@@ -11,7 +11,6 @@
         --ink: #1a1a1a; --ink-dim: #6b7280; --ink-faint: #9ca3af;
         --success: #16a34a; --error: #dc2626; --warn: #ea580c; --info: #2563eb;
         --bull: #16a34a; --bear: #dc2626; --neutral: #6b7280;
-        --ob-bull: #22c55e; --ob-bear: #ef4444; --fvg: #a855f7;
         --radius: 12px;
     }
     body.dark {
@@ -40,9 +39,7 @@
         font-size: 0.72rem; margin-top: 0.4rem;
         color: var(--ink-dim);
     }
-    .conn-status .dot {
-        width: 8px; height: 8px; border-radius: 50%; background: var(--ink-faint);
-    }
+    .conn-status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-faint); }
     .conn-status.connected .dot { background: var(--success); animation: pulse-dot 2s infinite; }
     .conn-status.connecting .dot { background: var(--warn); animation: pulse-dot 1s infinite; }
     .conn-status.error .dot { background: var(--error); }
@@ -75,10 +72,8 @@
         transition: all 0.15s;
     }
     .tab.active { background: var(--ink); color: var(--bg); }
-
     .tab-panel { display: none; }
-    .tab-panel.active { display: block; animation: fadeIn 0.25s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .tab-panel.active { display: block; }
 
     .section {
         background: var(--panel); border: 1px solid var(--border);
@@ -92,11 +87,6 @@
     .section-title {
         font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
         color: var(--ink-dim); font-weight: 700;
-    }
-    .section-title .badge {
-        display: inline-block; margin-left: 0.3rem; padding: 0.1rem 0.4rem;
-        background: var(--info); color: #fff; border-radius: 10px;
-        font-size: 0.6rem; letter-spacing: 0;
     }
     .chevron { font-size: 0.65rem; color: var(--ink-faint); transition: transform 0.2s; }
     .section.open .chevron { transform: rotate(180deg); }
@@ -114,12 +104,6 @@
         border: 1px solid var(--border); background: var(--panel-2);
         color: var(--ink); font-family: inherit; font-size: 0.85rem;
         -webkit-appearance: none; appearance: none;
-    }
-    select {
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%236b7280' d='M0 0l5 6 5-6z'/></svg>");
-        background-repeat: no-repeat;
-        background-position: right 0.8rem center;
-        background-size: 10px;
     }
     select:focus, input:focus { outline: none; border-color: var(--ink); }
     .control-row { margin-bottom: 0.7rem; }
@@ -141,12 +125,10 @@
         font-family: inherit; cursor: pointer;
     }
     .btn-secondary:active { transform: scale(0.97); }
-    .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .signal-banner {
         padding: 1rem; border-radius: 10px; text-align: center;
         margin-bottom: 0.9rem; font-weight: 700;
-        transition: all 0.3s;
     }
     .signal-banner.buy { background: #dcfce7; color: #15803d; border: 2px solid #86efac; }
     .signal-banner.sell { background: #fee2e2; color: #b91c1c; border: 2px solid #fca5a5; }
@@ -159,55 +141,32 @@
     .signal-banner .signal-setup { font-size: 0.78rem; font-weight: 500; opacity: 0.9; margin-top: 0.2rem; }
     .signal-banner .signal-conf { font-size: 0.78rem; font-weight: 500; opacity: 0.85; margin-top: 0.3rem; }
 
-    .confidence-bar {
-        height: 6px; background: rgba(0,0,0,0.08);
-        border-radius: 3px; overflow: hidden; margin-top: 0.5rem;
-    }
+    .confidence-bar { height: 6px; background: rgba(0,0,0,0.08); border-radius: 3px; overflow: hidden; margin-top: 0.5rem; }
     .confidence-fill { height: 100%; background: var(--success); transition: width 0.6s ease; }
 
-    .tf-grid {
-        display: grid; grid-template-columns: repeat(3, 1fr);
-        gap: 0.4rem; margin-bottom: 0.8rem;
-    }
+    .tf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-bottom: 0.8rem; }
     .tf-card {
         padding: 0.6rem 0.5rem; border-radius: 8px;
         background: var(--panel-2); text-align: center;
         border: 2px solid transparent;
-        transition: all 0.2s;
     }
     .tf-card.bull { border-color: var(--bull); }
     .tf-card.bear { border-color: var(--bear); }
     .tf-card.range { border-color: var(--neutral); }
-    .tf-card .tf-name {
-        font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em;
-        color: var(--ink-dim); margin-bottom: 0.2rem;
-    }
-    .tf-card .tf-direction {
-        font-size: 0.85rem; font-weight: 700;
-        margin-bottom: 0.15rem;
-    }
+    .tf-card .tf-name { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; color: var(--ink-dim); margin-bottom: 0.2rem; }
+    .tf-card .tf-direction { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.15rem; }
     .tf-card.bull .tf-direction { color: var(--bull); }
     .tf-card.bear .tf-direction { color: var(--bear); }
     .tf-card.range .tf-direction { color: var(--neutral); }
     .tf-card .tf-detail { font-size: 0.65rem; color: var(--ink-dim); }
 
-    .levels-grid {
-        display: grid; grid-template-columns: repeat(3, 1fr);
-        gap: 0.4rem; margin-bottom: 0.6rem;
-    }
+    .levels-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-bottom: 0.6rem; }
     .level-card {
         padding: 0.65rem 0.4rem; border-radius: 8px; text-align: center;
         border: 1px solid var(--border); background: var(--panel-2);
     }
-    .level-card .lv-label {
-        font-size: 0.62rem; text-transform: uppercase;
-        color: var(--ink-dim); font-weight: 700; letter-spacing: 0.05em;
-        margin-bottom: 0.2rem;
-    }
-    .level-card .lv-value {
-        font-size: 0.9rem; font-weight: 700;
-        font-family: ui-monospace, monospace; word-break: break-all;
-    }
+    .level-card .lv-label { font-size: 0.62rem; text-transform: uppercase; color: var(--ink-dim); font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+    .level-card .lv-value { font-size: 0.9rem; font-weight: 700; font-family: ui-monospace, monospace; word-break: break-all; }
     .level-card.entry .lv-value { color: var(--info); }
     .level-card.sl .lv-value { color: var(--error); }
     .level-card.tp .lv-value { color: var(--success); }
@@ -217,14 +176,8 @@
         background: var(--panel-2); border-radius: 8px;
         font-size: 0.82rem; line-height: 1.55;
     }
-    .report-block h3 {
-        font-size: 0.7rem; text-transform: uppercase;
-        letter-spacing: 0.06em; color: var(--ink-dim);
-        margin-bottom: 0.45rem; font-weight: 700;
-    }
+    .report-block h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); margin-bottom: 0.45rem; font-weight: 700; }
     .report-block p { margin-bottom: 0.35rem; }
-    .report-block ul { padding-left: 1.1rem; }
-    .report-block li { margin-bottom: 0.2rem; }
 
     .smc-tag {
         display: inline-block; padding: 0.15rem 0.5rem;
@@ -261,40 +214,23 @@
         z-index: 100;
     }
     .status-bar.visible { transform: translateY(0); }
-    .spinner {
-        width: 12px; height: 12px;
-        border: 2px solid rgba(128,128,128,0.3);
-        border-top-color: currentColor; border-radius: 50%;
-        animation: spin 0.8s linear infinite; flex-shrink: 0;
-    }
+    .spinner { width: 12px; height: 12px; border: 2px solid rgba(128,128,128,0.3); border-top-color: currentColor; border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .empty-state {
-        text-align: center; padding: 1.8rem 1rem;
-        color: var(--ink-faint); font-size: 0.8rem;
-    }
+    .empty-state { text-align: center; padding: 1.8rem 1rem; color: var(--ink-faint); font-size: 0.8rem; }
     .action-row { display: flex; gap: 0.4rem; margin-bottom: 0.7rem; flex-wrap: wrap; }
 
     .history-item {
         padding: 0.65rem 0.75rem; border-radius: 8px;
         border: 1px solid var(--border); margin-bottom: 0.35rem;
-        background: var(--panel); cursor: pointer;
+        background: var(--panel);
     }
-    .history-item .h-header {
-        display: flex; justify-content: space-between;
-        align-items: center; margin-bottom: 0.2rem;
-    }
+    .history-item .h-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem; }
     .history-item .h-instrument { font-weight: 700; font-size: 0.82rem; }
-    .history-item .h-signal {
-        font-size: 0.7rem; padding: 0.12rem 0.45rem;
-        border-radius: 6px; font-weight: 700;
-    }
+    .history-item .h-signal { font-size: 0.7rem; padding: 0.12rem 0.45rem; border-radius: 6px; font-weight: 700; }
     .history-item .h-signal.buy { background: #dcfce7; color: var(--success); }
     .history-item .h-signal.sell { background: #fee2e2; color: var(--error); }
     .history-item .h-signal.wait { background: #fef3c7; color: var(--warn); }
-    body.dark .history-item .h-signal.buy { background: #052e16; }
-    body.dark .history-item .h-signal.sell { background: #450a0a; }
-    body.dark .history-item .h-signal.wait { background: #451a03; }
     .history-item .h-meta { font-size: 0.68rem; color: var(--ink-dim); display: flex; justify-content: space-between; }
 
     .price-ticker {
@@ -314,7 +250,6 @@
         text-align: center; padding: 0.7rem;
         border-top: 1px solid var(--border); margin-top: 0.8rem;
     }
-    .hidden { display: none !important; }
 </style>
 </head>
 <body>
@@ -335,9 +270,6 @@
     <div class="tab" data-tab="settings">⚙️ Réglages</div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════
-     TAB ANALYSE
-     ═══════════════════════════════════════════════════════ -->
 <div class="tab-panel active" id="panel-analyze">
 
     <div class="section open">
@@ -354,16 +286,16 @@
                 <div class="control-row">
                     <label class="control-label">Mode d'analyse multi-timeframe</label>
                     <select id="mtf-mode">
-                        <option value="h4h1">H4 + H1 — Tendance de fond (swing)</option>
+                        <option value="h4h1">H4 + H1 — Tendance de fond</option>
                         <option value="h1m15" selected>H1 + M15 — Intraday principal</option>
-                        <option value="h1m15m5">H1 + M15 + M5 — Scalping (précis)</option>
+                        <option value="h1m15m5">H1 + M15 + M5 — Scalping</option>
                     </select>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="price-ticker" id="price-ticker">
+    <div class="price-ticker">
         <span class="pt-label">Prix actuel :</span>
         <span class="pt-value" id="pt-value">—</span>
         <span class="pt-change" id="pt-change"></span>
@@ -372,7 +304,6 @@
     <button class="btn-primary" id="analyze-btn">🧠 Lancer l'analyse SMC</button>
 
     <div id="report-container" style="display:none;">
-
         <div class="signal-banner" id="signal-banner">
             <div class="signal-label">Signal final</div>
             <div class="signal-value" id="signal-value">—</div>
@@ -420,7 +351,7 @@
             <div id="scenarios-container"></div>
         </div>
 
-        <div class="report-block" id="audit-block">
+        <div class="report-block">
             <h3>🤖 Audit IA <span style="font-size:0.65rem;font-weight:400;">(Groq · Llama 3.3 70B)</span></h3>
             <div id="audit-container">
                 <button class="btn-secondary" id="run-audit-btn">🔍 Lancer l'audit IA</button>
@@ -431,14 +362,9 @@
             <button class="btn-secondary" id="save-history-btn">💾 Sauvegarder</button>
             <button class="btn-secondary" id="send-telegram-btn">📤 Telegram</button>
         </div>
-
     </div>
-
 </div>
 
-<!-- ═══════════════════════════════════════════════════════
-     TAB HISTORIQUE
-     ═══════════════════════════════════════════════════════ -->
 <div class="tab-panel" id="panel-history">
     <div class="action-row">
         <button class="btn-secondary" id="clear-history-btn">🗑️ Tout effacer</button>
@@ -446,11 +372,7 @@
     <div id="history-list"></div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════
-     TAB RÉGLAGES
-     ═══════════════════════════════════════════════════════ -->
 <div class="tab-panel" id="panel-settings">
-
     <div class="section open">
         <div class="section-header" data-toggle="section-groq">
             <span class="section-title">🤖 Audit IA — Groq</span>
@@ -464,8 +386,7 @@
                 </div>
                 <button class="btn-secondary" id="save-groq">Enregistrer</button>
                 <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;line-height:1.4;">
-                    Clé gratuite sur <strong>console.groq.com</strong> → API Keys → Create<br>
-                    Sans clé, l'analyse SMC fonctionne mais sans l'audit IA.
+                    Clé gratuite sur <strong>console.groq.com</strong> → API Keys → Create
                 </div>
             </div>
         </div>
@@ -493,30 +414,10 @@
             </div>
         </div>
     </div>
-
-    <div class="section open">
-        <div class="section-header" data-toggle="section-about">
-            <span class="section-title">ℹ️ À propos</span>
-            <span class="chevron">▼</span>
-        </div>
-        <div class="section-body" id="section-about">
-            <div class="section-content">
-                <p style="font-size:0.78rem;color:var(--ink-dim);line-height:1.5;">
-                    <strong>SMC Deriv Analyzer</strong><br>
-                    Connexion temps réel à Deriv WebSocket (gratuit, sans token).<br>
-                    Analyse Smart Money Concepts complète : BOS, CHoCH, Order Blocks, FVG, Premium/Discount, Liquidity Sweeps.<br>
-                    Audit par IA Groq (Llama 3.3 70B).<br>
-                    Aucune installation. 100% navigateur.<br><br>
-                    ⚠️ Cet outil est éducatif. Il ne constitue pas un conseil financier.
-                </p>
-            </div>
-        </div>
-    </div>
-
 </div>
 
 <div class="disclaimer">
-    ⚠️ Outil d'analyse éducatif. Pas un conseil financier. Trade responsable.
+    ⚠️ Outil d'analyse éducatif. Pas un conseil financier.
 </div>
 
 <div class="status-bar" id="status-bar">
@@ -526,7 +427,6 @@
 
 <div class="toast" id="toast"><span id="toast-text">Message</span></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════════════
 // CONFIG
@@ -542,7 +442,7 @@ const STORAGE = {
 };
 
 // ══════════════════════════════════════════════════════════════════
-// SYMBOLES DERIV
+// SYMBOLES
 // ══════════════════════════════════════════════════════════════════
 const SYMBOLS = {
     'Indices synthétiques': [
@@ -603,7 +503,7 @@ const state = {
     wsPromiseResolve: null,
     symbol: 'R_10',
     mtfMode: 'h1m15',
-    candles: { H4: [], H1: [], M15: [], M5: [] },
+    candles: {},
     lastAnalysis: null,
     subscriptionId: null
 };
@@ -644,7 +544,6 @@ function formatPrice(p) {
     else if (abs >= 100) dec = 2;
     else if (abs >= 10) dec = 3;
     else if (abs >= 1) dec = 4;
-    else dec = 5;
     return Number(p).toFixed(dec);
 }
 function formatDate(ts) {
@@ -662,7 +561,7 @@ function getDecimals(price) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// CONNEXION DERIV WEBSOCKET
+// CONNEXION DERIV
 // ══════════════════════════════════════════════════════════════════
 function updateConnStatus(status, text) {
     const el = $('conn-status');
@@ -675,33 +574,37 @@ function connectDeriv() {
     return new Promise((resolve, reject) => {
         if (state.ws && state.wsReady) { resolve(); return; }
         updateConnStatus('connecting', 'Connexion à Deriv…');
+        log('Tentative connexion : ' + DERIV_WS_URL);
         try {
             const ws = new WebSocket(DERIV_WS_URL);
             state.ws = ws;
             state.wsPromiseResolve = resolve;
-
-            ws.onopen = () => {
-                log('WebSocket ouvert');
-            };
-
+            const timeout = setTimeout(() => {
+                if (!state.wsReady) {
+                    log('Timeout — serveur injoignable');
+                    updateConnStatus('error', 'Timeout — serveur injoignable');
+                    try { ws.close(); } catch (e) {}
+                    reject(new Error('Timeout connexion Deriv'));
+                }
+            }, 10000);
+            ws.onopen = () => log('WebSocket ouvert');
             ws.onmessage = (evt) => {
                 try {
                     const data = JSON.parse(evt.data);
+                    if (!state.wsReady) clearTimeout(timeout);
                     handleDerivMessage(data);
-                } catch (e) {
-                    log('Parse error: ' + e.message);
-                }
+                } catch (e) { log('Parse error: ' + e.message); }
             };
-
             ws.onerror = () => {
-                updateConnStatus('error', 'Erreur de connexion');
+                updateConnStatus('error', 'Erreur WebSocket');
+                clearTimeout(timeout);
                 reject(new Error('WebSocket error'));
             };
-
-            ws.onclose = () => {
+            ws.onclose = (e) => {
                 state.wsReady = false;
-                updateConnStatus('', 'Déconnecté');
-                log('WebSocket fermé');
+                log('WebSocket fermé — code : ' + e.code);
+                updateConnStatus('', 'Déconnecté (code ' + e.code + ')');
+                clearTimeout(timeout);
             };
         } catch (e) {
             updateConnStatus('error', 'Erreur : ' + e.message);
@@ -733,7 +636,6 @@ function sendDerivRequest(payload) {
 }
 
 function handleDerivMessage(data) {
-    // Réponse à une requête identifiée
     if (data.req_id && pendingRequests[data.req_id]) {
         const { resolve, reject } = pendingRequests[data.req_id];
         delete pendingRequests[data.req_id];
@@ -741,7 +643,6 @@ function handleDerivMessage(data) {
         else resolve(data);
         return;
     }
-    // Première réponse sans req_id (message d'accueil)
     if (!state.wsReady && data.msg_type) {
         state.wsReady = true;
         updateConnStatus('connected', 'Connecté à Deriv');
@@ -750,23 +651,13 @@ function handleDerivMessage(data) {
             state.wsPromiseResolve = null;
         }
     }
-    // Ticks en streaming
-    if (data.msg_type === 'tick' && data.tick) {
-        updatePriceTicker(data.tick.quote);
-    }
+    if (data.msg_type === 'tick' && data.tick) updatePriceTicker(data.tick.quote);
 }
 
 // ══════════════════════════════════════════════════════════════════
-// RÉCUPÉRATION DES BOUGIES
+// BOUGIES
 // ══════════════════════════════════════════════════════════════════
-const GRANULARITY = {
-    M5: 300,
-    M15: 900,
-    M30: 1800,
-    H1: 3600,
-    H4: 14400,
-    D1: 86400
-};
+const GRANULARITY = { M5: 300, M15: 900, M30: 1800, H1: 3600, H4: 14400, D1: 86400 };
 
 async function fetchCandles(symbol, granularity, count = 200) {
     setStatus('Chargement ' + symbol + '…');
@@ -779,9 +670,7 @@ async function fetchCandles(symbol, granularity, count = 200) {
         style: 'candles',
         granularity: granularity
     });
-    if (!response.candles || !response.candles.length) {
-        throw new Error('Pas de données pour ' + symbol);
-    }
+    if (!response.candles || !response.candles.length) throw new Error('Pas de données');
     return response.candles.map(c => ({
         time: c.epoch,
         open: parseFloat(c.open),
@@ -791,22 +680,15 @@ async function fetchCandles(symbol, granularity, count = 200) {
     }));
 }
 
-// ══════════════════════════════════════════════════════════════════
-// TICKER DE PRIX EN DIRECT
-// ══════════════════════════════════════════════════════════════════
 async function subscribeTicks(symbol) {
     try {
         if (state.subscriptionId) {
-            try {
-                await sendDerivRequest({ forget: state.subscriptionId });
-            } catch (e) {}
+            try { await sendDerivRequest({ forget: state.subscriptionId }); } catch (e) {}
         }
         const resp = await sendDerivRequest({ ticks: symbol, subscribe: 1 });
         state.subscriptionId = resp.subscription?.id;
         if (resp.tick) updatePriceTicker(resp.tick.quote);
-    } catch (e) {
-        log('Erreur subscribe ticks : ' + e.message);
-    }
+    } catch (e) { log('Erreur subscribe : ' + e.message); }
 }
 
 let lastPrice = null;
@@ -823,10 +705,8 @@ function updatePriceTicker(price) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// ANALYSE SMC — Smart Money Concepts
+// ANALYSE SMC
 // ══════════════════════════════════════════════════════════════════
-
-// 1. Détection des swing highs / swing lows
 function findSwings(candles, lookback = 3) {
     const swings = [];
     for (let i = lookback; i < candles.length - lookback; i++) {
@@ -841,34 +721,24 @@ function findSwings(candles, lookback = 3) {
     return swings.sort((a, b) => a.index - b.index);
 }
 
-// 2. Détection BOS / CHoCH
 function detectStructure(candles) {
     const swings = findSwings(candles, 3);
     if (swings.length < 4) return { trend: 'range', events: [], swings };
-
     const events = [];
     let trend = 'range';
     let lastHigh = null, lastLow = null;
-
-    for (let i = 0; i < swings.length; i++) {
-        const s = swings[i];
+    for (const s of swings) {
         if (s.type === 'high') {
             if (lastHigh !== null && s.price > lastHigh.price) {
-                if (trend === 'bearish') {
-                    events.push({ type: 'CHoCH', direction: 'bull', price: s.price, index: s.index, time: s.time });
-                } else {
-                    events.push({ type: 'BOS', direction: 'bull', price: s.price, index: s.index, time: s.time });
-                }
+                if (trend === 'bearish') events.push({ type: 'CHoCH', direction: 'bull', price: s.price, index: s.index, time: s.time });
+                else events.push({ type: 'BOS', direction: 'bull', price: s.price, index: s.index, time: s.time });
                 trend = 'bullish';
             }
             lastHigh = s;
         } else {
             if (lastLow !== null && s.price < lastLow.price) {
-                if (trend === 'bullish') {
-                    events.push({ type: 'CHoCH', direction: 'bear', price: s.price, index: s.index, time: s.time });
-                } else {
-                    events.push({ type: 'BOS', direction: 'bear', price: s.price, index: s.index, time: s.time });
-                }
+                if (trend === 'bullish') events.push({ type: 'CHoCH', direction: 'bear', price: s.price, index: s.index, time: s.time });
+                else events.push({ type: 'BOS', direction: 'bear', price: s.price, index: s.index, time: s.time });
                 trend = 'bearish';
             }
             lastLow = s;
@@ -877,192 +747,100 @@ function detectStructure(candles) {
     return { trend, events, swings, lastHigh, lastLow };
 }
 
-// 3. Détection des Order Blocks
 function detectOrderBlocks(candles, structure) {
     const obs = [];
     const events = structure.events.filter(e => e.type === 'BOS' || e.type === 'CHoCH');
     for (const ev of events) {
-        // Chercher la dernière bougie opposée avant l'événement
         const evIdx = ev.index;
         if (ev.direction === 'bull') {
             for (let i = evIdx - 1; i >= Math.max(0, evIdx - 10); i--) {
                 if (candles[i].close < candles[i].open) {
-                    obs.push({
-                        type: 'bull',
-                        top: Math.max(candles[i].open, candles[i].close),
-                        bottom: candles[i].low,
-                        time: candles[i].time,
-                        index: i,
-                        tested: false
-                    });
+                    obs.push({ type: 'bull', top: Math.max(candles[i].open, candles[i].close), bottom: candles[i].low, time: candles[i].time, index: i });
                     break;
                 }
             }
         } else {
             for (let i = evIdx - 1; i >= Math.max(0, evIdx - 10); i--) {
                 if (candles[i].close > candles[i].open) {
-                    obs.push({
-                        type: 'bear',
-                        top: candles[i].high,
-                        bottom: Math.min(candles[i].open, candles[i].close),
-                        time: candles[i].time,
-                        index: i,
-                        tested: false
-                    });
+                    obs.push({ type: 'bear', top: candles[i].high, bottom: Math.min(candles[i].open, candles[i].close), time: candles[i].time, index: i });
                     break;
                 }
             }
         }
     }
-    // Ne garder que les 3 OB les plus récents par direction
     const bulls = obs.filter(o => o.type === 'bull').slice(-3);
     const bears = obs.filter(o => o.type === 'bear').slice(-3);
     return [...bulls, ...bears].sort((a, b) => b.index - a.index);
 }
 
-// 4. Détection des FVG (Fair Value Gaps)
 function detectFVG(candles) {
     const fvgs = [];
     for (let i = 2; i < candles.length; i++) {
-        const c1 = candles[i - 2];
-        const c3 = candles[i];
-        // FVG bullish : low de la 3e > high de la 1ère
-        if (c3.low > c1.high) {
-            fvgs.push({
-                type: 'bull',
-                top: c3.low,
-                bottom: c1.high,
-                time: candles[i - 1].time,
-                index: i - 1
-            });
-        }
-        // FVG bearish : high de la 3e < low de la 1ère
-        if (c3.high < c1.low) {
-            fvgs.push({
-                type: 'bear',
-                top: c1.low,
-                bottom: c3.high,
-                time: candles[i - 1].time,
-                index: i - 1
-            });
-        }
+        const c1 = candles[i - 2], c3 = candles[i];
+        if (c3.low > c1.high) fvgs.push({ type: 'bull', top: c3.low, bottom: c1.high, time: candles[i - 1].time, index: i - 1 });
+        if (c3.high < c1.low) fvgs.push({ type: 'bear', top: c1.low, bottom: c3.high, time: candles[i - 1].time, index: i - 1 });
     }
-    // Nettoyer : ne garder que ceux encore non comblés par le prix
-    const last = candles[candles.length - 1];
-    const lastClose = last.close;
-    const active = fvgs.filter(f => {
-        if (f.type === 'bull') return f.bottom > lastClose;
-        else return f.top < lastClose;
-    });
-    return active.slice(-5);
+    const lastClose = candles[candles.length - 1].close;
+    return fvgs.filter(f => f.type === 'bull' ? f.bottom > lastClose : f.top < lastClose).slice(-5);
 }
 
-// 5. Zones Premium / Discount (par rapport au dernier swing range)
-function computePremiumDiscount(candles, structure) {
+function computePremiumDiscount(candles) {
     const recent = candles.slice(-50);
     const high = Math.max(...recent.map(c => c.high));
     const low = Math.min(...recent.map(c => c.low));
     const range = high - low;
     const equilibrium = (high + low) / 2;
     const current = candles[candles.length - 1].close;
-    const premiumStart = low + range * 0.5;
-    const discountEnd = low + range * 0.5;
-    const zone = current > premiumStart ? 'premium' : 'discount';
+    const zone = current > equilibrium ? 'premium' : 'discount';
     const position = range > 0 ? ((current - low) / range) * 100 : 50;
-    return {
-        high, low, equilibrium, current,
-        zone, position: position.toFixed(1),
-        range
-    };
+    return { high, low, equilibrium, current, zone, position: position.toFixed(1), range };
 }
 
-// 6. Liquidity Sweeps (balayages de liquidité)
 function detectLiquiditySweeps(candles, structure) {
     const sweeps = [];
-    const swings = structure.swings;
     const recent = candles.slice(-30);
     const lastClose = candles[candles.length - 1].close;
-
-    // Cherche les swing highs/lows récents balayés puis rejetés
-    const recentHighs = swings.filter(s => s.type === 'high').slice(-5);
-    const recentLows = swings.filter(s => s.type === 'low').slice(-5);
-
+    const recentHighs = structure.swings.filter(s => s.type === 'high').slice(-5);
+    const recentLows = structure.swings.filter(s => s.type === 'low').slice(-5);
     for (const sh of recentHighs) {
-        // Le prix a-t-il dépassé ce high récemment ?
         const swept = recent.some(c => c.high > sh.price && c.close < sh.price);
-        if (swept && lastClose < sh.price) {
-            sweeps.push({ type: 'bear', level: sh.price, time: sh.time, desc: 'Liquidity sweep au-dessus du high → rejet' });
-        }
+        if (swept && lastClose < sh.price) sweeps.push({ type: 'bear', level: sh.price, desc: 'Sweep au-dessus du high → rejet' });
     }
     for (const sl of recentLows) {
         const swept = recent.some(c => c.low < sl.price && c.close > sl.price);
-        if (swept && lastClose > sl.price) {
-            sweeps.push({ type: 'bull', level: sl.price, time: sl.time, desc: 'Liquidity sweep sous le low → rejet' });
-        }
+        if (swept && lastClose > sl.price) sweeps.push({ type: 'bull', level: sl.price, desc: 'Sweep sous le low → rejet' });
     }
     return sweeps.slice(-3);
 }
 
-// ══════════════════════════════════════════════════════════════════
-// ANALYSE D'UN TIMEFRAME
-// ══════════════════════════════════════════════════════════════════
 function analyzeTimeframe(candles) {
     if (!candles || candles.length < 30) return null;
     const structure = detectStructure(candles);
     const obs = detectOrderBlocks(candles, structure);
     const fvgs = detectFVG(candles);
-    const pd = computePremiumDiscount(candles, structure);
+    const pd = computePremiumDiscount(candles);
     const sweeps = detectLiquiditySweeps(candles, structure);
 
-    // Score directionnel
     let bullPoints = 0, bearPoints = 0;
     if (structure.trend === 'bullish') bullPoints += 3;
     else if (structure.trend === 'bearish') bearPoints += 3;
-
-    // Dernier événement de structure
     const lastEv = structure.events[structure.events.length - 1];
-    if (lastEv) {
-        if (lastEv.direction === 'bull') bullPoints += 1;
-        else bearPoints += 1;
-    }
-
-    // Zone premium/discount
-    if (pd.zone === 'discount') bullPoints += 1;
-    else bearPoints += 1;
-
-    // Liquidity sweeps récents
-    for (const s of sweeps) {
-        if (s.type === 'bull') bullPoints += 2;
-        else bearPoints += 2;
-    }
+    if (lastEv) { if (lastEv.direction === 'bull') bullPoints += 1; else bearPoints += 1; }
+    if (pd.zone === 'discount') bullPoints += 1; else bearPoints += 1;
+    for (const s of sweeps) { if (s.type === 'bull') bullPoints += 2; else bearPoints += 2; }
 
     const total = bullPoints + bearPoints;
-    let direction = 'range';
-    let strength = 0;
+    let direction = 'range', strength = 50;
     if (total > 0) {
-        if (bullPoints > bearPoints * 1.3) {
-            direction = 'bullish';
-            strength = Math.round(bullPoints / total * 100);
-        } else if (bearPoints > bullPoints * 1.3) {
-            direction = 'bearish';
-            strength = Math.round(bearPoints / total * 100);
-        } else {
-            direction = 'range';
-            strength = 50;
-        }
+        if (bullPoints > bearPoints * 1.3) { direction = 'bullish'; strength = Math.round(bullPoints / total * 100); }
+        else if (bearPoints > bullPoints * 1.3) { direction = 'bearish'; strength = Math.round(bearPoints / total * 100); }
     }
-
     return { structure, obs, fvgs, pd, sweeps, direction, strength, bullPoints, bearPoints };
 }
 
-// ══════════════════════════════════════════════════════════════════
-// SYNTHÈSE MULTI-TIMEFRAME
-// ══════════════════════════════════════════════════════════════════
 function synthesizeSMC(results, mode) {
     const tfs = Object.keys(results).filter(k => results[k]);
-    if (tfs.length === 0) return null;
-
-    // Poids selon mode
+    if (!tfs.length) return null;
     let weights = {};
     if (mode === 'h4h1') weights = { H4: 0.65, H1: 0.35 };
     else if (mode === 'h1m15') weights = { H1: 0.55, M15: 0.45 };
@@ -1076,459 +854,243 @@ function synthesizeSMC(results, mode) {
         else if (r.direction === 'bearish') bearScore += w * (r.strength / 100);
         totalWeight += w;
     }
-
     const bullNorm = totalWeight > 0 ? bullScore / totalWeight : 0;
     const bearNorm = totalWeight > 0 ? bearScore / totalWeight : 0;
-
-    let signal = 'ATTENDRE', signalClass = 'wait';
-    let confidence = 0;
-
+    let signal = 'ATTENDRE', signalClass = 'wait', confidence = 0;
     if (bullNorm > bearNorm * 1.4 && bullNorm > 0.4) {
-        signal = 'ACHAT';
-        signalClass = 'buy';
-        confidence = Math.min(95, Math.round(bullNorm * 100));
+        signal = 'ACHAT'; signalClass = 'buy'; confidence = Math.min(95, Math.round(bullNorm * 100));
     } else if (bearNorm > bullNorm * 1.4 && bearNorm > 0.4) {
-        signal = 'VENTE';
-        signalClass = 'sell';
-        confidence = Math.min(95, Math.round(bearNorm * 100));
+        signal = 'VENTE'; signalClass = 'sell'; confidence = Math.min(95, Math.round(bearNorm * 100));
     } else {
-        signal = 'ATTENDRE';
-        signalClass = 'wait';
         confidence = Math.round(Math.max(bullNorm, bearNorm) * 60);
     }
-
-    return { signal, signalClass, confidence, bullNorm, bearNorm };
+    return { signal, signalClass, confidence };
 }
 
-// ══════════════════════════════════════════════════════════════════
-// CALCUL DES NIVEAUX D'ENTRÉE / SL / TP (SMC)
-// ══════════════════════════════════════════════════════════════════
 function computeSMCLevels(results, synthesis, currentPrice) {
     const tfs = Object.keys(results).filter(k => results[k]);
     const decimals = getDecimals(currentPrice);
     const fmt = p => p != null && !isNaN(p) ? Number(p).toFixed(decimals) : '—';
-
-    // Récupère les OB et FVG du timeframe le plus bas (entrée précise)
     const entryTF = tfs[tfs.length - 1];
     const entryR = results[entryTF];
     const obs = entryR.obs || [];
     const fvgs = entryR.fvgs || [];
-
     let entry, sl, tp, riskReward;
 
     if (synthesis.signal === 'ACHAT') {
-        // OB bullish le plus proche sous le prix
         const bullOBs = obs.filter(o => o.type === 'bull' && o.top < currentPrice).sort((a, b) => b.top - a.top);
         const entryOB = bullOBs[0];
-        if (entryOB) {
-            entry = entryOB.top; // entrée au sommet de l'OB
-            sl = entryOB.bottom - (entryOB.top - entryOB.bottom) * 0.2; // SL sous l'OB
-        } else {
-            // Fallback : dernier FVG bullish
+        if (entryOB) { entry = entryOB.top; sl = entryOB.bottom - (entryOB.top - entryOB.bottom) * 0.2; }
+        else {
             const bullFVGs = fvgs.filter(f => f.type === 'bull').sort((a, b) => b.top - a.top);
-            if (bullFVGs[0]) {
-                entry = bullFVGs[0].top;
-                sl = bullFVGs[0].bottom - (bullFVGs[0].top - bullFVGs[0].bottom) * 0.2;
-            } else {
-                entry = currentPrice * 0.998;
-                sl = currentPrice * 0.99;
-            }
+            if (bullFVGs[0]) { entry = bullFVGs[0].top; sl = bullFVGs[0].bottom - (bullFVGs[0].top - bullFVGs[0].bottom) * 0.2; }
+            else { entry = currentPrice * 0.998; sl = currentPrice * 0.99; }
         }
-        // TP : dernier high structurel
         const lastHigh = entryR.structure.lastHigh;
         tp = lastHigh ? Math.max(lastHigh.price, entry + (entry - sl) * 2) : entry + (entry - sl) * 2;
     } else if (synthesis.signal === 'VENTE') {
         const bearOBs = obs.filter(o => o.type === 'bear' && o.bottom > currentPrice).sort((a, b) => a.bottom - b.bottom);
         const entryOB = bearOBs[0];
-        if (entryOB) {
-            entry = entryOB.bottom;
-            sl = entryOB.top + (entryOB.top - entryOB.bottom) * 0.2;
-        } else {
+        if (entryOB) { entry = entryOB.bottom; sl = entryOB.top + (entryOB.top - entryOB.bottom) * 0.2; }
+        else {
             const bearFVGs = fvgs.filter(f => f.type === 'bear').sort((a, b) => a.bottom - b.bottom);
-            if (bearFVGs[0]) {
-                entry = bearFVGs[0].bottom;
-                sl = bearFVGs[0].top + (bearFVGs[0].top - bearFVGs[0].bottom) * 0.2;
-            } else {
-                entry = currentPrice * 1.002;
-                sl = currentPrice * 1.01;
-            }
+            if (bearFVGs[0]) { entry = bearFVGs[0].bottom; sl = bearFVGs[0].top + (bearFVGs[0].top - bearFVGs[0].bottom) * 0.2; }
+            else { entry = currentPrice * 1.002; sl = currentPrice * 1.01; }
         }
         const lastLow = entryR.structure.lastLow;
         tp = lastLow ? Math.min(lastLow.price, entry - (sl - entry) * 2) : entry - (sl - entry) * 2;
     } else {
-        entry = currentPrice;
-        sl = currentPrice * 0.99;
-        tp = currentPrice * 1.01;
+        entry = currentPrice; sl = currentPrice * 0.99; tp = currentPrice * 1.01;
     }
-
     const risk = Math.abs(entry - sl);
     const reward = Math.abs(tp - entry);
     riskReward = risk > 0 ? '1:' + (reward / risk).toFixed(2) : '—';
-
-    return {
-        entry: fmt(entry),
-        sl: fmt(sl),
-        tp: fmt(tp),
-        riskReward,
-        entryPrice: entry,
-        slPrice: sl,
-        tpPrice: tp
-    };
+    return { entry: fmt(entry), sl: fmt(sl), tp: fmt(tp), riskReward, entryPrice: entry, slPrice: sl, tpPrice: tp };
 }
 
-// ══════════════════════════════════════════════════════════════════
-// SCÉNARIOS ALTERNATIFS
-// ══════════════════════════════════════════════════════════════════
-function buildScenarios(results, synthesis, levels, currentPrice) {
+function buildScenarios(results, synthesis, levels) {
     const scenarios = [];
-    const tfs = Object.keys(results).filter(k => results[k]);
-    const decimals = getDecimals(currentPrice);
-    const fmt = p => p != null ? Number(p).toFixed(decimals) : '—';
-
-    // Scénario principal
     if (synthesis.signal === 'ACHAT') {
-        scenarios.push({
-            type: 'bull',
-            title: '🟢 Scénario principal — Achat',
-            prob: 'Probabilité estimée : ' + synthesis.confidence + '%',
-            text: 'Attendre un retour du prix sur l\'Order Block ' + fmt(levels.entryPrice) + ' puis confirmer par un rejet haussier sur M15/M5. Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP : ' + levels.tp
-        });
-        scenarios.push({
-            type: 'bear',
-            title: '🔴 Scénario alternatif — Invalidation',
-            prob: 'Probabilité de retournement : ' + (100 - synthesis.confidence) + '%',
-            text: 'Si le prix clôture sous ' + levels.sl + ' (SL), le biais haussier est invalidé. Réévaluation nécessaire. Prochaine cible baissière : dernier low structurel.'
-        });
-        scenarios.push({
-            type: 'range',
-            title: '⚪ Scénario neutre — Range',
-            prob: 'Probabilité : faible',
-            text: 'Si le prix reste bloqué entre ' + levels.entry + ' et ' + levels.tp + ' sans direction claire, attendre une cassure de structure pour repositionner.'
-        });
+        scenarios.push({ type: 'bull', title: '🟢 Scénario principal — Achat', prob: 'Probabilité : ' + synthesis.confidence + '%',
+            text: 'Attendre retour du prix sur OB ' + levels.entry + '. Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP : ' + levels.tp });
+        scenarios.push({ type: 'bear', title: '🔴 Invalidation', prob: 'Probabilité : ' + (100 - synthesis.confidence) + '%',
+            text: 'Si clôture sous ' + levels.sl + ', biais haussier invalidé.' });
+        scenarios.push({ type: 'range', title: '⚪ Range', prob: 'Probabilité faible',
+            text: 'Si prix bloqué entre ' + levels.entry + ' et ' + levels.tp + ', attendre cassure.' });
     } else if (synthesis.signal === 'VENTE') {
-        scenarios.push({
-            type: 'bear',
-            title: '🔴 Scénario principal — Vente',
-            prob: 'Probabilité estimée : ' + synthesis.confidence + '%',
-            text: 'Attendre un retour du prix sur l\'Order Block bearish ' + fmt(levels.entryPrice) + ' puis confirmer par un rejet baissier. Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP : ' + levels.tp
-        });
-        scenarios.push({
-            type: 'bull',
-            title: '🟢 Scénario alternatif — Invalidation',
-            prob: 'Probabilité de retournement : ' + (100 - synthesis.confidence) + '%',
-            text: 'Si le prix clôture au-dessus de ' + levels.sl + ' (SL), le biais baissier est invalidé. Réévaluation nécessaire.'
-        });
-        scenarios.push({
-            type: 'range',
-            title: '⚪ Scénario neutre — Range',
-            prob: 'Probabilité : faible',
-            text: 'Si le prix reste bloqué entre ' + levels.tp + ' et ' + levels.entry + ', attendre une cassure de structure.'
-        });
+        scenarios.push({ type: 'bear', title: '🔴 Scénario principal — Vente', prob: 'Probabilité : ' + synthesis.confidence + '%',
+            text: 'Attendre retour du prix sur OB bearish ' + levels.entry + '. Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP : ' + levels.tp });
+        scenarios.push({ type: 'bull', title: '🟢 Invalidation', prob: 'Probabilité : ' + (100 - synthesis.confidence) + '%',
+            text: 'Si clôture au-dessus de ' + levels.sl + ', biais baissier invalidé.' });
+        scenarios.push({ type: 'range', title: '⚪ Range', prob: 'Probabilité faible',
+            text: 'Si prix bloqué entre ' + levels.tp + ' et ' + levels.entry + ', attendre cassure.' });
     } else {
-        scenarios.push({
-            type: 'range',
-            title: '⚪ Scénario principal — Attente',
-            prob: 'Probabilité : indéterminée',
-            text: 'La structure ne donne pas de biais clair. Attendre une cassure de structure (BOS) ou un balayage de liquidité pour se positionner.'
-        });
+        scenarios.push({ type: 'range', title: '⚪ Attente', prob: 'Probabilité indéterminée',
+            text: 'Structure peu claire. Attendre BOS ou sweep de liquidité.' });
     }
-
     return scenarios;
 }
 
-// ══════════════════════════════════════════════════════════════════
-// AFFICHAGE DU RAPPORT
-// ══════════════════════════════════════════════════════════════════
 function renderReport(results, synthesis, levels, scenarios, currentPrice, symbol) {
     $('report-container').style.display = 'block';
-
-    // Signal
     const banner = $('signal-banner');
     banner.className = 'signal-banner ' + synthesis.signalClass;
     $('signal-value').textContent = synthesis.signal;
     $('signal-conf').textContent = 'Confiance : ' + synthesis.confidence + '%';
-
-    // Setup
-    const setupText = buildSetupText(results, synthesis);
-    $('signal-setup').textContent = setupText;
-
+    const tfs = Object.keys(results).filter(k => results[k]);
+    const entryTF = tfs[tfs.length - 1];
+    const entryR = results[entryTF];
+    const setupParts = [];
+    if (entryR.obs && entryR.obs.length) setupParts.push('OB ' + entryTF);
+    if (entryR.fvgs && entryR.fvgs.length) setupParts.push('FVG ' + entryTF);
+    if (entryR.sweeps && entryR.sweeps.length) setupParts.push('Liquidity sweep');
+    $('signal-setup').textContent = 'Setup : ' + (setupParts.length ? setupParts.join(' + ') : 'structure ' + entryTF);
     $('confidence-fill').style.width = synthesis.confidence + '%';
-    $('confidence-fill').style.background = synthesis.confidence > 65 ? 'var(--success)' :
-        synthesis.confidence > 45 ? 'var(--info)' : 'var(--warn)';
+    $('confidence-fill').style.background = synthesis.confidence > 65 ? 'var(--success)' : synthesis.confidence > 45 ? 'var(--info)' : 'var(--warn)';
 
-    // Grille TF
-    const tfGrid = $('tf-grid');
-    tfGrid.innerHTML = Object.keys(results).filter(k => results[k]).map(tf => {
+    $('tf-grid').innerHTML = tfs.map(tf => {
         const r = results[tf];
         const cls = r.direction === 'bullish' ? 'bull' : r.direction === 'bearish' ? 'bear' : 'range';
         const label = r.direction === 'bullish' ? '📈 Bull' : r.direction === 'bearish' ? '📉 Bear' : '↔️ Range';
         const lastEv = r.structure.events[r.structure.events.length - 1];
         const evTxt = lastEv ? (lastEv.type + ' ' + (lastEv.direction === 'bull' ? '↑' : '↓')) : '—';
-        return '<div class="tf-card ' + cls + '">' +
-            '<div class="tf-name">' + tf + '</div>' +
-            '<div class="tf-direction">' + label + '</div>' +
-            '<div class="tf-detail">' + r.strength + '% · ' + evTxt + '</div>' +
-            '</div>';
+        return '<div class="tf-card ' + cls + '"><div class="tf-name">' + tf + '</div><div class="tf-direction">' + label + '</div><div class="tf-detail">' + r.strength + '% · ' + evTxt + '</div></div>';
     }).join('');
 
-    // Niveaux
     $('level-entry').textContent = levels.entry;
     $('level-sl').textContent = levels.sl;
     $('level-tp').textContent = levels.tp;
     $('level-rr').textContent = levels.riskReward;
 
-    // Structure SMC
-    const entryTF = Object.keys(results).filter(k => results[k]).pop();
-    const entryR = results[entryTF];
     let structHTML = '<p><strong>Timeframe d\'entrée :</strong> ' + entryTF + '</p>';
-    structHTML += '<p><strong>Dernier événement :</strong> ';
     const lastEv = entryR.structure.events[entryR.structure.events.length - 1];
-    if (lastEv) {
-        structHTML += '<span class="smc-tag ' + (lastEv.direction === 'bull' ? 'bull' : 'bear') + '">' +
-            lastEv.type + ' ' + (lastEv.direction === 'bull' ? 'haussier' : 'baissier') + ' à ' + formatPrice(lastEv.price) + '</span>';
-    } else {
-        structHTML += 'Aucun événement récent';
-    }
+    structHTML += '<p><strong>Dernier événement :</strong> ';
+    if (lastEv) structHTML += '<span class="smc-tag ' + (lastEv.direction === 'bull' ? 'bull' : 'bear') + '">' + lastEv.type + ' ' + (lastEv.direction === 'bull' ? 'haussier' : 'baissier') + ' à ' + formatPrice(lastEv.price) + '</span>';
+    else structHTML += 'Aucun';
     structHTML += '</p>';
     structHTML += '<p><strong>Dernier High :</strong> ' + (entryR.structure.lastHigh ? formatPrice(entryR.structure.lastHigh.price) : '—') + '</p>';
     structHTML += '<p><strong>Dernier Low :</strong> ' + (entryR.structure.lastLow ? formatPrice(entryR.structure.lastLow.price) : '—') + '</p>';
     $('smc-structure').innerHTML = structHTML;
 
-    // Order Blocks
     const obs = entryR.obs || [];
-    if (obs.length === 0) {
-        $('ob-container').innerHTML = '<p style="color:var(--ink-dim);">Aucun Order Block détecté récemment.</p>';
-    } else {
-        $('ob-container').innerHTML = obs.map(ob =>
-            '<div style="margin-bottom:0.4rem;">' +
-            '<span class="smc-tag ' + (ob.type === 'bull' ? 'bull' : 'bear') + '">' +
-            (ob.type === 'bull' ? '📈 OB Bullish' : '📉 OB Bearish') + '</span> ' +
-            formatPrice(ob.bottom) + ' → ' + formatPrice(ob.top) +
-            '</div>'
-        ).join('');
-    }
+    $('ob-container').innerHTML = obs.length ? obs.map(ob =>
+        '<div style="margin-bottom:0.4rem;"><span class="smc-tag ' + (ob.type === 'bull' ? 'bull' : 'bear') + '">' +
+        (ob.type === 'bull' ? '📈 OB Bullish' : '📉 OB Bearish') + '</span> ' + formatPrice(ob.bottom) + ' → ' + formatPrice(ob.top) + '</div>'
+    ).join('') : '<p style="color:var(--ink-dim);">Aucun Order Block détecté.</p>';
 
-    // FVG
     const fvgs = entryR.fvgs || [];
-    if (fvgs.length === 0) {
-        $('fvg-container').innerHTML = '<p style="color:var(--ink-dim);">Aucun FVG actif (tous comblés).</p>';
-    } else {
-        $('fvg-container').innerHTML = fvgs.map(f =>
-            '<div style="margin-bottom:0.4rem;">' +
-            '<span class="smc-tag ' + (f.type === 'bull' ? 'bull' : 'bear') + '">' +
-            (f.type === 'bull' ? '💧 FVG Bullish' : '💧 FVG Bearish') + '</span> ' +
-            formatPrice(f.bottom) + ' → ' + formatPrice(f.top) +
-            '</div>'
-        ).join('');
-    }
+    $('fvg-container').innerHTML = fvgs.length ? fvgs.map(f =>
+        '<div style="margin-bottom:0.4rem;"><span class="smc-tag ' + (f.type === 'bull' ? 'bull' : 'bear') + '">' +
+        (f.type === 'bull' ? '💧 FVG Bullish' : '💧 FVG Bearish') + '</span> ' + formatPrice(f.bottom) + ' → ' + formatPrice(f.top) + '</div>'
+    ).join('') : '<p style="color:var(--ink-dim);">Aucun FVG actif.</p>';
 
-    // Premium / Discount
     const pd = entryR.pd;
-    $('pd-container').innerHTML = 
+    $('pd-container').innerHTML =
         '<p>Range : ' + formatPrice(pd.low) + ' → ' + formatPrice(pd.high) + '</p>' +
-        '<p>Équilibre (50%) : ' + formatPrice(pd.equilibrium) + '</p>' +
-        '<p>Prix actuel en zone : <span class="smc-tag ' + (pd.zone === 'discount' ? 'bull' : 'bear') + '">' +
+        '<p>Équilibre : ' + formatPrice(pd.equilibrium) + '</p>' +
+        '<p>Zone : <span class="smc-tag ' + (pd.zone === 'discount' ? 'bull' : 'bear') + '">' +
         (pd.zone === 'discount' ? '💎 Discount' : '🔺 Premium') + ' (' + pd.position + '%)</span></p>';
 
-    // Scénarios
     $('scenarios-container').innerHTML = scenarios.map(s =>
-        '<div class="scenario ' + s.type + '">' +
-        '<div class="sc-title">' + esc(s.title) + '</div>' +
-        '<div class="sc-prob">' + esc(s.prob) + '</div>' +
-        '<div>' + esc(s.text) + '</div>' +
-        '</div>'
+        '<div class="scenario ' + s.type + '"><div class="sc-title">' + esc(s.title) + '</div>' +
+        '<div class="sc-prob">' + esc(s.prob) + '</div><div>' + esc(s.text) + '</div></div>'
     ).join('');
 
-    // Reset audit
     $('audit-container').innerHTML = '<button class="btn-secondary" id="run-audit-btn">🔍 Lancer l\'audit IA</button>';
     $('run-audit-btn')?.addEventListener('click', runGroqAudit);
 
-    // Sauvegarde l'analyse
-    state.lastAnalysis = {
-        timestamp: Date.now(),
-        symbol,
-        signal: synthesis.signal,
-        signalClass: synthesis.signalClass,
-        confidence: synthesis.confidence,
-        levels,
-        results,
-        scenarios,
-        currentPrice
-    };
-
+    state.lastAnalysis = { timestamp: Date.now(), symbol, signal: synthesis.signal, signalClass: synthesis.signalClass, confidence: synthesis.confidence, levels, results, scenarios, currentPrice };
     $('report-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function buildSetupText(results, synthesis) {
-    const tfs = Object.keys(results).filter(k => results[k]);
-    const entryTF = tfs[tfs.length - 1];
-    const r = results[entryTF];
-    const parts = [];
-    if (r.obs && r.obs.length > 0) parts.push('OB ' + entryTF);
-    if (r.fvgs && r.fvgs.length > 0) parts.push('FVG ' + entryTF);
-    if (r.sweeps && r.sweeps.length > 0) parts.push('Liquidity sweep');
-    if (parts.length === 0) return 'Setup : structure ' + entryTF;
-    return 'Setup : ' + parts.join(' + ');
-}
-
 // ══════════════════════════════════════════════════════════════════
-// AUDIT IA (GROQ)
+// AUDIT IA GROQ
 // ══════════════════════════════════════════════════════════════════
 function getGroqKey() {
-    try { return (localStorage.getItem(STORAGE.groq) || '').trim(); }
-    catch (e) { return ''; }
+    try { return (localStorage.getItem(STORAGE.groq) || '').trim(); } catch (e) { return ''; }
 }
 
 async function runGroqAudit() {
     const key = getGroqKey();
-    if (!key) {
-        toast('Configure ta clé Groq dans Réglages', 'warn', 3500);
-        return;
-    }
+    if (!key) { toast('Configure ta clé Groq dans Réglages', 'warn', 3500); return; }
     const analysis = state.lastAnalysis;
     if (!analysis) return;
-
     const container = $('audit-container');
-    container.innerHTML = '<div style="text-align:center;padding:1rem;"><div class="spinner" style="margin:0 auto 0.5rem;"></div>Analyse IA en cours…</div>';
-
-    // Prépare le résumé compact pour le prompt
+    container.innerHTML = '<div style="text-align:center;padding:1rem;"><div class="spinner" style="margin:0 auto 0.5rem;"></div>Analyse IA…</div>';
     const summary = {
-        symbol: analysis.symbol,
-        signal: analysis.signal,
-        confidence: analysis.confidence,
-        entry: analysis.levels.entry,
-        sl: analysis.levels.sl,
-        tp: analysis.levels.tp,
-        rr: analysis.levels.riskReward,
-        currentPrice: analysis.currentPrice,
-        tfs: {}
+        symbol: analysis.symbol, signal: analysis.signal, confidence: analysis.confidence,
+        entry: analysis.levels.entry, sl: analysis.levels.sl, tp: analysis.levels.tp, rr: analysis.levels.riskReward,
+        currentPrice: analysis.currentPrice, tfs: {}
     };
     for (const tf of Object.keys(analysis.results)) {
         const r = analysis.results[tf];
         if (!r) continue;
-        summary.tfs[tf] = {
-            trend: r.direction,
-            strength: r.strength,
-            lastEvent: r.structure.events.length ? r.structure.events[r.structure.events.length-1].type : null,
-            obsCount: r.obs.length,
-            fvgsCount: r.fvgs.length,
-            sweepsCount: r.sweeps.length,
-            zone: r.pd.zone
-        };
+        summary.tfs[tf] = { trend: r.direction, strength: r.strength, obsCount: r.obs.length, fvgsCount: r.fvgs.length, sweepsCount: r.sweeps.length, zone: r.pd.zone };
     }
-
-    const prompt = `Tu es un analyste trader professionnel expert en Smart Money Concepts (SMC). Un algorithme vient de produire l'analyse suivante. Fais un AUDIT CRITIQUE de cette analyse.
-
-DONNÉES DE L'ANALYSE :
-${JSON.stringify(summary, null, 2)}
-
-Ton audit doit :
-1. Vérifier la cohérence du signal avec la structure (BOS, CHoCH, OB, FVG, sweeps)
-2. Identifier les forces et faiblesses du setup
-3. Signaler les risques (conflits de timeframe, OB déjà testé, FVG comblé, sweep non confirmé)
-4. Donner une note de qualité du setup (0-100)
-5. Proposer un biais alternatif si pertinent
-
-Réponds en français, en texte structuré SANS markdown, en 5 sections courtes :
-- Cohérence : (2-3 phrases)
-- Forces : (3 puces)
-- Faiblesses : (2-3 puces)
-- Risques : (2-3 puces)
-- Verdict : (note /100 + conseil final en 1 phrase)`;
-
+    const prompt = 'Tu es un analyste trader expert en Smart Money Concepts. Fais un audit CRITIQUE de cette analyse.\n\nDONNÉES :\n' + JSON.stringify(summary, null, 2) + '\n\nRéponds en français, texte structuré SANS markdown, 5 sections :\n- Cohérence (2-3 phrases)\n- Forces (3 puces)\n- Faiblesses (2-3 puces)\n- Risques (2-3 puces)\n- Verdict (note /100 + conseil final)';
     try {
         const res = await fetch(GROQ_API_URL, {
             method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + key,
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 model: GROQ_MODEL,
                 messages: [
-                    { role: 'system', content: 'Tu es un analyste trading expert en SMC. Tu réponds de façon concise, professionnelle et sans markdown.' },
+                    { role: 'system', content: 'Tu es un analyste trading expert en SMC. Réponds de façon concise, professionnelle, sans markdown.' },
                     { role: 'user', content: prompt }
                 ],
                 temperature: 0.4,
                 max_tokens: 1000
             })
         });
-        if (!res.ok) {
-            const err = await res.text();
-            throw new Error('HTTP ' + res.status + ' — ' + err.slice(0, 200));
-        }
+        if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         const text = data.choices?.[0]?.message?.content || 'Pas de réponse';
         renderAudit(text);
     } catch (e) {
-        log('Groq error: ' + e.message);
-        container.innerHTML = '<p style="color:var(--error);">Erreur audit IA : ' + esc(e.message) + '</p>' +
-            '<button class="btn-secondary" id="run-audit-btn">Réessayer</button>';
+        container.innerHTML = '<p style="color:var(--error);">Erreur : ' + esc(e.message) + '</p><button class="btn-secondary" id="run-audit-btn">Réessayer</button>';
         $('run-audit-btn')?.addEventListener('click', runGroqAudit);
     }
 }
 
 function renderAudit(text) {
     const container = $('audit-container');
-    // Transforme les sections en HTML
     const lines = text.split('\n').filter(l => l.trim());
     let html = '';
-    let inSection = false;
-
     for (const line of lines) {
         const t = line.trim();
         if (/^(Cohérence|Forces|Faiblesses|Risques|Verdict)\s*:/.test(t)) {
-            if (inSection) html += '</ul>';
             const parts = t.split(':');
-            html += '<h4 style="font-size:0.78rem;font-weight:700;margin:0.6rem 0 0.3rem;color:var(--ink);">' + esc(parts[0]) + '</h4>';
+            html += '<h4 style="font-size:0.78rem;font-weight:700;margin:0.6rem 0 0.3rem;">' + esc(parts[0]) + '</h4>';
             const rest = parts.slice(1).join(':').trim();
             if (rest) html += '<p>' + esc(rest) + '</p>';
-            html += '<ul>';
-            inSection = true;
-        } else if (/^[-•*]\s/.test(t)) {
-            html += '<li>' + esc(t.replace(/^[-•*]\s*/, '')) + '</li>';
-        } else if (/^\d+\.\s/.test(t)) {
-            html += '<li>' + esc(t.replace(/^\d+\.\s*/, '')) + '</li>';
+        } else if (/^[-•*]\s/.test(t) || /^\d+\.\s/.test(t)) {
+            html += '<p style="padding-left:1rem;">• ' + esc(t.replace(/^[-•*\d.]\s*/, '')) + '</p>';
         } else if (t) {
             html += '<p>' + esc(t) + '</p>';
         }
     }
-    if (inSection) html += '</ul>';
-    container.innerHTML = html;
-
-    // Ajoute le bouton "Sauvegarder"
-    const btn = document.createElement('button');
-    btn.className = 'btn-secondary';
-    btn.style.marginTop = '0.6rem';
-    btn.textContent = '🔁 Relancer l\'audit';
-    btn.addEventListener('click', runGroqAudit);
-    container.appendChild(btn);
+    container.innerHTML = html + '<button class="btn-secondary" style="margin-top:0.5rem;" id="run-audit-btn">🔁 Relancer l\'audit</button>';
+    $('run-audit-btn')?.addEventListener('click', runGroqAudit);
 }
 
 // ══════════════════════════════════════════════════════════════════
-// PIPELINE PRINCIPAL
+// PIPELINE
 // ══════════════════════════════════════════════════════════════════
 async function runAnalysis() {
     const btn = $('analyze-btn');
     btn.disabled = true;
-    btn.textContent = '🧠 Analyse en cours…';
+    btn.textContent = '🧠 Analyse…';
     setStatus('Connexion à Deriv…');
-
     try {
         if (!state.ws || !state.wsReady) {
             await connectDeriv();
             await sleep(300);
         }
-
-        setStatus('Récupération des bougies…');
         const mode = $('mtf-mode').value;
         state.mtfMode = mode;
-        const tfsToFetch = mode === 'h4h1' ? ['H4', 'H1'] :
-                           mode === 'h1m15' ? ['H1', 'M15'] :
-                           ['H1', 'M15', 'M5'];
+        const tfsToFetch = mode === 'h4h1' ? ['H4', 'H1'] : mode === 'h1m15' ? ['H1', 'M15'] : ['H1', 'M15', 'M5'];
         const results = {};
         state.candles = {};
-
         for (const tf of tfsToFetch) {
             setStatus('Chargement ' + tf + '…');
             const candles = await fetchCandles(state.symbol, GRANULARITY[tf], 200);
@@ -1536,23 +1098,18 @@ async function runAnalysis() {
             const r = analyzeTimeframe(candles);
             if (r) results[tf] = r;
         }
-
         setStatus('Synthèse SMC…');
         const synthesis = synthesizeSMC(results, mode);
         if (!synthesis) throw new Error('Impossible de synthétiser');
-
         const lastCandle = state.candles[tfsToFetch[tfsToFetch.length - 1]];
         const currentPrice = lastCandle[lastCandle.length - 1].close;
-
         const levels = computeSMCLevels(results, synthesis, currentPrice);
-        const scenarios = buildScenarios(results, synthesis, levels, currentPrice);
-
+        const scenarios = buildScenarios(results, synthesis, levels);
         renderReport(results, synthesis, levels, scenarios, currentPrice, state.symbol);
         setStatus(null);
         toast('Analyse complète ✓', 'success');
-
     } catch (e) {
-        log('Erreur analyse : ' + e.message);
+        log('Erreur : ' + e.message);
         setStatus(null);
         toast('Erreur : ' + e.message, 'error', 4500);
     } finally {
@@ -1564,9 +1121,7 @@ async function runAnalysis() {
 // ══════════════════════════════════════════════════════════════════
 // HISTORIQUE
 // ══════════════════════════════════════════════════════════════════
-function loadHistory() {
-    try { return JSON.parse(localStorage.getItem(STORAGE.history) || '[]'); } catch (e) { return []; }
-}
+function loadHistory() { try { return JSON.parse(localStorage.getItem(STORAGE.history) || '[]'); } catch (e) { return []; } }
 function saveHistory(item) {
     const h = loadHistory();
     h.unshift(item);
@@ -1577,39 +1132,24 @@ function renderHistory() {
     const list = $('history-list');
     const h = loadHistory();
     if (!h.length) { list.innerHTML = '<div class="empty-state">Aucune analyse sauvegardée.</div>'; return; }
-    list.innerHTML = h.map((item, i) =>
-        '<div class="history-item" data-i="' + i + '">' +
-        '<div class="h-header">' +
-        '<span class="h-instrument">' + esc(item.symbol) + '</span>' +
-        '<span class="h-signal ' + item.signalClass + '">' + esc(item.signal) + ' ' + item.confidence + '%</span>' +
-        '</div>' +
-        '<div class="h-meta">' +
-        '<span>' + formatDate(item.timestamp) + '</span>' +
-        '<span>E: ' + item.levels.entry + ' · SL: ' + item.levels.sl + '</span>' +
-        '</div>' +
-        '</div>'
+    list.innerHTML = h.map(item =>
+        '<div class="history-item"><div class="h-header"><span class="h-instrument">' + esc(item.symbol) + '</span>' +
+        '<span class="h-signal ' + item.signalClass + '">' + esc(item.signal) + ' ' + item.confidence + '%</span></div>' +
+        '<div class="h-meta"><span>' + formatDate(item.timestamp) + '</span>' +
+        '<span>E: ' + item.levels.entry + ' · SL: ' + item.levels.sl + '</span></div></div>'
     ).join('');
 }
 
 // ══════════════════════════════════════════════════════════════════
 // TELEGRAM
 // ══════════════════════════════════════════════════════════════════
-function getTelegramConfig() {
-    try { return JSON.parse(localStorage.getItem(STORAGE.telegram) || '{}'); } catch (e) { return {}; }
-}
+function getTelegramConfig() { try { return JSON.parse(localStorage.getItem(STORAGE.telegram) || '{}'); } catch (e) { return {}; } }
 async function sendTelegram(report) {
     const cfg = getTelegramConfig();
-    if (!cfg.token || !cfg.chatId) {
-        toast('Configure Telegram dans Réglages', 'warn');
-        return;
-    }
-    let text = '🧠 *SMC Analysis* — ' + report.symbol + '\n\n';
+    if (!cfg.token || !cfg.chatId) { toast('Configure Telegram', 'warn'); return; }
+    let text = '🧠 *SMC* — ' + report.symbol + '\n\n';
     text += '*Signal :* ' + report.signal + ' (' + report.confidence + '%)\n';
-    text += '*Entrée :* ' + report.levels.entry + '\n';
-    text += '*SL :* ' + report.levels.sl + '\n';
-    text += '*TP :* ' + report.levels.tp + '\n';
-    text += '*R/R :* ' + report.levels.riskReward + '\n\n';
-    text += '_' + formatDate(report.timestamp) + '_';
+    text += '*Entrée :* ' + report.levels.entry + '\n*SL :* ' + report.levels.sl + '\n*TP :* ' + report.levels.tp + '\n*R/R :* ' + report.levels.riskReward;
     try {
         const res = await fetch('https://api.telegram.org/bot' + cfg.token + '/sendMessage', {
             method: 'POST',
@@ -1617,11 +1157,9 @@ async function sendTelegram(report) {
             body: JSON.stringify({ chat_id: cfg.chatId, text, parse_mode: 'Markdown' })
         });
         const data = await res.json();
-        if (data.ok) toast('Envoyé sur Telegram ✓', 'success');
+        if (data.ok) toast('Envoyé ✓', 'success');
         else toast('Telegram : ' + (data.description || 'erreur'), 'error');
-    } catch (e) {
-        toast('Telegram : ' + e.message, 'error');
-    }
+    } catch (e) { toast('Telegram : ' + e.message, 'error'); }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -1632,15 +1170,12 @@ function initSymbols() {
     let html = '';
     for (const [cat, list] of Object.entries(SYMBOLS)) {
         html += '<optgroup label="' + cat + '">';
-        for (const s of list) {
-            html += '<option value="' + s.id + '">' + s.name + '</option>';
-        }
+        for (const s of list) html += '<option value="' + s.id + '">' + s.name + '</option>';
         html += '</optgroup>';
     }
     sel.innerHTML = html;
     sel.value = 'R_10';
     state.symbol = 'R_10';
-
     sel.addEventListener('change', async (e) => {
         state.symbol = e.target.value;
         if (state.wsReady) await subscribeTicks(state.symbol);
@@ -1675,40 +1210,29 @@ function initTabs() {
 
 function initSections() {
     document.querySelectorAll('.section-header').forEach(h => {
-        h.addEventListener('click', () => {
-            h.parentElement.classList.toggle('open');
-        });
+        h.addEventListener('click', () => h.parentElement.classList.toggle('open'));
     });
 }
 
 function initSettings() {
-    // Charger Groq
     const gk = getGroqKey();
     if (gk) $('groq-key').value = gk;
-
     $('save-groq')?.addEventListener('click', () => {
         const v = $('groq-key').value.trim();
         try { localStorage.setItem(STORAGE.groq, v); } catch (e) {}
         toast(v ? 'Clé Groq enregistrée ✓' : 'Clé supprimée', v ? 'success' : 'warn');
     });
-
-    // Charger Telegram
     const cfg = getTelegramConfig();
     if (cfg.token) $('telegram-token').value = cfg.token;
     if (cfg.chatId) $('telegram-chatid').value = cfg.chatId;
-
     $('save-telegram')?.addEventListener('click', () => {
         const token = $('telegram-token').value.trim();
         const chatId = $('telegram-chatid').value.trim();
         try { localStorage.setItem(STORAGE.telegram, JSON.stringify({ token, chatId })); } catch (e) {}
         toast('Config Telegram enregistrée ✓', 'success');
     });
-
     $('test-telegram')?.addEventListener('click', () => {
-        sendTelegram({
-            symbol: 'TEST', signal: 'ACHAT', confidence: 99, timestamp: Date.now(),
-            levels: { entry: '—', sl: '—', tp: '—', riskReward: '—' }
-        });
+        sendTelegram({ symbol: 'TEST', signal: 'ACHAT', confidence: 99, timestamp: Date.now(), levels: { entry: '—', sl: '—', tp: '—', riskReward: '—' } });
     });
 }
 
@@ -1719,10 +1243,8 @@ async function init() {
     initSymbols();
     initSettings();
     renderHistory();
-
     $('theme-toggle').addEventListener('click', toggleTheme);
     $('analyze-btn').addEventListener('click', runAnalysis);
-
     $('save-history-btn')?.addEventListener('click', () => {
         if (!state.lastAnalysis) { toast('Aucune analyse', 'warn'); return; }
         saveHistory(state.lastAnalysis);
@@ -1737,17 +1259,13 @@ async function init() {
         localStorage.removeItem(STORAGE.history);
         renderHistory();
     });
-
-    // Connexion auto
     try {
         await connectDeriv();
         await sleep(300);
         await subscribeTicks(state.symbol);
     } catch (e) {
         log('Connexion auto échouée : ' + e.message);
-        toast('Connexion Deriv impossible — vérifie ta connexion', 'error', 4000);
     }
-
     log('SMC Analyzer prêt');
 }
 
