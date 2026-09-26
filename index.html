@@ -431,7 +431,7 @@
 // ══════════════════════════════════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════════════════════════════════
-const DERIV_WS_URL = 'wss://ws.binaryws.com/websockets/v3?app_id=1';
+const PROXY_URL = 'https://smc-deriv.onrender.com';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODEL = 'llama-3.3-70b-versatile';
 const STORAGE = {
@@ -498,14 +498,12 @@ const SYMBOLS = {
 // STATE
 // ══════════════════════════════════════════════════════════════════
 const state = {
-    ws: null,
     wsReady: false,
-    wsPromiseResolve: null,
     symbol: 'R_10',
     mtfMode: 'h1m15',
     candles: {},
     lastAnalysis: null,
-    subscriptionId: null
+    tickInterval: null
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -561,97 +559,45 @@ function getDecimals(price) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// CONNEXION DERIV
+// CONNEXION PROXY
 // ══════════════════════════════════════════════════════════════════
 function updateConnStatus(status, text) {
     const el = $('conn-status');
     el.classList.remove('connected', 'connecting', 'error');
-    el.classList.add(status);
+    if (status) el.classList.add(status);
     $('conn-text').textContent = text;
 }
 
-function connectDeriv() {
-    return new Promise((resolve, reject) => {
-        if (state.ws && state.wsReady) { resolve(); return; }
-        updateConnStatus('connecting', 'Connexion à Deriv…');
-        log('Tentative connexion : ' + DERIV_WS_URL);
-        try {
-            const ws = new WebSocket(DERIV_WS_URL);
-            state.ws = ws;
-            state.wsPromiseResolve = resolve;
-            const timeout = setTimeout(() => {
-                if (!state.wsReady) {
-                    log('Timeout — serveur injoignable');
-                    updateConnStatus('error', 'Timeout — serveur injoignable');
-                    try { ws.close(); } catch (e) {}
-                    reject(new Error('Timeout connexion Deriv'));
-                }
-            }, 10000);
-            ws.onopen = () => log('WebSocket ouvert');
-            ws.onmessage = (evt) => {
-                try {
-                    const data = JSON.parse(evt.data);
-                    if (!state.wsReady) clearTimeout(timeout);
-                    handleDerivMessage(data);
-                } catch (e) { log('Parse error: ' + e.message); }
-            };
-            ws.onerror = () => {
-                updateConnStatus('error', 'Erreur WebSocket');
-                clearTimeout(timeout);
-                reject(new Error('WebSocket error'));
-            };
-            ws.onclose = (e) => {
-                state.wsReady = false;
-                log('WebSocket fermé — code : ' + e.code);
-                updateConnStatus('', 'Déconnecté (code ' + e.code + ')');
-                clearTimeout(timeout);
-            };
-        } catch (e) {
-            updateConnStatus('error', 'Erreur : ' + e.message);
-            reject(e);
+async function connectDeriv() {
+    updateConnStatus('connecting', 'Connexion au proxy…');
+    try {
+        const res = await fetch(PROXY_URL + '/', { method: 'GET' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (data.status === 'ok') {
+            state.wsReady = true;
+            updateConnStatus('connected', 'Connecté via proxy');
+            return true;
         }
-    });
+        throw new Error('Réponse invalide');
+    } catch (e) {
+        state.wsReady = false;
+        updateConnStatus('error', 'Proxy injoignable');
+        throw e;
+    }
 }
 
-const pendingRequests = {};
-let reqId = 1;
-
-function sendDerivRequest(payload) {
-    return new Promise((resolve, reject) => {
-        if (!state.ws || state.ws.readyState !== WebSocket.OPEN) {
-            reject(new Error('WebSocket non connecté'));
-            return;
-        }
-        const id = reqId++;
-        payload.req_id = id;
-        pendingRequests[id] = { resolve, reject };
-        state.ws.send(JSON.stringify(payload));
-        setTimeout(() => {
-            if (pendingRequests[id]) {
-                delete pendingRequests[id];
-                reject(new Error('Timeout'));
-            }
-        }, 15000);
+async function sendDerivRequest(payload) {
+    const res = await fetch(PROXY_URL + '/api/deriv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
     });
-}
-
-function handleDerivMessage(data) {
-    if (data.req_id && pendingRequests[data.req_id]) {
-        const { resolve, reject } = pendingRequests[data.req_id];
-        delete pendingRequests[data.req_id];
-        if (data.error) reject(new Error(data.error.message));
-        else resolve(data);
-        return;
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Erreur proxy ' + res.status);
     }
-    if (!state.wsReady && data.msg_type) {
-        state.wsReady = true;
-        updateConnStatus('connected', 'Connecté à Deriv');
-        if (state.wsPromiseResolve) {
-            state.wsPromiseResolve();
-            state.wsPromiseResolve = null;
-        }
-    }
-    if (data.msg_type === 'tick' && data.tick) updatePriceTicker(data.tick.quote);
+    return await res.json();
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -680,15 +626,33 @@ async function fetchCandles(symbol, granularity, count = 200) {
     }));
 }
 
-async function subscribeTicks(symbol) {
+async function fetchCurrentPrice(symbol) {
     try {
-        if (state.subscriptionId) {
-            try { await sendDerivRequest({ forget: state.subscriptionId }); } catch (e) {}
+        const res = await sendDerivRequest({
+            ticks_history: symbol,
+            count: 1,
+            end: 'latest',
+            start: 1,
+            style: 'ticks'
+        });
+        if (res.history && res.history.prices && res.history.prices.length) {
+            return parseFloat(res.history.prices[res.history.prices.length - 1]);
         }
-        const resp = await sendDerivRequest({ ticks: symbol, subscribe: 1 });
-        state.subscriptionId = resp.subscription?.id;
-        if (resp.tick) updatePriceTicker(resp.tick.quote);
-    } catch (e) { log('Erreur subscribe : ' + e.message); }
+        return null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function subscribeTicks(symbol) {
+    if (state.tickInterval) clearInterval(state.tickInterval);
+    // Premier appel immédiat
+    fetchCurrentPrice(symbol).then(p => { if (p) updatePriceTicker(p); });
+    // Polling toutes les 5 secondes
+    state.tickInterval = setInterval(async () => {
+        const p = await fetchCurrentPrice(symbol);
+        if (p) updatePriceTicker(p);
+    }, 5000);
 }
 
 let lastPrice = null;
@@ -1080,9 +1044,9 @@ async function runAnalysis() {
     const btn = $('analyze-btn');
     btn.disabled = true;
     btn.textContent = '🧠 Analyse…';
-    setStatus('Connexion à Deriv…');
+    setStatus('Connexion au proxy…');
     try {
-        if (!state.ws || !state.wsReady) {
+        if (!state.wsReady) {
             await connectDeriv();
             await sleep(300);
         }
@@ -1176,9 +1140,10 @@ function initSymbols() {
     sel.innerHTML = html;
     sel.value = 'R_10';
     state.symbol = 'R_10';
-    sel.addEventListener('change', async (e) => {
+    sel.addEventListener('change', (e) => {
         state.symbol = e.target.value;
-        if (state.wsReady) await subscribeTicks(state.symbol);
+        lastPrice = null;
+        if (state.wsReady) subscribeTicks(state.symbol);
     });
 }
 
@@ -1262,7 +1227,7 @@ async function init() {
     try {
         await connectDeriv();
         await sleep(300);
-        await subscribeTicks(state.symbol);
+        subscribeTicks(state.symbol);
     } catch (e) {
         log('Connexion auto échouée : ' + e.message);
     }
