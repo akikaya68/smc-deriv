@@ -1,5 +1,4 @@
 const express = require('express');
-const WebSocket = require('ws');
 const cors = require('cors');
 const https = require('https');
 
@@ -7,72 +6,55 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-const APP_ID = '34vKV1G0NztPGAGnedRWK';
 const PORT = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
-    res.json({ status: 'ok', service: 'Deriv Proxy WS', timestamp: Date.now(), app_id: APP_ID });
+    res.json({ status: 'ok', service: 'HF Proxy', timestamp: Date.now() });
 });
 
-app.post('/api/deriv', async (req, res) => {
-    const payload = req.body;
+// Relaie les requêtes vers Hugging Face
+app.post('/api/hf', async (req, res) => {
+    const { token, payload } = req.body;
+    if (!token) return res.status(400).json({ error: 'Token manquant' });
+    
     try {
-        const result = await sendViaWSProxy(payload);
-        res.json(result);
+        const data = await callHuggingFace(token, payload);
+        res.json(data);
     } catch (e) {
+        console.error('HF error:', e.message);
         res.status(500).json({ error: e.message });
     }
 });
 
-// Essaie plusieurs méthodes pour joindre Deriv
-function sendViaWSProxy(payload) {
+function callHuggingFace(token, payload) {
     return new Promise((resolve, reject) => {
-        const url = 'wss://ws.derivws.com/websockets/v3?app_id=' + APP_ID + '&l=EN';
-        
-        const ws = new WebSocket(url, {
+        const body = JSON.stringify(payload);
+        const options = {
+            hostname: 'api-inference.huggingface.co',
+            path: '/models/meta-llama/Meta-Llama-3-8B-Instruct',
+            method: 'POST',
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Origin': 'https://app.deriv.com',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Connection': 'Upgrade',
-                'Upgrade': 'websocket'
-            },
-            // Bypass via proxy HTTPS de contournement (Cloudflare-friendly)
-            agent: new https.Agent({
-                keepAlive: true,
-                family: 4,  // Force IPv4 (certains blocages sont sur IPv6)
-                rejectUnauthorized: false
-            })
-        });
-        
-        let settled = false;
-        const timeout = setTimeout(() => {
-            if (!settled) { settled = true; try { ws.close(); } catch (e) {} reject(new Error('Timeout')); }
-        }, 15000);
-        
-        ws.on('open', () => ws.send(JSON.stringify(payload)));
-        ws.on('message', (data) => {
-            try {
-                const msg = JSON.parse(data.toString());
-                if (!msg.msg_type && !msg.error) return;
-                if (settled) return;
-                settled = true;
-                clearTimeout(timeout);
-                try { ws.close(); } catch (e) {}
-                if (msg.error) reject(new Error(msg.error.message));
-                else resolve(msg);
-            } catch (e) {
-                if (!settled) { settled = true; clearTimeout(timeout); try { ws.close(); } catch (ee) {} reject(e); }
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(body)
             }
+        };
+        const req = https.request(options, (resp) => {
+            let data = '';
+            resp.on('data', (chunk) => data += chunk);
+            resp.on('end', () => {
+                try {
+                    const json = JSON.parse(data);
+                    resolve(json);
+                } catch (e) {
+                    reject(new Error('Réponse invalide : ' + data.slice(0, 200)));
+                }
+            });
         });
-        ws.on('error', (err) => {
-            if (!settled) { settled = true; clearTimeout(timeout); reject(err); }
-        });
-        ws.on('close', (code) => {
-            if (!settled) { settled = true; clearTimeout(timeout); reject(new Error('Fermé (code ' + code + ')')); }
-        });
+        req.on('error', reject);
+        req.write(body);
+        req.end();
     });
 }
 
-app.listen(PORT, '0.0.0.0', () => console.log('Proxy actif sur port ' + PORT));
+app.listen(PORT, '0.0.0.0', () => console.log('HF Proxy actif sur port ' + PORT));
