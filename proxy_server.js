@@ -82,4 +82,4 @@ function sendToDeriv(url, payload) {
 }
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('Proxy Deriv actif sur port ' + PORT + ' — App ID: ' + APP_ID));
+app.listen(PORT, '0.0.0.0', () => console.log('Proxy Deriv actif sur port ' + PORT));
