@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SMC Analyzer Pro</title>
+<title>SMC Trader Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     :root {
@@ -11,6 +12,7 @@
         --ink: #1a1a1a; --ink-dim: #6b7280; --ink-faint: #9ca3af;
         --success: #16a34a; --error: #dc2626; --warn: #ea580c; --info: #2563eb;
         --bull: #16a34a; --bear: #dc2626; --neutral: #6b7280;
+        --be: #f59e0b;
         --radius: 12px;
     }
     body.dark {
@@ -22,10 +24,9 @@
         background: var(--bg); color: var(--ink); min-height: 100vh;
         padding: 1rem 0.7rem 6rem; font-size: 14px; line-height: 1.5;
         max-width: 900px; margin: 0 auto;
-        transition: background 0.3s, color 0.3s;
     }
     header { margin-bottom: 1rem; text-align: center; position: relative; }
-    h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.2rem; }
+    h1 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.2rem; }
     .subtitle { font-size: 0.75rem; color: var(--ink-dim); }
     .theme-toggle {
         position: absolute; top: 0; right: 0;
@@ -36,12 +37,10 @@
     }
     .conn-status {
         display: flex; align-items: center; justify-content: center; gap: 0.4rem;
-        font-size: 0.72rem; margin-top: 0.4rem;
-        color: var(--ink-dim);
+        font-size: 0.72rem; margin-top: 0.4rem; color: var(--ink-dim);
     }
     .conn-status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-faint); }
     .conn-status.connected .dot { background: var(--success); animation: pulse-dot 2s infinite; }
-    .conn-status.connecting .dot { background: var(--warn); animation: pulse-dot 1s infinite; }
     .conn-status.error .dot { background: var(--error); }
     @keyframes pulse-dot { 50% { opacity: 0.4; } }
 
@@ -52,7 +51,7 @@
         padding: 0.7rem 1.1rem; border-radius: 10px;
         font-size: 0.8rem; font-weight: 500;
         z-index: 1000; opacity: 0;
-        transition: transform 0.35s ease, opacity 0.35s ease;
+        transition: transform 0.35s, opacity 0.35s;
         max-width: 90vw; text-align: center;
     }
     .toast.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
@@ -66,10 +65,9 @@
         border: 1px solid var(--border); overflow-x: auto;
     }
     .tab {
-        padding: 0.5rem 0.75rem; border-radius: 7px;
-        font-size: 0.74rem; font-weight: 600; cursor: pointer;
+        padding: 0.5rem 0.7rem; border-radius: 7px;
+        font-size: 0.72rem; font-weight: 600; cursor: pointer;
         white-space: nowrap; color: var(--ink-dim);
-        transition: all 0.15s;
     }
     .tab.active { background: var(--ink); color: var(--bg); }
     .tab-panel { display: none; }
@@ -99,7 +97,7 @@
         margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.05em;
         font-weight: 700;
     }
-    select, input[type="text"], input[type="password"] {
+    select, input[type="text"], input[type="password"], input[type="number"] {
         width: 100%; padding: 0.65rem 0.8rem; border-radius: 8px;
         border: 1px solid var(--border); background: var(--panel-2);
         color: var(--ink); font-family: inherit; font-size: 0.85rem;
@@ -108,6 +106,8 @@
     select:focus, input:focus { outline: none; border-color: var(--ink); }
     .control-row { margin-bottom: 0.7rem; }
     .control-row:last-child { margin-bottom: 0; }
+    .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .control-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem; }
 
     .btn-primary {
         width: 100%; padding: 0.95rem; border-radius: var(--radius);
@@ -115,7 +115,6 @@
         font-size: 0.92rem; font-weight: 700; font-family: inherit;
         cursor: pointer; margin-bottom: 0.8rem;
     }
-    .btn-primary:active:not(:disabled) { transform: scale(0.98); }
     .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
     .btn-secondary {
         padding: 0.5rem 0.8rem; border-radius: 8px;
@@ -123,113 +122,97 @@
         color: var(--ink); font-size: 0.76rem; font-weight: 600;
         font-family: inherit; cursor: pointer;
     }
+    .btn-danger {
+        background: var(--error); color: #fff; border-color: var(--error);
+    }
+    .btn-success {
+        background: var(--success); color: #fff; border-color: var(--success);
+    }
 
-    .signal-banner {
+    .scanner-status {
         padding: 1rem; border-radius: 10px; text-align: center;
-        margin-bottom: 0.9rem; font-weight: 700;
+        margin-bottom: 1rem; font-weight: 700;
     }
-    .signal-banner.buy { background: #dcfce7; color: #15803d; border: 2px solid #86efac; }
-    .signal-banner.sell { background: #fee2e2; color: #b91c1c; border: 2px solid #fca5a5; }
-    .signal-banner.wait { background: #fef3c7; color: #b45309; border: 2px solid #fde68a; }
-    body.dark .signal-banner.buy { background: #052e16; color: #86efac; }
-    body.dark .signal-banner.sell { background: #450a0a; color: #fca5a5; }
-    body.dark .signal-banner.wait { background: #451a03; color: #fde68a; }
-    .signal-banner .signal-label { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.8; }
-    .signal-banner .signal-value { font-size: 1.6rem; margin: 0.15rem 0; }
-    .signal-banner .signal-setup { font-size: 0.78rem; font-weight: 500; opacity: 0.9; margin-top: 0.2rem; }
-    .signal-banner .signal-conf { font-size: 0.78rem; font-weight: 500; opacity: 0.85; margin-top: 0.3rem; }
+    .scanner-status.idle { background: #f3f4f6; color: #6b7280; border: 2px dashed #d1d5db; }
+    .scanner-status.running { background: #dcfce7; color: #15803d; border: 2px solid #86efac; }
+    body.dark .scanner-status.idle { background: #1f2937; color: #9ca3af; }
+    body.dark .scanner-status.running { background: #052e16; color: #86efac; }
+    .scanner-status .sc-main { font-size: 1rem; margin-bottom: 0.3rem; }
+    .scanner-status .sc-info { font-size: 0.75rem; font-weight: 500; opacity: 0.8; }
 
-    .confidence-bar { height: 6px; background: rgba(0,0,0,0.08); border-radius: 3px; overflow: hidden; margin-top: 0.5rem; }
-    .confidence-fill { height: 100%; background: var(--success); transition: width 0.6s ease; }
+    .scan-log {
+        max-height: 300px; overflow-y: auto;
+        padding: 0.5rem; background: var(--panel-2);
+        border-radius: 8px; font-family: ui-monospace, monospace;
+        font-size: 0.72rem; margin-bottom: 0.7rem;
+    }
+    .scan-log-item {
+        padding: 0.3rem 0.5rem; border-left: 3px solid;
+        margin-bottom: 0.3rem; background: var(--panel); border-radius: 4px;
+    }
+    .scan-log-item.info { border-color: var(--info); }
+    .scan-log-item.success { border-color: var(--success); }
+    .scan-log-item.warn { border-color: var(--warn); }
+    .scan-log-item.error { border-color: var(--error); }
+    .scan-log-item .time { color: var(--ink-dim); font-size: 0.65rem; }
 
-    .tf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-bottom: 0.8rem; }
-    .tf-card {
+    .alert-item {
+        padding: 0.75rem; border-radius: 8px;
+        border-left: 4px solid; margin-bottom: 0.5rem;
+        background: var(--panel-2);
+    }
+    .alert-item.buy { border-color: var(--bull); }
+    .alert-item.sell { border-color: var(--bear); }
+    .alert-item .a-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem; }
+    .alert-item .a-instrument { font-weight: 700; font-size: 0.85rem; }
+    .alert-item .a-signal { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 6px; font-weight: 700; }
+    .alert-item .a-signal.buy { background: #dcfce7; color: var(--success); }
+    .alert-item .a-signal.sell { background: #fee2e2; color: var(--error); }
+    .alert-item .a-details { font-size: 0.72rem; color: var(--ink-dim); margin-bottom: 0.3rem; }
+    .alert-item .a-meta { font-size: 0.68rem; color: var(--ink-faint); display: flex; justify-content: space-between; }
+
+    /* TRADE JOURNAL */
+    .trade-item {
+        padding: 0.75rem; border-radius: 8px;
+        border: 1px solid var(--border); margin-bottom: 0.5rem;
+        background: var(--panel-2); position: relative;
+    }
+    .trade-item.open { border-left: 4px solid var(--info); }
+    .trade-item.tp { border-left: 4px solid var(--success); background: #f0fdf4; }
+    .trade-item.sl { border-left: 4px solid var(--error); background: #fef2f2; }
+    .trade-item.be { border-left: 4px solid var(--be); background: #fffbeb; }
+    body.dark .trade-item.tp { background: #052e1644; }
+    body.dark .trade-item.sl { background: #450a0a44; }
+    body.dark .trade-item.be { background: #451a0344; }
+    .trade-item .t-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; }
+    .trade-item .t-instrument { font-weight: 700; font-size: 0.88rem; }
+    .trade-item .t-direction { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 6px; font-weight: 700; }
+    .trade-item .t-direction.buy { background: #dcfce7; color: var(--success); }
+    .trade-item .t-direction.sell { background: #fee2e2; color: var(--error); }
+    .trade-item .t-direction.tp { background: var(--success); color: #fff; }
+    .trade-item .t-direction.sl { background: var(--error); color: #fff; }
+    .trade-item .t-direction.be { background: var(--be); color: #fff; }
+    .trade-item .t-prices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.3rem; margin-bottom: 0.4rem; font-size: 0.72rem; }
+    .trade-item .t-prices .p-label { font-size: 0.6rem; color: var(--ink-dim); text-transform: uppercase; }
+    .trade-item .t-prices .p-value { font-family: ui-monospace, monospace; font-weight: 700; font-size: 0.78rem; }
+    .trade-item .t-prices .entry .p-value { color: var(--info); }
+    .trade-item .t-prices .sl .p-value { color: var(--error); }
+    .trade-item .t-prices .tp .p-value { color: var(--success); }
+    .trade-item .t-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.68rem; color: var(--ink-faint); }
+    .trade-item .t-actions { display: flex; gap: 0.3rem; margin-top: 0.5rem; }
+    .trade-item .t-pnl { font-size: 0.78rem; font-weight: 700; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 0.4rem; margin-bottom: 0.8rem; }
+    .stat-card {
         padding: 0.6rem 0.5rem; border-radius: 8px;
-        background: var(--panel-2); text-align: center;
-        border: 2px solid transparent;
+        background: var(--panel-2); border: 1px solid var(--border);
+        text-align: center;
     }
-    .tf-card.bull { border-color: var(--bull); }
-    .tf-card.bear { border-color: var(--bear); }
-    .tf-card.range { border-color: var(--neutral); }
-    .tf-card .tf-name { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; color: var(--ink-dim); margin-bottom: 0.2rem; }
-    .tf-card .tf-direction { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.15rem; }
-    .tf-card.bull .tf-direction { color: var(--bull); }
-    .tf-card.bear .tf-direction { color: var(--bear); }
-    .tf-card.range .tf-direction { color: var(--neutral); }
-    .tf-card .tf-detail { font-size: 0.65rem; color: var(--ink-dim); }
-
-    .levels-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-bottom: 0.6rem; }
-    .level-card {
-        padding: 0.65rem 0.4rem; border-radius: 8px; text-align: center;
-        border: 1px solid var(--border); background: var(--panel-2);
-    }
-    .level-card .lv-label { font-size: 0.62rem; text-transform: uppercase; color: var(--ink-dim); font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
-    .level-card .lv-value { font-size: 0.9rem; font-weight: 700; font-family: ui-monospace, monospace; word-break: break-all; }
-    .level-card.entry .lv-value { color: var(--info); }
-    .level-card.sl .lv-value { color: var(--error); }
-    .level-card.tp .lv-value { color: var(--success); }
-
-    .report-block {
-        margin-bottom: 0.8rem; padding: 0.75rem;
-        background: var(--panel-2); border-radius: 8px;
-        font-size: 0.82rem; line-height: 1.55;
-    }
-    .report-block h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); margin-bottom: 0.45rem; font-weight: 700; }
-    .report-block p { margin-bottom: 0.35rem; }
-
-    .smc-tag {
-        display: inline-block; padding: 0.15rem 0.5rem;
-        border-radius: 12px; font-size: 0.68rem;
-        font-weight: 700; margin-right: 0.3rem;
-        margin-bottom: 0.25rem;
-    }
-    .smc-tag.bull { background: #dcfce7; color: #15803d; }
-    .smc-tag.bear { background: #fee2e2; color: #b91c1c; }
-    .smc-tag.neutral { background: #f3f4f6; color: #4b5563; }
-    body.dark .smc-tag.bull { background: #052e16; color: #86efac; }
-    body.dark .smc-tag.bear { background: #450a0a; color: #fca5a5; }
-    body.dark .smc-tag.neutral { background: #1f2937; color: #9ca3af; }
-
-    .scenario {
-        padding: 0.6rem 0.75rem; border-radius: 8px;
-        margin-bottom: 0.35rem; font-size: 0.8rem;
-        border-left: 3px solid;
-    }
-    .scenario.bull { background: #f0fdf4; border-color: var(--bull); }
-    .scenario.bear { background: #fef2f2; border-color: var(--bear); }
-    .scenario.range { background: #f9fafb; border-color: var(--neutral); }
-    body.dark .scenario.bull { background: #052e1633; }
-    body.dark .scenario.bear { background: #450a0a33; }
-    body.dark .scenario.range { background: var(--panel); }
-    .scenario .sc-title { font-weight: 700; margin-bottom: 0.1rem; }
-    .scenario .sc-prob { font-size: 0.7rem; color: var(--ink-dim); }
-
-    .status-bar {
-        position: fixed; bottom: 0; left: 0; right: 0;
-        background: var(--ink); color: var(--bg); padding: 0.6rem 1rem;
-        font-size: 0.76rem; display: flex; align-items: center; gap: 0.5rem;
-        transform: translateY(100%); transition: transform 0.3s;
-        z-index: 100;
-    }
-    .status-bar.visible { transform: translateY(0); }
-    .spinner { width: 12px; height: 12px; border: 2px solid rgba(128,128,128,0.3); border-top-color: currentColor; border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .empty-state { text-align: center; padding: 1.8rem 1rem; color: var(--ink-faint); font-size: 0.8rem; }
-    .action-row { display: flex; gap: 0.4rem; margin-bottom: 0.7rem; flex-wrap: wrap; }
-
-    .history-item {
-        padding: 0.65rem 0.75rem; border-radius: 8px;
-        border: 1px solid var(--border); margin-bottom: 0.35rem;
-        background: var(--panel);
-    }
-    .history-item .h-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem; }
-    .history-item .h-instrument { font-weight: 700; font-size: 0.82rem; }
-    .history-item .h-signal { font-size: 0.7rem; padding: 0.12rem 0.45rem; border-radius: 6px; font-weight: 700; }
-    .history-item .h-signal.buy { background: #dcfce7; color: var(--success); }
-    .history-item .h-signal.sell { background: #fee2e2; color: var(--error); }
-    .history-item .h-signal.wait { background: #fef3c7; color: var(--warn); }
-    .history-item .h-meta { font-size: 0.68rem; color: var(--ink-dim); display: flex; justify-content: space-between; }
+    .stat-card .st-label { font-size: 0.6rem; text-transform: uppercase; color: var(--ink-dim); font-weight: 700; margin-bottom: 0.2rem; }
+    .stat-card .st-value { font-size: 1rem; font-weight: 700; font-family: ui-monospace, monospace; }
+    .stat-card .st-value.win { color: var(--success); }
+    .stat-card .st-value.loss { color: var(--error); }
+    .stat-card .st-value.neutral { color: var(--ink); }
 
     .price-ticker {
         display: flex; align-items: center; gap: 0.5rem;
@@ -239,23 +222,52 @@
     }
     .price-ticker .pt-label { color: var(--ink-dim); font-size: 0.72rem; font-family: -apple-system, sans-serif; }
     .price-ticker .pt-value { font-weight: 700; }
-    .price-ticker .pt-change { font-size: 0.75rem; }
-    .price-ticker .pt-change.up { color: var(--success); }
-    .price-ticker .pt-change.down { color: var(--error); }
+
+    .empty-state { text-align: center; padding: 1.5rem 1rem; color: var(--ink-faint); font-size: 0.8rem; }
+    .action-row { display: flex; gap: 0.4rem; margin-bottom: 0.7rem; flex-wrap: wrap; }
+
+    .status-bar {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background: var(--ink); color: var(--bg); padding: 0.6rem 1rem;
+        font-size: 0.76rem; display: flex; align-items: center; gap: 0.5rem;
+        transform: translateY(100%); transition: transform 0.3s; z-index: 100;
+    }
+    .status-bar.visible { transform: translateY(0); }
+    .spinner { width: 12px; height: 12px; border: 2px solid rgba(128,128,128,0.3); border-top-color: currentColor; border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .progress-be {
+        padding: 0.5rem 0.7rem; border-radius: 6px;
+        background: #fffbeb; border: 1px solid var(--be);
+        margin-top: 0.4rem; font-size: 0.72rem;
+    }
+    body.dark .progress-be { background: #451a0344; }
+    .progress-be .pb-text { font-weight: 700; color: var(--be); margin-bottom: 0.2rem; }
+    .progress-bar { height: 6px; background: rgba(0,0,0,0.1); border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--be); transition: width 0.5s; }
 
     .disclaimer {
         font-size: 0.68rem; color: var(--ink-dim);
         text-align: center; padding: 0.7rem;
         border-top: 1px solid var(--border); margin-top: 0.8rem;
     }
+
+    .report-container {
+        background: var(--panel-2); padding: 1rem; border-radius: 8px;
+        font-size: 0.82rem; line-height: 1.6; margin-bottom: 0.8rem;
+    }
+    .report-container h3 { font-size: 0.85rem; margin: 0.8rem 0 0.4rem; color: var(--ink); border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+    .report-container h3:first-child { margin-top: 0; }
+    .report-container ul { padding-left: 1.2rem; margin-bottom: 0.4rem; }
+    .report-container li { margin-bottom: 0.2rem; }
 </style>
 </head>
 <body>
 
 <header>
     <button class="theme-toggle" id="theme-toggle">🌙</button>
-    <h1>🧠 SMC Analyzer Pro</h1>
-    <p class="subtitle">Smart Money Concepts · Forex · Métaux · Indices · Crypto</p>
+    <h1>🎯 SMC Trader Pro</h1>
+    <p class="subtitle">Scanner · Journal Trading · Rapports PDF</p>
     <div class="conn-status" id="conn-status">
         <span class="dot"></span>
         <span id="conn-text">Prêt</span>
@@ -263,115 +275,194 @@
 </header>
 
 <div class="tabs">
-    <div class="tab active" data-tab="analyze">🔍 Analyse</div>
-    <div class="tab" data-tab="history">📁 Historique</div>
+    <div class="tab active" data-tab="scanner">🤖 Scanner</div>
+    <div class="tab" data-tab="journal">📓 Journal</div>
+    <div class="tab" data-tab="stats">📊 Stats</div>
+    <div class="tab" data-tab="report">📄 Rapport</div>
     <div class="tab" data-tab="settings">⚙️ Réglages</div>
 </div>
 
-<div class="tab-panel active" id="panel-analyze">
+<div class="tab-panel active" id="panel-scanner">
+    <div class="scanner-status idle" id="scanner-status">
+        <div class="sc-main" id="scanner-main">⏸ Scanner arrêté</div>
+        <div class="sc-info" id="scanner-info">Prêt à démarrer</div>
+    </div>
+    <button class="btn-primary" id="scanner-toggle">▶️ Démarrer le scanner</button>
 
     <div class="section open">
-        <div class="section-header" data-toggle="section-symbol">
-            <span class="section-title">📊 Instrument & timeframe</span>
+        <div class="section-header" data-toggle="section-config">
+            <span class="section-title">⚙️ Configuration</span>
             <span class="chevron">▼</span>
         </div>
-        <div class="section-body" id="section-symbol">
+        <div class="section-body" id="section-config">
             <div class="section-content">
                 <div class="control-row">
-                    <label class="control-label">Instrument</label>
-                    <select id="symbol-select"></select>
+                    <label class="control-label">Fréquence</label>
+                    <select id="freq-select">
+                        <option value="15">Toutes les 15 min</option>
+                        <option value="30" selected>Toutes les 30 min</option>
+                        <option value="60">Toutes les heures</option>
+                    </select>
                 </div>
                 <div class="control-row">
-                    <label class="control-label">Mode d'analyse multi-timeframe</label>
-                    <select id="mtf-mode">
-                        <option value="h4h1">H4 + H1 — Tendance de fond</option>
-                        <option value="h1m15" selected>H1 + M15 — Intraday principal</option>
-                        <option value="h1m15m5">H1 + M15 + M5 — Scalping</option>
+                    <label class="control-label">Confiance minimum</label>
+                    <select id="conf-select">
+                        <option value="85">85%</option>
+                        <option value="90" selected>90% (recommandé)</option>
+                        <option value="95">95% (strict)</option>
+                    </select>
+                </div>
+                <div class="control-row">
+                    <label class="control-label">R/R minimum</label>
+                    <select id="rr-select">
+                        <option value="1.5">1:1.5</option>
+                        <option value="2" selected>1:2 (recommandé)</option>
+                        <option value="3">1:3 (strict)</option>
                     </select>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="price-ticker">
-        <span class="pt-label">Prix actuel :</span>
-        <span class="pt-value" id="pt-value">—</span>
-        <span class="pt-change" id="pt-change"></span>
-    </div>
-
-    <button class="btn-primary" id="analyze-btn">🧠 Lancer l'analyse SMC</button>
-
-    <div id="report-container" style="display:none;">
-        <div class="signal-banner" id="signal-banner">
-            <div class="signal-label">Signal final</div>
-            <div class="signal-value" id="signal-value">—</div>
-            <div class="signal-setup" id="signal-setup">—</div>
-            <div class="signal-conf" id="signal-conf">—</div>
-            <div class="confidence-bar"><div class="confidence-fill" id="confidence-fill" style="width:0%"></div></div>
+    <div class="section open">
+        <div class="section-header" data-toggle="section-log">
+            <span class="section-title">📜 Journal du scan</span>
+            <span class="chevron">▼</span>
         </div>
-
-        <div class="tf-grid" id="tf-grid"></div>
-
-        <div class="report-block">
-            <h3>🎯 Niveaux clés</h3>
-            <div class="levels-grid">
-                <div class="level-card entry"><div class="lv-label">Entrée</div><div class="lv-value" id="level-entry">—</div></div>
-                <div class="level-card sl"><div class="lv-label">Stop Loss</div><div class="lv-value" id="level-sl">—</div></div>
-                <div class="level-card tp"><div class="lv-label">Take Profit</div><div class="lv-value" id="level-tp">—</div></div>
+        <div class="section-body" id="section-log">
+            <div class="section-content">
+                <div class="scan-log" id="scan-log"><div class="empty-state">Aucun scan</div></div>
+                <button class="btn-secondary" id="clear-log-btn" style="margin-top:0.5rem;">🗑️ Effacer</button>
             </div>
-            <div style="text-align:center;font-size:0.78rem;color:var(--ink-dim);">
-                Ratio R/R : <strong id="level-rr" style="color:var(--info);">—</strong>
-            </div>
-        </div>
-
-        <div class="report-block">
-            <h3>🏗️ Structure SMC</h3>
-            <div id="smc-structure"></div>
-        </div>
-
-        <div class="report-block">
-            <h3>📦 Order Blocks actifs</h3>
-            <div id="ob-container"></div>
-        </div>
-
-        <div class="report-block">
-            <h3>💧 Fair Value Gaps (FVG)</h3>
-            <div id="fvg-container"></div>
-        </div>
-
-        <div class="report-block">
-            <h3>💰 Zones Premium / Discount</h3>
-            <div id="pd-container"></div>
-        </div>
-
-        <div class="report-block">
-            <h3>🎲 Scénarios probabilistes</h3>
-            <div id="scenarios-container"></div>
-        </div>
-
-        <div class="report-block">
-            <h3>🤖 Audit IA <span style="font-size:0.65rem;font-weight:400;">(Hugging Face · Llama 3)</span></h3>
-            <div id="audit-container">
-                <button class="btn-secondary" id="run-audit-btn">🔍 Lancer l'audit IA</button>
-            </div>
-        </div>
-
-        <div class="action-row">
-            <button class="btn-secondary" id="save-history-btn">💾 Sauvegarder</button>
-            <button class="btn-secondary" id="send-telegram-btn">📤 Telegram</button>
         </div>
     </div>
 </div>
 
-<div class="tab-panel" id="panel-history">
+<div class="tab-panel" id="panel-journal">
     <div class="action-row">
-        <button class="btn-secondary" id="clear-history-btn">🗑️ Tout effacer</button>
+        <button class="btn-secondary" id="add-trade-btn">➕ Nouvelle position</button>
+        <button class="btn-secondary" id="sync-prices-btn">🔄 Sync prix</button>
     </div>
-    <div id="history-list"></div>
+
+    <div class="section open" id="add-trade-section" style="display:none;">
+        <div class="section-header" data-toggle="section-add-trade">
+            <span class="section-title">📝 Ajouter une position</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="section-add-trade">
+            <div class="section-content">
+                <div class="control-grid">
+                    <div class="control-row">
+                        <label class="control-label">Instrument</label>
+                        <input type="text" id="trade-instrument" placeholder="EUR/USD">
+                    </div>
+                    <div class="control-row">
+                        <label class="control-label">Direction</label>
+                        <select id="trade-direction">
+                            <option value="buy">🟢 ACHAT</option>
+                            <option value="sell">🔴 VENTE</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="control-grid-3">
+                    <div class="control-row">
+                        <label class="control-label">Entrée</label>
+                        <input type="number" id="trade-entry" step="0.00001" placeholder="1.0842">
+                    </div>
+                    <div class="control-row">
+                        <label class="control-label">Stop Loss</label>
+                        <input type="number" id="trade-sl" step="0.00001" placeholder="1.0800">
+                    </div>
+                    <div class="control-row">
+                        <label class="control-label">Take Profit</label>
+                        <input type="number" id="trade-tp" step="0.00001" placeholder="1.0900">
+                    </div>
+                </div>
+                <div class="control-row">
+                    <label class="control-label">Taille de position (lots ou $)</label>
+                    <input type="number" id="trade-size" step="0.01" placeholder="0.10">
+                </div>
+                <div class="action-row">
+                    <button class="btn-secondary btn-success" id="save-trade-btn">💾 Enregistrer</button>
+                    <button class="btn-secondary" id="cancel-trade-btn">Annuler</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section open">
+        <div class="section-header" data-toggle="section-open-trades">
+            <span class="section-title">📈 Positions en cours <span id="open-count"></span></span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="section-open-trades">
+            <div class="section-content">
+                <div id="open-trades-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section open">
+        <div class="section-header" data-toggle="section-closed-trades">
+            <span class="section-title">📉 Positions fermées <span id="closed-count"></span></span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="section-closed-trades">
+            <div class="section-content">
+                <div id="closed-trades-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="tab-panel" id="panel-stats">
+    <div class="section open">
+        <div class="section-header" data-toggle="section-stats-all">
+            <span class="section-title">📊 Statistiques globales</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="section-stats-all">
+            <div class="section-content">
+                <div class="stats-grid" id="stats-global"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section open">
+        <div class="section-header" data-toggle="section-stats-week">
+            <span class="section-title">📅 Statistiques cette semaine</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="section-stats-week">
+            <div class="section-content">
+                <div class="stats-grid" id="stats-week"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section open">
+        <div class="section-header" data-toggle="section-stats-patterns">
+            <span class="section-title">🔍 Schémas détectés</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="section-stats-patterns">
+            <div class="section-content">
+                <div id="patterns-analysis"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="tab-panel" id="panel-report">
+    <div class="action-row">
+        <button class="btn-secondary" id="generate-report-btn">📄 Générer rapport PDF</button>
+    </div>
+    <div class="report-container" id="report-preview">
+        <div class="empty-state">Clique sur "Générer rapport PDF" pour voir le résumé.</div>
+    </div>
 </div>
 
 <div class="tab-panel" id="panel-settings">
-
     <div class="section open">
         <div class="section-header" data-toggle="section-twelvedata">
             <span class="section-title">📡 Twelve Data API</span>
@@ -380,32 +471,10 @@
         <div class="section-body" id="section-twelvedata">
             <div class="section-content">
                 <div class="control-row">
-                    <label class="control-label">Clé API Twelve Data</label>
-                    <input type="password" id="twelvedata-key" placeholder="Colle ta clé ici">
+                    <label class="control-label">Clé API</label>
+                    <input type="password" id="twelvedata-key" placeholder="Colle ta clé">
                 </div>
                 <button class="btn-secondary" id="save-twelvedata">Enregistrer</button>
-                <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;line-height:1.4;">
-                    Clé gratuite sur <strong>twelvedata.com</strong> → Dashboard → API Keys
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="section open">
-        <div class="section-header" data-toggle="section-groq">
-            <span class="section-title">🤖 Audit IA — Hugging Face</span>
-            <span class="chevron">▼</span>
-        </div>
-        <div class="section-body" id="section-groq">
-            <div class="section-content">
-                <div class="control-row">
-                    <label class="control-label">Hugging Face Token</label>
-                    <input type="password" id="groq-key" placeholder="hf_...">
-                </div>
-                <button class="btn-secondary" id="save-groq">Enregistrer</button>
-                <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;line-height:1.4;">
-                    Token gratuit sur <strong>huggingface.co/settings/tokens</strong> → New token → Read
-                </div>
             </div>
         </div>
     </div>
@@ -432,6 +501,19 @@
             </div>
         </div>
     </div>
+
+    <div class="section open">
+        <div class="section-header" data-toggle="section-danger">
+            <span class="section-title">⚠️ Zone sensible</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="section-danger">
+            <div class="section-content">
+                <button class="btn-secondary btn-danger" id="clear-all-btn" style="width:100%;margin-bottom:0.5rem;">🗑️ Effacer toutes les données</button>
+                <button class="btn-secondary" id="export-data-btn" style="width:100%;">📥 Exporter les données (JSON)</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="disclaimer">
@@ -444,79 +526,39 @@
 </div>
 
 <div class="toast" id="toast"><span id="toast-text">Message</span></div>
-
 <script>
 // ══════════════════════════════════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════════════════════════════════
 const TWELVEDATA_API = 'https://api.twelvedata.com';
-const PROXY_URL = 'https://site--smc-deriv--vjf2vsfxsd4g.code.run';
-const HF_API_URL = PROXY_URL + '/api/hf';
 const STORAGE = {
     twelvedata: 'smc_twelvedata_key',
-    hf: 'smc_hf_token',
     telegram: 'smc_telegram',
-    history: 'smc_history',
+    trades: 'smc_trades',
+    alerts_sent: 'smc_alerts_sent',
+    scanlog: 'smc_scan_log',
     dark: 'smc_dark'
 };
-// ══════════════════════════════════════════════════════════════════
-// SYMBOLES
-// ══════════════════════════════════════════════════════════════════
-const SYMBOLS = {
-    'Forex — Majeures': [
-        { id: 'EUR/USD', name: 'EUR/USD' },
-        { id: 'GBP/USD', name: 'GBP/USD' },
-        { id: 'USD/JPY', name: 'USD/JPY' },
-        { id: 'USD/CHF', name: 'USD/CHF' },
-        { id: 'AUD/USD', name: 'AUD/USD' },
-        { id: 'USD/CAD', name: 'USD/CAD' },
-        { id: 'NZD/USD', name: 'NZD/USD' }
-    ],
-    'Forex — Croisées': [
-        { id: 'EUR/GBP', name: 'EUR/GBP' },
-        { id: 'EUR/JPY', name: 'EUR/JPY' },
-        { id: 'GBP/JPY', name: 'GBP/JPY' },
-        { id: 'EUR/CHF', name: 'EUR/CHF' },
-        { id: 'EUR/AUD', name: 'EUR/AUD' },
-        { id: 'GBP/CHF', name: 'GBP/CHF' }
-    ],
-    'Métaux': [
-        { id: 'XAU/USD', name: '🥇 Or (XAU/USD)' },
-        { id: 'XAG/USD', name: '🥈 Argent (XAG/USD)' },
-        { id: 'XPT/USD', name: 'Platine (XPT/USD)' },
-        { id: 'XPD/USD', name: 'Palladium (XPD/USD)' }
-    ],
-    'Indices US': [
-        { id: 'SPX', name: 'S&P 500 (SPX)' },
-        { id: 'NDX', name: 'Nasdaq 100 (NDX)' },
-        { id: 'DJI', name: 'Dow Jones (DJI)' },
-        { id: 'RUT', name: 'Russell 2000 (RUT)' }
-    ],
-    'Indices Europe': [
-        { id: 'DAX', name: 'DAX 40 (Allemagne)' },
-        { id: 'CAC', name: 'CAC 40 (France)' },
-        { id: 'FTSE', name: 'FTSE 100 (UK)' },
-        { id: 'STOXX50E', name: 'Euro Stoxx 50' }
-    ],
-    'Crypto': [
-        { id: 'BTC/USD', name: 'Bitcoin' },
-        { id: 'ETH/USD', name: 'Ethereum' },
-        { id: 'LTC/USD', name: 'Litecoin' },
-        { id: 'XRP/USD', name: 'Ripple' },
-        { id: 'SOL/USD', name: 'Solana' }
-    ]
-};
+
+const SCAN_INSTRUMENTS = [
+    { id: 'EUR/USD', name: 'EUR/USD' },
+    { id: 'XAU/USD', name: '🥇 Or' },
+    { id: 'SPX', name: 'S&P 500' },
+    { id: 'DAX', name: 'DAX 40' },
+    { id: 'BTC/USD', name: 'Bitcoin' }
+];
+
+const TF_MAP = { H4: '4h', H1: '1h', M15: '15min' };
 
 // ══════════════════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════════════════
 const state = {
     ready: false,
-    symbol: 'EUR/USD',
-    mtfMode: 'h1m15',
-    candles: {},
-    lastAnalysis: null,
-    tickInterval: null
+    scanning: false,
+    countdownInterval: null,
+    nextScanTime: null,
+    trackingInterval: null
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -529,7 +571,7 @@ function esc(s) {
     ));
 }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-function log(m) { console.log('[SMC]', m); }
+function log(m) { console.log('[Trader]', m); }
 
 let toastTimer;
 function toast(msg, type = 'success', dur = 2500) {
@@ -563,21 +605,29 @@ function formatDate(ts) {
     const pad = n => String(n).padStart(2, '0');
     return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
 }
-function getDecimals(price) {
-    const abs = Math.abs(price || 1);
-    if (abs >= 1000) return 2;
-    if (abs >= 100) return 2;
-    if (abs >= 10) return 3;
-    if (abs >= 1) return 4;
-    return 5;
+function formatTime(ts) {
+    const d = new Date(ts);
+    const pad = n => String(n).padStart(2, '0');
+    return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+}
+function formatDateLong(ts) {
+    const d = new Date(ts);
+    return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CLÉS & CONFIGS
+// ══════════════════════════════════════════════════════════════════
+function getTwelveKey() {
+    try { return (localStorage.getItem(STORAGE.twelvedata) || '').trim(); } catch (e) { return ''; }
+}
+function getTelegramConfig() {
+    try { return JSON.parse(localStorage.getItem(STORAGE.telegram) || '{}'); } catch (e) { return {}; }
 }
 
 // ══════════════════════════════════════════════════════════════════
 // CONNEXION TWELVE DATA
 // ══════════════════════════════════════════════════════════════════
-function getTwelveKey() {
-    try { return (localStorage.getItem(STORAGE.twelvedata) || '').trim(); } catch (e) { return ''; }
-}
 function updateConnStatus(status, text) {
     const el = $('conn-status');
     el.classList.remove('connected', 'connecting', 'error');
@@ -586,13 +636,12 @@ function updateConnStatus(status, text) {
 }
 async function connectTwelveData() {
     const key = getTwelveKey();
-    if (!key) { updateConnStatus('error', 'Clé API manquante'); return false; }
-    updateConnStatus('connecting', 'Vérification de la clé…');
+    if (!key) { updateConnStatus('error', 'Clé manquante'); return false; }
     try {
         const res = await fetch(TWELVEDATA_API + '/api_usage?apikey=' + encodeURIComponent(key));
         const data = await res.json();
         if (data.code === 401 || data.status === 'error') {
-            updateConnStatus('error', 'Clé API invalide');
+            updateConnStatus('error', 'Clé invalide');
             return false;
         }
         state.ready = true;
@@ -607,20 +656,17 @@ async function connectTwelveData() {
 // ══════════════════════════════════════════════════════════════════
 // BOUGIES
 // ══════════════════════════════════════════════════════════════════
-const TF_MAP = { H4: '4h', H1: '1h', M15: '15min', M5: '5min', D1: '1day' };
-
 async function fetchCandles(symbol, tf, count = 200) {
     const key = getTwelveKey();
-    if (!key) throw new Error('Clé API Twelve Data manquante');
-    setStatus('Chargement ' + symbol + ' ' + tf + '…');
+    if (!key) throw new Error('Clé API manquante');
     const url = TWELVEDATA_API + '/time_series?symbol=' + encodeURIComponent(symbol) +
                 '&interval=' + TF_MAP[tf] + '&outputsize=' + count +
                 '&apikey=' + encodeURIComponent(key);
     const res = await fetch(url);
     const data = await res.json();
-    if (data.code === 429) throw new Error('Limite API atteinte (attends 1 min)');
+    if (data.code === 429) throw new Error('Limite API atteinte');
     if (data.status === 'error') throw new Error(data.message || 'Erreur API');
-    if (!data.values || !data.values.length) throw new Error('Pas de données pour ' + symbol);
+    if (!data.values || !data.values.length) throw new Error('Pas de données');
     return data.values.reverse().map(v => ({
         time: Math.floor(new Date(v.datetime).getTime() / 1000),
         open: parseFloat(v.open), high: parseFloat(v.high),
@@ -640,28 +686,6 @@ async function fetchCurrentPrice(symbol) {
     } catch (e) { return null; }
 }
 
-function subscribeTicks(symbol) {
-    if (state.tickInterval) clearInterval(state.tickInterval);
-    fetchCurrentPrice(symbol).then(p => { if (p) updatePriceTicker(p); });
-    state.tickInterval = setInterval(async () => {
-        const p = await fetchCurrentPrice(symbol);
-        if (p) updatePriceTicker(p);
-    }, 15000);
-}
-
-let lastPrice = null;
-function updatePriceTicker(price) {
-    const el = $('pt-value'), changeEl = $('pt-change');
-    if (!el) return;
-    el.textContent = formatPrice(price);
-    if (lastPrice !== null) {
-        const diff = price - lastPrice;
-        changeEl.textContent = (diff >= 0 ? '▲ +' : '▼ ') + formatPrice(diff);
-        changeEl.className = 'pt-change ' + (diff >= 0 ? 'up' : 'down');
-    }
-    lastPrice = price;
-}
-
 // ══════════════════════════════════════════════════════════════════
 // ANALYSE SMC
 // ══════════════════════════════════════════════════════════════════
@@ -673,8 +697,8 @@ function findSwings(candles, lookback = 3) {
             if (candles[i].high <= candles[i - j].high || candles[i].high <= candles[i + j].high) isHigh = false;
             if (candles[i].low >= candles[i - j].low || candles[i].low >= candles[i + j].low) isLow = false;
         }
-        if (isHigh) swings.push({ type: 'high', index: i, price: candles[i].high, time: candles[i].time });
-        if (isLow) swings.push({ type: 'low', index: i, price: candles[i].low, time: candles[i].time });
+        if (isHigh) swings.push({ type: 'high', index: i, price: candles[i].high });
+        if (isLow) swings.push({ type: 'low', index: i, price: candles[i].low });
     }
     return swings.sort((a, b) => a.index - b.index);
 }
@@ -687,16 +711,14 @@ function detectStructure(candles) {
     let lastHigh = null, lastLow = null;
     for (const s of swings) {
         if (s.type === 'high') {
-            if (lastHigh !== null && s.price > lastHigh.price) {
-                if (trend === 'bearish') events.push({ type: 'CHoCH', direction: 'bull', price: s.price, index: s.index, time: s.time });
-                else events.push({ type: 'BOS', direction: 'bull', price: s.price, index: s.index, time: s.time });
+            if (lastHigh && s.price > lastHigh.price) {
+                events.push({ type: trend === 'bearish' ? 'CHoCH' : 'BOS', direction: 'bull', price: s.price });
                 trend = 'bullish';
             }
             lastHigh = s;
         } else {
-            if (lastLow !== null && s.price < lastLow.price) {
-                if (trend === 'bullish') events.push({ type: 'CHoCH', direction: 'bear', price: s.price, index: s.index, time: s.time });
-                else events.push({ type: 'BOS', direction: 'bear', price: s.price, index: s.index, time: s.time });
+            if (lastLow && s.price < lastLow.price) {
+                events.push({ type: trend === 'bullish' ? 'CHoCH' : 'BOS', direction: 'bear', price: s.price });
                 trend = 'bearish';
             }
             lastLow = s;
@@ -705,53 +727,40 @@ function detectStructure(candles) {
     return { trend, events, swings, lastHigh, lastLow };
 }
 
-function detectOrderBlocks(candles, structure) {
+function detectOB(candles, structure) {
     const obs = [];
     const events = structure.events.filter(e => e.type === 'BOS' || e.type === 'CHoCH');
     for (const ev of events) {
-        const evIdx = ev.index;
+        const evIdx = ev.price ? candles.findIndex(c => c.high === ev.price || c.low === ev.price) : -1;
+        if (evIdx < 0) continue;
         if (ev.direction === 'bull') {
             for (let i = evIdx - 1; i >= Math.max(0, evIdx - 10); i--) {
                 if (candles[i].close < candles[i].open) {
-                    obs.push({ type: 'bull', top: Math.max(candles[i].open, candles[i].close), bottom: candles[i].low, time: candles[i].time, index: i });
+                    obs.push({ type: 'bull', top: Math.max(candles[i].open, candles[i].close), bottom: candles[i].low, index: i });
                     break;
                 }
             }
         } else {
             for (let i = evIdx - 1; i >= Math.max(0, evIdx - 10); i--) {
                 if (candles[i].close > candles[i].open) {
-                    obs.push({ type: 'bear', top: candles[i].high, bottom: Math.min(candles[i].open, candles[i].close), time: candles[i].time, index: i });
+                    obs.push({ type: 'bear', top: candles[i].high, bottom: Math.min(candles[i].open, candles[i].close), index: i });
                     break;
                 }
             }
         }
     }
-    const bulls = obs.filter(o => o.type === 'bull').slice(-3);
-    const bears = obs.filter(o => o.type === 'bear').slice(-3);
-    return [...bulls, ...bears].sort((a, b) => b.index - a.index);
+    return obs.slice(-4);
 }
 
 function detectFVG(candles) {
     const fvgs = [];
     for (let i = 2; i < candles.length; i++) {
         const c1 = candles[i - 2], c3 = candles[i];
-        if (c3.low > c1.high) fvgs.push({ type: 'bull', top: c3.low, bottom: c1.high, time: candles[i - 1].time, index: i - 1 });
-        if (c3.high < c1.low) fvgs.push({ type: 'bear', top: c1.low, bottom: c3.high, time: candles[i - 1].time, index: i - 1 });
+        if (c3.low > c1.high) fvgs.push({ type: 'bull', top: c3.low, bottom: c1.high });
+        if (c3.high < c1.low) fvgs.push({ type: 'bear', top: c1.low, bottom: c3.high });
     }
     const lastClose = candles[candles.length - 1].close;
-    return fvgs.filter(f => f.type === 'bull' ? f.bottom > lastClose : f.top < lastClose).slice(-5);
-}
-
-function computePremiumDiscount(candles) {
-    const recent = candles.slice(-50);
-    const high = Math.max(...recent.map(c => c.high));
-    const low = Math.min(...recent.map(c => c.low));
-    const range = high - low;
-    const equilibrium = (high + low) / 2;
-    const current = candles[candles.length - 1].close;
-    const zone = current > equilibrium ? 'premium' : 'discount';
-    const position = range > 0 ? ((current - low) / range) * 100 : 50;
-    return { high, low, equilibrium, current, zone, position: position.toFixed(1), range };
+    return fvgs.filter(f => f.type === 'bull' ? f.bottom > lastClose : f.top < lastClose).slice(-3);
 }
 
 function detectLiquiditySweeps(candles, structure) {
@@ -762,359 +771,487 @@ function detectLiquiditySweeps(candles, structure) {
     const recentLows = structure.swings.filter(s => s.type === 'low').slice(-5);
     for (const sh of recentHighs) {
         const swept = recent.some(c => c.high > sh.price && c.close < sh.price);
-        if (swept && lastClose < sh.price) sweeps.push({ type: 'bear', level: sh.price, desc: 'Sweep haut → rejet' });
+        if (swept && lastClose < sh.price) sweeps.push({ type: 'bear', level: sh.price });
     }
     for (const sl of recentLows) {
         const swept = recent.some(c => c.low < sl.price && c.close > sl.price);
-        if (swept && lastClose > sl.price) sweeps.push({ type: 'bull', level: sl.price, desc: 'Sweep bas → rejet' });
+        if (swept && lastClose > sl.price) sweeps.push({ type: 'bull', level: sl.price });
     }
-    return sweeps.slice(-3);
+    return sweeps.slice(-2);
 }
 
-function analyzeTimeframe(candles) {
+function computePD(candles) {
+    const recent = candles.slice(-50);
+    const high = Math.max(...recent.map(c => c.high));
+    const low = Math.min(...recent.map(c => c.low));
+    const range = high - low;
+    const eq = (high + low) / 2;
+    const current = candles[candles.length - 1].close;
+    return {
+        high, low, equilibrium: eq, current,
+        zone: current > eq ? 'premium' : 'discount',
+        position: range > 0 ? parseFloat(((current - low) / range * 100).toFixed(1)) : 50
+    };
+}
+
+function analyzeTF(candles) {
     if (!candles || candles.length < 30) return null;
     const structure = detectStructure(candles);
-    const obs = detectOrderBlocks(candles, structure);
+    const obs = detectOB(candles, structure);
     const fvgs = detectFVG(candles);
-    const pd = computePremiumDiscount(candles);
+    const pd = computePD(candles);
     const sweeps = detectLiquiditySweeps(candles, structure);
-    let bullPoints = 0, bearPoints = 0;
-    if (structure.trend === 'bullish') bullPoints += 3;
-    else if (structure.trend === 'bearish') bearPoints += 3;
+
+    let bullPts = 0, bearPts = 0;
+    if (structure.trend === 'bullish') bullPts += 3;
+    else if (structure.trend === 'bearish') bearPts += 3;
     const lastEv = structure.events[structure.events.length - 1];
-    if (lastEv) { if (lastEv.direction === 'bull') bullPoints += 1; else bearPoints += 1; }
-    if (pd.zone === 'discount') bullPoints += 1; else bearPoints += 1;
-    for (const s of sweeps) { if (s.type === 'bull') bullPoints += 2; else bearPoints += 2; }
-    const total = bullPoints + bearPoints;
+    if (lastEv) { if (lastEv.direction === 'bull') bullPts += 1; else bearPts += 1; }
+    for (const s of sweeps) { if (s.type === 'bull') bullPts += 2; else bearPts += 2; }
+
+    const total = bullPts + bearPts;
     let direction = 'range', strength = 50;
     if (total > 0) {
-        if (bullPoints > bearPoints * 1.3) { direction = 'bullish'; strength = Math.round(bullPoints / total * 100); }
-        else if (bearPoints > bullPoints * 1.3) { direction = 'bearish'; strength = Math.round(bearPoints / total * 100); }
+        if (bullPts > bearPts * 1.3) { direction = 'bullish'; strength = Math.round(bullPts / total * 100); }
+        else if (bearPts > bullPts * 1.3) { direction = 'bearish'; strength = Math.round(bearPts / total * 100); }
     }
-    return { structure, obs, fvgs, pd, sweeps, direction, strength, bullPoints, bearPoints };
+    return { structure, obs, fvgs, pd, sweeps, direction, strength };
 }
 
-function synthesizeSMC(results, mode) {
-    const tfs = Object.keys(results).filter(k => results[k]);
-    if (!tfs.length) return null;
-    let weights = {};
-    if (mode === 'h4h1') weights = { H4: 0.65, H1: 0.35 };
-    else if (mode === 'h1m15') weights = { H1: 0.55, M15: 0.45 };
-    else weights = { H1: 0.5, M15: 0.3, M5: 0.2 };
-    let bullScore = 0, bearScore = 0, totalWeight = 0;
-    for (const tf of tfs) {
-        const w = weights[tf] || 0.33;
+function synthesize(results) {
+    const weights = { H4: 0.5, H1: 0.3, M15: 0.2 };
+    let bullS = 0, bearS = 0, totalW = 0;
+    for (const tf of Object.keys(results)) {
         const r = results[tf];
-        if (r.direction === 'bullish') bullScore += w * (r.strength / 100);
-        else if (r.direction === 'bearish') bearScore += w * (r.strength / 100);
-        totalWeight += w;
+        if (!r) continue;
+        const w = weights[tf] || 0.33;
+        if (r.direction === 'bullish') bullS += w * (r.strength / 100);
+        else if (r.direction === 'bearish') bearS += w * (r.strength / 100);
+        totalW += w;
     }
-    const bullNorm = totalWeight > 0 ? bullScore / totalWeight : 0;
-    const bearNorm = totalWeight > 0 ? bearScore / totalWeight : 0;
+    const bullN = totalW > 0 ? bullS / totalW : 0;
+    const bearN = totalW > 0 ? bearS / totalW : 0;
     let signal = 'ATTENDRE', signalClass = 'wait', confidence = 0;
-    if (bullNorm > bearNorm * 1.4 && bullNorm > 0.4) {
-        signal = 'ACHAT'; signalClass = 'buy'; confidence = Math.min(95, Math.round(bullNorm * 100));
-    } else if (bearNorm > bullNorm * 1.4 && bearNorm > 0.4) {
-        signal = 'VENTE'; signalClass = 'sell'; confidence = Math.min(95, Math.round(bearNorm * 100));
-    } else {
-        confidence = Math.round(Math.max(bullNorm, bearNorm) * 60);
-    }
+    if (bullN > bearN * 1.4 && bullN > 0.4) { signal = 'ACHAT'; signalClass = 'buy'; confidence = Math.min(95, Math.round(bullN * 100)); }
+    else if (bearN > bullN * 1.4 && bearN > 0.4) { signal = 'VENTE'; signalClass = 'sell'; confidence = Math.min(95, Math.round(bearN * 100)); }
+    else confidence = Math.round(Math.max(bullN, bearN) * 60);
     return { signal, signalClass, confidence };
 }
 
-function computeSMCLevels(results, synthesis, currentPrice) {
-    const tfs = Object.keys(results).filter(k => results[k]);
-    const decimals = getDecimals(currentPrice);
-    const fmt = p => p != null && !isNaN(p) ? Number(p).toFixed(decimals) : '—';
-    const entryTF = tfs[tfs.length - 1];
-    const entryR = results[entryTF];
+function computeLevels(results, synthesis, current) {
+    const entryR = results.M15 || results.H1 || results.H4;
     const obs = entryR.obs || [];
-    let entry, sl, tp, riskReward;
+    let entry, sl, tp;
     if (synthesis.signal === 'ACHAT') {
-        const bullOBs = obs.filter(o => o.type === 'bull' && o.top < currentPrice).sort((a, b) => b.top - a.top);
-        const entryOB = bullOBs[0];
-        if (entryOB) { entry = entryOB.top; sl = entryOB.bottom - (entryOB.top - entryOB.bottom) * 0.2; }
-        else { entry = currentPrice * 0.998; sl = currentPrice * 0.99; }
-        const lastHigh = entryR.structure.lastHigh;
-        tp = lastHigh ? Math.max(lastHigh.price, entry + (entry - sl) * 2) : entry + (entry - sl) * 2;
+        const bullOBs = obs.filter(o => o.type === 'bull' && o.top < current).sort((a, b) => b.top - a.top);
+        const ob = bullOBs[0];
+        if (ob) { entry = ob.top; sl = ob.bottom - (ob.top - ob.bottom) * 0.2; }
+        else { entry = current * 0.998; sl = current * 0.99; }
+        const lh = entryR.structure.lastHigh;
+        tp = lh ? Math.max(lh.price, entry + (entry - sl) * 2) : entry + (entry - sl) * 2;
     } else if (synthesis.signal === 'VENTE') {
-        const bearOBs = obs.filter(o => o.type === 'bear' && o.bottom > currentPrice).sort((a, b) => a.bottom - b.bottom);
-        const entryOB = bearOBs[0];
-        if (entryOB) { entry = entryOB.bottom; sl = entryOB.top + (entryOB.top - entryOB.bottom) * 0.2; }
-        else { entry = currentPrice * 1.002; sl = currentPrice * 1.01; }
-        const lastLow = entryR.structure.lastLow;
-        tp = lastLow ? Math.min(lastLow.price, entry - (sl - entry) * 2) : entry - (sl - entry) * 2;
+        const bearOBs = obs.filter(o => o.type === 'bear' && o.bottom > current).sort((a, b) => a.bottom - b.bottom);
+        const ob = bearOBs[0];
+        if (ob) { entry = ob.bottom; sl = ob.top + (ob.top - ob.bottom) * 0.2; }
+        else { entry = current * 1.002; sl = current * 1.01; }
+        const ll = entryR.structure.lastLow;
+        tp = ll ? Math.min(ll.price, entry - (sl - entry) * 2) : entry - (sl - entry) * 2;
     } else {
-        entry = currentPrice; sl = currentPrice * 0.99; tp = currentPrice * 1.01;
+        entry = current; sl = current * 0.99; tp = current * 1.01;
     }
     const risk = Math.abs(entry - sl);
     const reward = Math.abs(tp - entry);
-    riskReward = risk > 0 ? '1:' + (reward / risk).toFixed(2) : '—';
-    return { entry: fmt(entry), sl: fmt(sl), tp: fmt(tp), riskReward, entryPrice: entry, slPrice: sl, tpPrice: tp };
+    return { entry, sl, tp, rr: risk > 0 ? reward / risk : 0 };
 }
 
-function buildScenarios(results, synthesis, levels) {
-    const scenarios = [];
-    if (synthesis.signal === 'ACHAT') {
-        scenarios.push({ type: 'bull', title: '🟢 Scénario principal — Achat', prob: 'Probabilité : ' + synthesis.confidence + '%',
-            text: 'Attendre retour sur OB ' + levels.entry + '. Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP : ' + levels.tp });
-        scenarios.push({ type: 'bear', title: '🔴 Invalidation', prob: 'Probabilité : ' + (100 - synthesis.confidence) + '%',
-            text: 'Si clôture sous ' + levels.sl + ', biais haussier invalidé.' });
-        scenarios.push({ type: 'range', title: '⚪ Range', prob: 'Probabilité faible',
-            text: 'Si prix bloqué entre ' + levels.entry + ' et ' + levels.tp + ', attendre cassure.' });
-    } else if (synthesis.signal === 'VENTE') {
-        scenarios.push({ type: 'bear', title: '🔴 Scénario principal — Vente', prob: 'Probabilité : ' + synthesis.confidence + '%',
-            text: 'Attendre retour sur OB bearish ' + levels.entry + '. Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP : ' + levels.tp });
-        scenarios.push({ type: 'bull', title: '🟢 Invalidation', prob: 'Probabilité : ' + (100 - synthesis.confidence) + '%',
-            text: 'Si clôture au-dessus de ' + levels.sl + ', biais baissier invalidé.' });
-        scenarios.push({ type: 'range', title: '⚪ Range', prob: 'Probabilité faible',
-            text: 'Si prix bloqué entre ' + levels.tp + ' et ' + levels.entry + ', attendre cassure.' });
-    } else {
-        scenarios.push({ type: 'range', title: '⚪ Attente', prob: 'Probabilité indéterminée',
-            text: 'Structure peu claire. Attendre BOS ou sweep de liquidité.' });
-    }
-    return scenarios;
+function validate(results, syn, lv, minConf, minRR) {
+    if (syn.confidence < minConf) return { valid: false, reason: 'Confiance ' + syn.confidence + '% < ' + minConf + '%' };
+    if (lv.rr < minRR) return { valid: false, reason: 'R/R 1:' + lv.rr.toFixed(2) + ' < 1:' + minRR };
+    const entryR = results.M15 || results.H1 || results.H4;
+    if (syn.signal === 'ACHAT' && entryR.pd.zone !== 'discount') return { valid: false, reason: 'ACHAT en zone Premium' };
+    if (syn.signal === 'VENTE' && entryR.pd.zone !== 'premium') return { valid: false, reason: 'VENTE en zone Discount' };
+    if (syn.signal === 'ATTENDRE') return { valid: false, reason: 'Signal neutre' };
+    return { valid: true };
 }
 
-function renderReport(results, synthesis, levels, scenarios, currentPrice, symbol) {
-    $('report-container').style.display = 'block';
-    const banner = $('signal-banner');
-    banner.className = 'signal-banner ' + synthesis.signalClass;
-    $('signal-value').textContent = synthesis.signal;
-    $('signal-conf').textContent = 'Confiance : ' + synthesis.confidence + '%';
-    const tfs = Object.keys(results).filter(k => results[k]);
-    const entryTF = tfs[tfs.length - 1];
-    const entryR = results[entryTF];
-    const setupParts = [];
-    if (entryR.obs && entryR.obs.length) setupParts.push('OB ' + entryTF);
-    if (entryR.fvgs && entryR.fvgs.length) setupParts.push('FVG ' + entryTF);
-    if (entryR.sweeps && entryR.sweeps.length) setupParts.push('Sweep');
-    $('signal-setup').textContent = 'Setup : ' + (setupParts.length ? setupParts.join(' + ') : 'structure ' + entryTF);
-    $('confidence-fill').style.width = synthesis.confidence + '%';
-    $('confidence-fill').style.background = synthesis.confidence > 65 ? 'var(--success)' : synthesis.confidence > 45 ? 'var(--info)' : 'var(--warn)';
-    $('tf-grid').innerHTML = tfs.map(tf => {
-        const r = results[tf];
-        const cls = r.direction === 'bullish' ? 'bull' : r.direction === 'bearish' ? 'bear' : 'range';
-        const label = r.direction === 'bullish' ? '📈 Bull' : r.direction === 'bearish' ? '📉 Bear' : '↔️ Range';
-        const lastEv = r.structure.events[r.structure.events.length - 1];
-        const evTxt = lastEv ? (lastEv.type + ' ' + (lastEv.direction === 'bull' ? '↑' : '↓')) : '—';
-        return '<div class="tf-card ' + cls + '"><div class="tf-name">' + tf + '</div><div class="tf-direction">' + label + '</div><div class="tf-detail">' + r.strength + '% · ' + evTxt + '</div></div>';
-    }).join('');
-    $('level-entry').textContent = levels.entry;
-    $('level-sl').textContent = levels.sl;
-    $('level-tp').textContent = levels.tp;
-    $('level-rr').textContent = levels.riskReward;
-    let structHTML = '<p><strong>Timeframe d\'entrée :</strong> ' + entryTF + '</p>';
-    const lastEv = entryR.structure.events[entryR.structure.events.length - 1];
-    structHTML += '<p><strong>Dernier événement :</strong> ';
-    if (lastEv) structHTML += '<span class="smc-tag ' + (lastEv.direction === 'bull' ? 'bull' : 'bear') + '">' + lastEv.type + ' ' + (lastEv.direction === 'bull' ? 'haussier' : 'baissier') + ' à ' + formatPrice(lastEv.price) + '</span>';
-    else structHTML += 'Aucun';
-    structHTML += '</p>';
-    structHTML += '<p><strong>Dernier High :</strong> ' + (entryR.structure.lastHigh ? formatPrice(entryR.structure.lastHigh.price) : '—') + '</p>';
-    structHTML += '<p><strong>Dernier Low :</strong> ' + (entryR.structure.lastLow ? formatPrice(entryR.structure.lastLow.price) : '—') + '</p>';
-    $('smc-structure').innerHTML = structHTML;
-    const obs = entryR.obs || [];
-    $('ob-container').innerHTML = obs.length ? obs.map(ob =>
-        '<div style="margin-bottom:0.4rem;"><span class="smc-tag ' + (ob.type === 'bull' ? 'bull' : 'bear') + '">' +
-        (ob.type === 'bull' ? '📈 OB Bullish' : '📉 OB Bearish') + '</span> ' + formatPrice(ob.bottom) + ' → ' + formatPrice(ob.top) + '</div>'
-    ).join('') : '<p style="color:var(--ink-dim);">Aucun Order Block détecté.</p>';
-    const fvgs = entryR.fvgs || [];
-    $('fvg-container').innerHTML = fvgs.length ? fvgs.map(f =>
-        '<div style="margin-bottom:0.4rem;"><span class="smc-tag ' + (f.type === 'bull' ? 'bull' : 'bear') + '">' +
-        (f.type === 'bull' ? '💧 FVG Bullish' : '💧 FVG Bearish') + '</span> ' + formatPrice(f.bottom) + ' → ' + formatPrice(f.top) + '</div>'
-    ).join('') : '<p style="color:var(--ink-dim);">Aucun FVG actif.</p>';
-    const pd = entryR.pd;
-    $('pd-container').innerHTML =
-        '<p>Range : ' + formatPrice(pd.low) + ' → ' + formatPrice(pd.high) + '</p>' +
-        '<p>Équilibre : ' + formatPrice(pd.equilibrium) + '</p>' +
-        '<p>Zone : <span class="smc-tag ' + (pd.zone === 'discount' ? 'bull' : 'bear') + '">' +
-        (pd.zone === 'discount' ? '💎 Discount' : '🔺 Premium') + ' (' + pd.position + '%)</span></p>';
-    $('scenarios-container').innerHTML = scenarios.map(s =>
-        '<div class="scenario ' + s.type + '"><div class="sc-title">' + esc(s.title) + '</div>' +
-        '<div class="sc-prob">' + esc(s.prob) + '</div><div>' + esc(s.text) + '</div></div>'
-    ).join('');
-    $('audit-container').innerHTML = '<button class="btn-secondary" id="run-audit-btn">🔍 Lancer l\'audit IA</button>';
-    $('run-audit-btn')?.addEventListener('click', runHFAudit);
-    state.lastAnalysis = { timestamp: Date.now(), symbol, signal: synthesis.signal, signalClass: synthesis.signalClass, confidence: synthesis.confidence, levels, results, scenarios, currentPrice };
-    $('report-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-// ══════════════════════════════════════════════════════════════════
-// AUDIT IA — HUGGING FACE (via proxy Northflank)
-// ══════════════════════════════════════════════════════════════════
-function getHFToken() {
-    try { return (localStorage.getItem(STORAGE.hf) || '').trim(); } catch (e) { return ''; }
-}
-
-async function runHFAudit() {
-    const token = getHFToken();
-    if (!token) { toast('Configure ton token Hugging Face dans Réglages', 'warn', 3500); return; }
-    const analysis = state.lastAnalysis;
-    if (!analysis) return;
-    const container = $('audit-container');
-    container.innerHTML = '<div style="text-align:center;padding:1rem;"><div class="spinner" style="margin:0 auto 0.5rem;"></div>Analyse IA en cours… (10-30 sec)</div>';
-    
-    const summary = {
-        symbol: analysis.symbol,
-        signal: analysis.signal,
-        confidence: analysis.confidence,
-        entry: analysis.levels.entry,
-        sl: analysis.levels.sl,
-        tp: analysis.levels.tp,
-        rr: analysis.levels.riskReward,
-        currentPrice: analysis.currentPrice,
-        tfs: {}
-    };
-    for (const tf of Object.keys(analysis.results)) {
-        const r = analysis.results[tf];
-        if (!r) continue;
-        summary.tfs[tf] = {
-            trend: r.direction,
-            strength: r.strength,
-            obsCount: r.obs.length,
-            fvgsCount: r.fvgs.length,
-            sweepsCount: r.sweeps.length,
-            zone: r.pd.zone
-        };
-    }
-    
-    const prompt = 'Tu es un analyste trader expert en Smart Money Concepts. Fais un audit CRITIQUE de cette analyse.\n\nDONNÉES DE L\'ANALYSE :\n' + JSON.stringify(summary, null, 2) + '\n\nRéponds en français, en 5 sections courtes SANS markdown :\n- Cohérence (2-3 phrases)\n- Forces (3 puces)\n- Faiblesses (2-3 puces)\n- Risques (2-3 puces)\n- Verdict (note /100 + conseil final en 1 phrase)';
-
-    try {
-        const res = await fetch(HF_API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                token: token,
-                payload: {
-                    inputs: prompt,
-                    parameters: {
-                        max_new_tokens: 800,
-                        temperature: 0.4,
-                        return_full_text: false
-                    }
-                }
-            })
-        });
-        
-        if (!res.ok) {
-            const err = await res.text();
-            throw new Error('HTTP ' + res.status + ' — ' + err.slice(0, 200));
-        }
-        
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
-        
-        let text = '';
-        if (Array.isArray(data) && data[0] && data[0].generated_text) text = data[0].generated_text;
-        else if (data.generated_text) text = data.generated_text;
-        else if (typeof data === 'string') text = data;
-        else text = JSON.stringify(data).slice(0, 500);
-        
-        renderAudit(text);
-    } catch (e) {
-        log('HF error: ' + e.message);
-        container.innerHTML = '<p style="color:var(--error);">Erreur audit IA : ' + esc(e.message) + '</p><button class="btn-secondary" id="run-audit-btn">Réessayer</button>';
-        $('run-audit-btn')?.addEventListener('click', runHFAudit);
-    }
-}
-
-function renderAudit(text) {
-    const container = $('audit-container');
-    const lines = text.split('\n').filter(l => l.trim());
-    let html = '';
-    for (const line of lines) {
-        const t = line.trim();
-        if (/^(Cohérence|Forces|Faiblesses|Risques|Verdict)\s*:/.test(t)) {
-            const parts = t.split(':');
-            html += '<h4 style="font-size:0.78rem;font-weight:700;margin:0.6rem 0 0.3rem;">' + esc(parts[0]) + '</h4>';
-            const rest = parts.slice(1).join(':').trim();
-            if (rest) html += '<p>' + esc(rest) + '</p>';
-        } else if (/^[-•*]\s/.test(t) || /^\d+\.\s/.test(t)) {
-            html += '<p style="padding-left:1rem;">• ' + esc(t.replace(/^[-•*\d.]\s*/, '')) + '</p>';
-        } else if (t) {
-            html += '<p>' + esc(t) + '</p>';
-        }
-    }
-    container.innerHTML = html + '<button class="btn-secondary" style="margin-top:0.5rem;" id="run-audit-btn">🔁 Relancer</button>';
-    $('run-audit-btn')?.addEventListener('click', runHFAudit);
-}
-
-// ══════════════════════════════════════════════════════════════════
-// PIPELINE
-// ══════════════════════════════════════════════════════════════════
-async function runAnalysis() {
-    const btn = $('analyze-btn');
-    btn.disabled = true;
-    btn.textContent = '🧠 Analyse…';
-    setStatus('Vérification de la clé API…');
-    try {
-        const ok = await connectTwelveData();
-        if (!ok) throw new Error('Clé API Twelve Data non configurée');
-        const mode = $('mtf-mode').value;
-        state.mtfMode = mode;
-        const tfsToFetch = mode === 'h4h1' ? ['H4', 'H1'] : mode === 'h1m15' ? ['H1', 'M15'] : ['H1', 'M15', 'M5'];
-        const results = {};
-        state.candles = {};
-        for (const tf of tfsToFetch) {
-            const candles = await fetchCandles(state.symbol, tf, 200);
-            state.candles[tf] = candles;
-            const r = analyzeTimeframe(candles);
+async function analyzeInstrument(inst, minConf, minRR) {
+    const results = {};
+    for (const tf of ['H4', 'H1', 'M15']) {
+        try {
+            const candles = await fetchCandles(inst.id, tf, 200);
+            const r = analyzeTF(candles);
             if (r) results[tf] = r;
-            await sleep(500);
+            await sleep(700);
+        } catch (e) {
+            return { ok: false, error: tf + ' : ' + e.message };
         }
-        setStatus('Synthèse SMC…');
-        const synthesis = synthesizeSMC(results, mode);
-        if (!synthesis) throw new Error('Impossible de synthétiser');
-        const lastCandle = state.candles[tfsToFetch[tfsToFetch.length - 1]];
-        const currentPrice = lastCandle[lastCandle.length - 1].close;
-        const levels = computeSMCLevels(results, synthesis, currentPrice);
-        const scenarios = buildScenarios(results, synthesis, levels);
-        renderReport(results, synthesis, levels, scenarios, currentPrice, state.symbol);
-        setStatus(null);
-        toast('Analyse complète ✓', 'success');
-    } catch (e) {
-        log('Erreur : ' + e.message);
-        setStatus(null);
-        toast('Erreur : ' + e.message, 'error', 4500);
-    } finally {
-        btn.disabled = false;
-        btn.textContent = '🧠 Lancer l\'analyse SMC';
     }
+    if (Object.keys(results).length < 2) return { ok: false, error: 'Données insuffisantes' };
+    const syn = synthesize(results);
+    const entryR = results.M15 || results.H1;
+    const current = entryR.pd.current;
+    const lv = computeLevels(results, syn, current);
+    const val = validate(results, syn, lv, minConf, minRR);
+    return { ok: true, inst, syn, lv, val, results, current };
 }
 
 // ══════════════════════════════════════════════════════════════════
-// HISTORIQUE
+// TRADE JOURNAL
 // ══════════════════════════════════════════════════════════════════
-function loadHistory() { try { return JSON.parse(localStorage.getItem(STORAGE.history) || '[]'); } catch (e) { return []; } }
-function saveHistory(item) {
-    const h = loadHistory();
-    h.unshift(item);
-    if (h.length > 100) h.length = 100;
-    try { localStorage.setItem(STORAGE.history, JSON.stringify(h)); } catch (e) {}
+function loadTrades() {
+    try { return JSON.parse(localStorage.getItem(STORAGE.trades) || '[]'); } catch (e) { return []; }
 }
-function renderHistory() {
-    const list = $('history-list');
-    const h = loadHistory();
-    if (!h.length) { list.innerHTML = '<div class="empty-state">Aucune analyse sauvegardée.</div>'; return; }
-    list.innerHTML = h.map(item =>
-        '<div class="history-item"><div class="h-header"><span class="h-instrument">' + esc(item.symbol) + '</span>' +
-        '<span class="h-signal ' + item.signalClass + '">' + esc(item.signal) + ' ' + item.confidence + '%</span></div>' +
-        '<div class="h-meta"><span>' + formatDate(item.timestamp) + '</span>' +
-        '<span>E: ' + item.levels.entry + ' · SL: ' + item.levels.sl + '</span></div></div>'
-    ).join('');
+function saveTrades(trades) {
+    try { localStorage.setItem(STORAGE.trades, JSON.stringify(trades)); } catch (e) {}
+}
+function addTrade(trade) {
+    const trades = loadTrades();
+    trade.id = Date.now() + Math.random();
+    trade.openedAt = Date.now();
+    trade.status = 'open';
+    trade.beMoved = false;
+    trade.history = [{ time: Date.now(), event: 'Position ouverte' }];
+    trades.unshift(trade);
+    saveTrades(trades);
+    return trade;
+}
+function updateTrade(id, updates) {
+    const trades = loadTrades();
+    const idx = trades.findIndex(t => t.id === id);
+    if (idx < 0) return;
+    trades[idx] = { ...trades[idx], ...updates };
+    saveTrades(trades);
+}
+
+// Calcul P&L approximatif
+function computePnL(trade, exitPrice) {
+    const dir = trade.direction === 'buy' ? 1 : -1;
+    const pips = (exitPrice - trade.entry) * dir;
+    // Approximation : 1 pip = 0.0001 pour FX, 0.01 pour indices, 0.1 pour XAU, etc.
+    let pipValue = 0.0001;
+    if (trade.instrument.includes('JPY')) pipValue = 0.01;
+    else if (trade.instrument.includes('XAU') || trade.instrument.includes('XAG')) pipValue = 0.01;
+    else if (trade.instrument === 'SPX' || trade.instrument === 'DAX' || trade.instrument === 'NDX') pipValue = 0.01;
+    else if (trade.instrument.includes('BTC')) pipValue = 1;
+    const pipsCount = pips / pipValue;
+    return {
+        pips: parseFloat(pipsCount.toFixed(1)),
+        dollars: parseFloat((pipsCount * (trade.size || 1) * 10).toFixed(2))
+    };
+}
+
+// Surveillance des positions
+async function trackOpenTrades() {
+    const trades = loadTrades();
+    const open = trades.filter(t => t.status === 'open');
+    if (!open.length) return;
+
+    for (const trade of open) {
+        try {
+            const price = await fetchCurrentPrice(trade.instrument);
+            if (!price) continue;
+
+            // Mettre à jour le prix actuel
+            updateTrade(trade.id, { currentPrice: price, lastChecked: Date.now() });
+
+            const dir = trade.direction === 'buy' ? 1 : -1;
+            const targetRR = 1; // On veut déplacer le SL à BE quand on atteint 1:1
+
+            // Vérifier si TP atteint
+            const tpReached = dir > 0 ? price >= trade.tp : price <= trade.tp;
+            if (tpReached) {
+                closeTrade(trade.id, 'tp', price);
+                continue;
+            }
+
+            // Vérifier si SL atteint
+            const slReached = dir > 0 ? price <= trade.sl : price >= trade.sl;
+            if (slReached) {
+                const result = trade.beMoved ? 'be' : 'sl';
+                closeTrade(trade.id, result, price);
+                continue;
+            }
+
+            // Vérifier si on doit déplacer le SL à BE
+            if (!trade.beMoved) {
+                const risk = Math.abs(trade.entry - trade.originalSl || trade.sl);
+                const move = Math.abs(price - trade.entry);
+                const rr = risk > 0 ? move / risk : 0;
+
+                if (rr >= targetRR) {
+                    // Déplacer le SL à BE (entry price)
+                    const trades2 = loadTrades();
+                    const idx = trades2.findIndex(t => t.id === trade.id);
+                    if (idx >= 0) {
+                        trades2[idx].originalSl = trades2[idx].originalSl || trades2[idx].sl;
+                        trades2[idx].sl = trades2[idx].entry;
+                        trades2[idx].beMoved = true;
+                        trades2[idx].history = trades2[idx].history || [];
+                        trades2[idx].history.push({ time: Date.now(), event: 'SL déplacé à BE (R/R atteint 1:1)' });
+                        saveTrades(trades2);
+                    }
+                    // Alerte Telegram
+                    sendTelegramMessage(
+                        `🎯 *BE déplacement*\n\n` +
+                        `📊 ${trade.instrument}\n` +
+                        `📈 Direction : ${trade.direction === 'buy' ? 'ACHAT' : 'VENTE'}\n` +
+                        `✅ R/R atteint 1:1\n` +
+                        `🔒 Déplace ton SL à l'entrée (${formatPrice(trade.entry)})\n\n` +
+                        `Prix actuel : ${formatPrice(price)}`
+                    );
+                    log('BE déplacé pour ' + trade.instrument);
+                }
+            }
+        } catch (e) {
+            log('Erreur track ' + trade.instrument + ' : ' + e.message);
+        }
+    }
+
+    renderTrades();
+    renderStats();
+}
+
+function closeTrade(id, result, exitPrice) {
+    const trades = loadTrades();
+    const idx = trades.findIndex(t => t.id === id);
+    if (idx < 0) return;
+    const trade = trades[idx];
+    const pnl = computePnL(trade, exitPrice);
+    trades[idx].status = 'closed';
+    trades[idx].closedAt = Date.now();
+    trades[idx].exitPrice = exitPrice;
+    trades[idx].result = result;
+    trades[idx].pnl = pnl;
+    trades[idx].history = trades[idx].history || [];
+    trades[idx].history.push({ time: Date.now(), event: 'Position fermée : ' + result.toUpperCase() });
+    saveTrades(trades);
+
+    // Alerte Telegram
+    const emoji = result === 'tp' ? '🎉' : result === 'be' ? '⚖️' : '❌';
+    const label = result === 'tp' ? 'TAKE PROFIT' : result === 'be' ? 'BREAK EVEN' : 'STOP LOSS';
+    sendTelegramMessage(
+        `${emoji} *Position fermée*\n\n` +
+        `📊 ${trade.instrument}\n` +
+        `📈 ${trade.direction === 'buy' ? 'ACHAT' : 'VENTE'}\n` +
+        `✅ Résultat : *${label}*\n` +
+        `💰 Prix sortie : ${formatPrice(exitPrice)}\n` +
+        `📊 Pips : ${pnl.pips > 0 ? '+' : ''}${pnl.pips}\n` +
+        `💵 P&L : ${pnl.dollars > 0 ? '+' : ''}${pnl.dollars}$`
+    );
+
+    renderTrades();
+    renderStats();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RENDU DU JOURNAL
+// ══════════════════════════════════════════════════════════════════
+function renderTrades() {
+    const trades = loadTrades();
+    const open = trades.filter(t => t.status === 'open');
+    const closed = trades.filter(t => t.status === 'closed').slice(0, 50);
+
+    $('open-count').textContent = open.length ? '(' + open.length + ')' : '';
+    $('closed-count').textContent = closed.length ? '(' + closed.length + ')' : '';
+
+    // Open trades
+    const openList = $('open-trades-list');
+    if (!open.length) {
+        openList.innerHTML = '<div class="empty-state">Aucune position ouverte</div>';
+    } else {
+        openList.innerHTML = open.map(t => {
+            const current = t.currentPrice || t.entry;
+            const dir = t.direction === 'buy' ? 1 : -1;
+            const move = (current - t.entry) * dir;
+            const risk = Math.abs(t.entry - (t.originalSl || t.sl));
+            const reward = Math.abs(t.tp - t.entry);
+            const currentRR = risk > 0 ? (move / risk) : 0;
+            const progressToTP = reward > 0 ? Math.max(0, Math.min(100, (move / reward) * 100)) : 0;
+            const pnl = computePnL(t, current);
+            return `
+                <div class="trade-item open">
+                    <div class="t-header">
+                        <span class="t-instrument">${esc(t.instrument)}</span>
+                        <span class="t-direction ${t.direction}">${t.direction === 'buy' ? '🟢 ACHAT' : '🔴 VENTE'}</span>
+                    </div>
+                    <div class="t-prices">
+                        <div class="entry"><div class="p-label">Entrée</div><div class="p-value">${formatPrice(t.entry)}</div></div>
+                        <div class="sl"><div class="p-label">SL ${t.beMoved ? '(BE)' : ''}</div><div class="p-value">${formatPrice(t.sl)}</div></div>
+                        <div class="tp"><div class="p-label">TP</div><div class="p-value">${formatPrice(t.tp)}</div></div>
+                    </div>
+                    <div class="t-footer">
+                        <span>Prix actuel : ${formatPrice(current)}</span>
+                        <span class="t-pnl" style="color: ${pnl.dollars >= 0 ? 'var(--success)' : 'var(--error)'}">${pnl.pips > 0 ? '+' : ''}${pnl.pips} pips</span>
+                    </div>
+                    <div class="progress-be">
+                        <div class="pb-text">R/R actuel : 1:${currentRR.toFixed(2)} — Vers TP : ${progressToTP.toFixed(0)}%</div>
+                        <div class="progress-bar"><div class="progress-fill" style="width:${progressToTP}%"></div></div>
+                    </div>
+                    <div class="t-actions">
+                        <button class="btn-secondary" onclick="manualClose('${t.id}', 'tp')">TP Manuel</button>
+                        <button class="btn-secondary" onclick="manualClose('${t.id}', 'be')">BE Manuel</button>
+                        <button class="btn-secondary btn-danger" onclick="manualClose('${t.id}', 'sl')">SL Manuel</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Closed trades
+    const closedList = $('closed-trades-list');
+    if (!closed.length) {
+        closedList.innerHTML = '<div class="empty-state">Aucune position fermée</div>';
+    } else {
+        closedList.innerHTML = closed.map(t => {
+            const pnl = t.pnl || { pips: 0, dollars: 0 };
+            return `
+                <div class="trade-item ${t.result}">
+                    <div class="t-header">
+                        <span class="t-instrument">${esc(t.instrument)}</span>
+                        <span class="t-direction ${t.result}">${t.result === 'tp' ? '✅ TP' : t.result === 'be' ? '⚖️ BE' : '❌ SL'}</span>
+                    </div>
+                    <div class="t-prices">
+                        <div class="entry"><div class="p-label">Entrée</div><div class="p-value">${formatPrice(t.entry)}</div></div>
+                        <div class="sl"><div class="p-label">Sortie</div><div class="p-value">${formatPrice(t.exitPrice)}</div></div>
+                        <div class="tp"><div class="p-label">P&L</div><div class="p-value" style="color:${pnl.dollars >= 0 ? 'var(--success)' : 'var(--error)'}">${pnl.dollars > 0 ? '+' : ''}${pnl.dollars}$</div></div>
+                    </div>
+                    <div class="t-footer">
+                        <span>${t.direction === 'buy' ? 'ACHAT' : 'VENTE'}</span>
+                        <span>${formatDate(t.closedAt)}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+}
+
+window.manualClose = function(id, result) {
+    if (!confirm('Confirmer fermeture en ' + result.toUpperCase() + ' ?')) return;
+    const trades = loadTrades();
+    const trade = trades.find(t => t.id == id);
+    if (!trade) return;
+    closeTrade(trade.id, result, trade.currentPrice || trade.entry);
+};
+
+// ══════════════════════════════════════════════════════════════════
+// STATISTIQUES
+// ══════════════════════════════════════════════════════════════════
+function computeStats(trades) {
+    const closed = trades.filter(t => t.status === 'closed');
+    if (!closed.length) {
+        return { total: 0, wins: 0, losses: 0, be: 0, winrate: 0, totalPips: 0, totalDollars: 0, avgRR: 0, best: null, worst: null };
+    }
+    const wins = closed.filter(t => t.result === 'tp').length;
+    const losses = closed.filter(t => t.result === 'sl').length;
+    const be = closed.filter(t => t.result === 'be').length;
+    const totalPips = closed.reduce((s, t) => s + (t.pnl?.pips || 0), 0);
+    const totalDollars = closed.reduce((s, t) => s + (t.pnl?.dollars || 0), 0);
+    const winrate = (wins + losses) > 0 ? Math.round(wins / (wins + losses) * 100) : 0;
+    const sortedByPnl = [...closed].sort((a, b) => (b.pnl?.dollars || 0) - (a.pnl?.dollars || 0));
+    return {
+        total: closed.length,
+        wins, losses, be,
+        winrate,
+        totalPips: parseFloat(totalPips.toFixed(1)),
+        totalDollars: parseFloat(totalDollars.toFixed(2)),
+        best: sortedByPnl[0],
+        worst: sortedByPnl[sortedByPnl.length - 1]
+    };
+}
+
+function renderStatCards(container, s) {
+    container.innerHTML = `
+        <div class="stat-card"><div class="st-label">Trades</div><div class="st-value neutral">${s.total}</div></div>
+        <div class="stat-card"><div class="st-label">Gagnants</div><div class="st-value win">${s.wins}</div></div>
+        <div class="stat-card"><div class="st-label">Perdants</div><div class="st-value loss">${s.losses}</div></div>
+        <div class="stat-card"><div class="st-label">BE</div><div class="st-value neutral">${s.be}</div></div>
+        <div class="stat-card"><div class="st-label">Winrate</div><div class="st-value ${s.winrate >= 55 ? 'win' : s.winrate >= 45 ? 'neutral' : 'loss'}">${s.winrate}%</div></div>
+        <div class="stat-card"><div class="st-label">Total $</div><div class="st-value ${s.totalDollars >= 0 ? 'win' : 'loss'}">${s.totalDollars > 0 ? '+' : ''}${s.totalDollars}$</div></div>
+        <div class="stat-card"><div class="st-label">Total pips</div><div class="st-value ${s.totalPips >= 0 ? 'win' : 'loss'}">${s.totalPips > 0 ? '+' : ''}${s.totalPips}</div></div>
+        <div class="stat-card"><div class="st-label">P&L moyen</div><div class="st-value neutral">${s.total > 0 ? (s.totalDollars / s.total).toFixed(1) : 0}$</div></div>
+    `;
+}
+
+function renderStats() {
+    const trades = loadTrades();
+    const allStats = computeStats(trades);
+    renderStatCards($('stats-global'), allStats);
+
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const weekTrades = trades.filter(t => t.status === 'closed' && (t.closedAt || 0) > weekAgo);
+    const weekStats = computeStats(weekTrades);
+    renderStatCards($('stats-week'), weekStats);
+
+    // Schémas
+    const patterns = detectPatterns(trades);
+    $('patterns-analysis').innerHTML = patterns.map(p =>
+        `<div class="progress-be" style="border-color:${p.color}"><div class="pb-text" style="color:${p.color}">${esc(p.title)}</div><div>${esc(p.text)}</div></div>`
+    ).join('') || '<div class="empty-state">Aucun schéma détecté pour le moment</div>';
+}
+
+function detectPatterns(trades) {
+    const closed = trades.filter(t => t.status === 'closed');
+    const patterns = [];
+    if (closed.length < 3) return patterns;
+
+    // 1. Winrate par instrument
+    const byInst = {};
+    for (const t of closed) {
+        if (!byInst[t.instrument]) byInst[t.instrument] = { wins: 0, losses: 0 };
+        if (t.result === 'tp') byInst[t.instrument].wins++;
+        else if (t.result === 'sl') byInst[t.instrument].losses++;
+    }
+    for (const [inst, stats] of Object.entries(byInst)) {
+        const total = stats.wins + stats.losses;
+        if (total >= 3) {
+            const wr = Math.round(stats.wins / total * 100);
+            if (wr < 40) patterns.push({ title: '🔴 ' + inst, text: 'Winrate faible : ' + wr + '% sur ' + total + ' trades', color: 'var(--error)' });
+            else if (wr > 70) patterns.push({ title: '🟢 ' + inst, text: 'Excellent winrate : ' + wr + '% sur ' + total + ' trades', color: 'var(--success)' });
+        }
+    }
+
+    // 2. Winrate par direction
+    const byDir = { buy: { wins: 0, losses: 0 }, sell: { wins: 0, losses: 0 } };
+    for (const t of closed) {
+        if (t.result === 'tp') byDir[t.direction].wins++;
+        else if (t.result === 'sl') byDir[t.direction].losses++;
+    }
+    for (const [dir, stats] of Object.entries(byDir)) {
+        const total = stats.wins + stats.losses;
+        if (total >= 5) {
+            const wr = Math.round(stats.wins / total * 100);
+            if (wr < 40) patterns.push({ title: '⚠️ Direction ' + (dir === 'buy' ? 'ACHAT' : 'VENTE'), text: 'Winrate faible : ' + wr + '% — évite cette direction', color: 'var(--error)' });
+        }
+    }
+
+    // 3. BE trop fréquents
+    const beCount = closed.filter(t => t.result === 'be').length;
+    if (beCount >= 3 && beCount / closed.length > 0.3) {
+        patterns.push({ title: '⚖️ Beaucoup de BE', text: (beCount / closed.length * 100).toFixed(0) + '% de tes trades finissent en BE. Considère prendre partiel à 1:1 et laisser courir.', color: 'var(--warn)' });
+    }
+
+    // 4. Jour de la semaine le plus perdant
+    const byDay = {};
+    for (const t of closed) {
+        if (t.result !== 'sl') continue;
+        const day = new Date(t.closedAt).getDay();
+        byDay[day] = (byDay[day] || 0) + 1;
+    }
+    const worstDay = Object.entries(byDay).sort((a, b) => b[1] - a[1])[0];
+    if (worstDay && worstDay[1] >= 3) {
+        const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+        patterns.push({ title: '📅 Jour défavorable', text: 'Tes SL arrivent surtout le ' + dayNames[worstDay[0]] + ' (' + worstDay[1] + ' pertes). Évite de trader ce jour.', color: 'var(--warn)' });
+    }
+
+    return patterns;
 }
 
 // ══════════════════════════════════════════════════════════════════
 // TELEGRAM
 // ══════════════════════════════════════════════════════════════════
-function getTelegramConfig() { try { return JSON.parse(localStorage.getItem(STORAGE.telegram) || '{}'); } catch (e) { return {}; } }
-async function sendTelegram(report) {
+async function sendTelegramMessage(text) {
     const cfg = getTelegramConfig();
-    if (!cfg.token || !cfg.chatId) { toast('Configure Telegram', 'warn'); return; }
-    let text = '🧠 *SMC* — ' + report.symbol + '\n\n';
-    text += '*Signal :* ' + report.signal + ' (' + report.confidence + '%)\n';
-    text += '*Entrée :* ' + report.levels.entry + '\n*SL :* ' + report.levels.sl + '\n*TP :* ' + report.levels.tp + '\n*R/R :* ' + report.levels.riskReward;
+    if (!cfg.token || !cfg.chatId) return false;
     try {
         const res = await fetch('https://api.telegram.org/bot' + cfg.token + '/sendMessage', {
             method: 'POST',
@@ -1122,32 +1259,302 @@ async function sendTelegram(report) {
             body: JSON.stringify({ chat_id: cfg.chatId, text, parse_mode: 'Markdown' })
         });
         const data = await res.json();
-        if (data.ok) toast('Envoyé ✓', 'success');
-        else toast('Telegram : ' + (data.description || 'erreur'), 'error');
-    } catch (e) { toast('Telegram : ' + e.message, 'error'); }
+        return data.ok;
+    } catch (e) { return false; }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SCANNER
+// ══════════════════════════════════════════════════════════════════
+function getScanConfig() {
+    return {
+        freqMin: parseInt($('freq-select').value, 10) || 30,
+        minConf: parseInt($('conf-select').value, 10) || 90,
+        minRR: parseFloat($('rr-select').value) || 2
+    };
+}
+
+function loadSentAlerts() { try { return JSON.parse(localStorage.getItem(STORAGE.alerts_sent) || '{}'); } catch (e) { return {}; } }
+function saveSentAlerts(s) { try { localStorage.setItem(STORAGE.alerts_sent, JSON.stringify(s)); } catch (e) {} }
+function wasSent(id, signal) {
+    const sent = loadSentAlerts();
+    const key = id + '_' + signal;
+    return sent[key] && (Date.now() - sent[key] < 2 * 60 * 60 * 1000);
+}
+function markSent(id, signal) {
+    const sent = loadSentAlerts();
+    sent[id + '_' + signal] = Date.now();
+    saveSentAlerts(sent);
+}
+
+function loadScanLog() { try { return JSON.parse(localStorage.getItem(STORAGE.scanlog) || '[]'); } catch (e) { return []; } }
+function addScanLog(msg, type = 'info') {
+    const logs = loadScanLog();
+    logs.unshift({ time: Date.now(), message: msg, type });
+    if (logs.length > 50) logs.length = 50;
+    try { localStorage.setItem(STORAGE.scanlog, JSON.stringify(logs)); } catch (e) {}
+    renderScanLog();
+}
+function renderScanLog() {
+    const logs = loadScanLog();
+    const container = $('scan-log');
+    if (!logs.length) { container.innerHTML = '<div class="empty-state">Aucun scan</div>'; return; }
+    container.innerHTML = logs.map(l =>
+        '<div class="scan-log-item ' + l.type + '"><span class="time">' + formatTime(l.time) + '</span> ' + esc(l.message) + '</div>'
+    ).join('');
+}
+
+async function runScan() {
+    const cfg = getScanConfig();
+    const tel = getTelegramConfig();
+    if (!tel.token || !tel.chatId) { addScanLog('⚠️ Telegram non configuré', 'warn'); return; }
+
+    addScanLog('🔍 Scan démarré · ' + SCAN_INSTRUMENTS.length + ' instruments', 'info');
+    let signalsFound = 0;
+
+    for (const inst of SCAN_INSTRUMENTS) {
+        if (!state.scanning) { addScanLog('⏸ Scan interrompu', 'warn'); return; }
+        try {
+            addScanLog('📊 ' + inst.name + '…', 'info');
+            const analysis = await analyzeInstrument(inst, cfg.minConf, cfg.minRR);
+            if (!analysis.ok) { addScanLog('❌ ' + inst.name + ' : ' + analysis.error, 'error'); continue; }
+            if (!analysis.val.valid) { addScanLog('⏭ ' + inst.name + ' : ' + analysis.val.reason, 'info'); continue; }
+            if (wasSent(inst.id, analysis.syn.signal)) { addScanLog('🔁 ' + inst.name + ' : déjà envoyé récemment', 'warn'); continue; }
+
+            const entryR = analysis.results.M15 || analysis.results.H1;
+            const setupParts = [];
+            if (entryR.obs?.length) setupParts.push('OB');
+            if (entryR.fvgs?.length) setupParts.push('FVG');
+            if (entryR.sweeps?.length) setupParts.push('Sweep');
+
+            const emoji = analysis.syn.signal === 'ACHAT' ? '🟢' : '🔴';
+            const zoneEmoji = entryR.pd.zone === 'discount' ? '💎' : '🔺';
+
+            let text = `🚨 *SIGNAL SMC A+*\n\n`;
+            text += `📊 *${inst.name}*\n`;
+            text += `${emoji} Signal : *${analysis.syn.signal}*\n`;
+            text += `🎯 Confiance : *${analysis.syn.confidence}%*\n\n`;
+            text += `💰 Setup : ${setupParts.join(' + ') || 'Structure'}\n`;
+            text += `${zoneEmoji} Zone : *${entryR.pd.zone === 'discount' ? 'Discount' : 'Premium'}* (${entryR.pd.position}%)\n\n`;
+            text += `━━━━━━━━━━━━━━\n`;
+            text += `📥 Entrée : \`${formatPrice(analysis.lv.entry)}\`\n`;
+            text += `🛑 SL : \`${formatPrice(analysis.lv.sl)}\`\n`;
+            text += `🎯 TP : \`${formatPrice(analysis.lv.tp)}\`\n`;
+            text += `⚖️ R/R : *1:${analysis.lv.rr.toFixed(2)}*\n\n`;
+            text += `📈 *Structure :*\n`;
+            for (const tf of ['H4', 'H1', 'M15']) {
+                if (!analysis.results[tf]) continue;
+                const r = analysis.results[tf];
+                const lbl = r.direction === 'bullish' ? '📈 Bull' : r.direction === 'bearish' ? '📉 Bear' : '↔️ Range';
+                text += `• ${tf} : ${lbl} (${r.strength}%)\n`;
+            }
+            text += `\n🕐 ${formatDate(Date.now())}`;
+
+            const sent = await sendTelegramMessage(text);
+            if (sent) {
+                markSent(inst.id, analysis.syn.signal);
+                signalsFound++;
+                addScanLog('🚨 SIGNAL ' + analysis.syn.signal + ' ' + inst.name + ' (' + analysis.syn.confidence + '%)', 'success');
+            } else {
+                addScanLog('⚠️ Échec envoi Telegram pour ' + inst.name, 'error');
+            }
+            await sleep(1000);
+        } catch (e) {
+            addScanLog('❌ ' + inst.name + ' : ' + e.message, 'error');
+        }
+    }
+    addScanLog(signalsFound > 0 ? '✅ Terminé · ' + signalsFound + ' signal(aux)' : '✅ Terminé · aucun signal A+', 'info');
+}
+
+function startScanner() {
+    if (state.scanning) return;
+    state.scanning = true;
+    $('scanner-toggle').textContent = '⏹ Arrêter le scanner';
+    $('scanner-toggle').style.background = 'var(--error)';
+    $('scanner-toggle').style.color = '#fff';
+    runScan().then(() => {
+        if (state.scanning) scheduleNext(getScanConfig().freqMin);
+    });
+    updateScannerUI();
+}
+function scheduleNext(min) {
+    if (state.countdownInterval) clearInterval(state.countdownInterval);
+    state.nextScanTime = Date.now() + min * 60 * 1000;
+    state.countdownInterval = setInterval(() => {
+        if (!state.scanning) { clearInterval(state.countdownInterval); return; }
+        const rem = Math.max(0, state.nextScanTime - Date.now());
+        const m = Math.floor(rem / 60000);
+        const s = Math.floor((rem % 60000) / 1000);
+        $('scanner-info').textContent = 'Prochain scan dans ' + m + 'm ' + String(s).padStart(2, '0') + 's';
+        if (rem <= 0) {
+            clearInterval(state.countdownInterval);
+            if (state.scanning) runScan().then(() => { if (state.scanning) scheduleNext(getScanConfig().freqMin); });
+        }
+    }, 1000);
+}
+function stopScanner() {
+    state.scanning = false;
+    if (state.countdownInterval) { clearInterval(state.countdownInterval); state.countdownInterval = null; }
+    $('scanner-toggle').textContent = '▶️ Démarrer le scanner';
+    $('scanner-toggle').style.background = '';
+    $('scanner-toggle').style.color = '';
+    updateScannerUI();
+}
+function updateScannerUI() {
+    const el = $('scanner-status');
+    if (state.scanning) {
+        el.className = 'scanner-status running';
+        $('scanner-main').textContent = '🟢 Scanner actif';
+        if (!$('scanner-info').textContent.includes('Prochain')) $('scanner-info').textContent = 'Démarrage…';
+    } else {
+        el.className = 'scanner-status idle';
+        $('scanner-main').textContent = '⏸ Scanner arrêté';
+        $('scanner-info').textContent = 'Prêt à démarrer';
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RAPPORT PDF HEBDOMADAIRE
+// ══════════════════════════════════════════════════════════════════
+function buildWeeklyReport() {
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const trades = loadTrades();
+    const weekClosed = trades.filter(t => t.status === 'closed' && (t.closedAt || 0) > weekAgo);
+    const weekOpened = trades.filter(t => (t.openedAt || 0) > weekAgo);
+
+    const stats = computeStats(weekClosed);
+    const patterns = detectPatterns(trades);
+
+    let html = '';
+    html += '<h3>📅 Semaine du ' + formatDateLong(weekAgo) + ' au ' + formatDateLong(Date.now()) + '</h3>';
+    html += '<p><strong>Trades ouverts cette semaine :</strong> ' + weekOpened.length + '</p>';
+    html += '<p><strong>Trades fermés cette semaine :</strong> ' + weekClosed.length + '</p>';
+
+    html += '<h3>📊 Résultats</h3>';
+    html += '<ul>';
+    html += '<li>Trades gagnants (TP) : <strong>' + stats.wins + '</strong></li>';
+    html += '<li>Trades perdants (SL) : <strong>' + stats.losses + '</strong></li>';
+    html += '<li>Break Even : <strong>' + stats.be + '</strong></li>';
+    html += '<li>Winrate : <strong>' + stats.winrate + '%</strong></li>';
+    html += '<li>Total pips : <strong>' + (stats.totalPips > 0 ? '+' : '') + stats.totalPips + '</strong></li>';
+    html += '<li>P&L total : <strong>' + (stats.totalDollars > 0 ? '+' : '') + stats.totalDollars + '$</strong></li>';
+    html += '</ul>';
+
+    if (stats.best && stats.worst) {
+        html += '<h3>🏆 Meilleur et pire trade</h3>';
+        html += '<ul>';
+        html += '<li>🏆 Meilleur : ' + esc(stats.best.instrument) + ' → ' + (stats.best.pnl?.dollars || 0) + '$</li>';
+        html += '<li>❌ Pire : ' + esc(stats.worst.instrument) + ' → ' + (stats.worst.pnl?.dollars || 0) + '$</li>';
+        html += '</ul>';
+    }
+
+    html += '<h3>🔍 Schémas détectés</h3>';
+    if (patterns.length) {
+        html += '<ul>';
+        patterns.forEach(p => { html += '<li>' + esc(p.title) + ' : ' + esc(p.text) + '</li>'; });
+        html += '</ul>';
+    } else {
+        html += '<p>Pas assez de données pour identifier des schémas.</p>';
+    }
+
+    html += '<h3>💡 Recommandations</h3>';
+    html += '<ul>';
+    if (stats.winrate >= 60) html += '<li>✅ Excellent winrate. Continue comme ça !</li>';
+    else if (stats.winrate >= 45) html += '<li>⚠️ Winrate moyen. Analyse les trades perdants pour identifier des erreurs récurrentes.</li>';
+    else if (stats.total > 0) html += '<li>🔴 Winrate faible. Révise ta stratégie : trades en zone SMC correcte ? Confiance ≥ 90% ?</li>';
+
+    if (stats.be > stats.wins) html += '<li>⚖️ Beaucoup de BE. Prends partiel à 1:1 et laisse courir le reste pour maximiser.</li>';
+    if (stats.totalDollars < 0) html += '<li>💰 P&L négatif. Réduis la taille des positions jusqu\'à retrouver la confiance.</li>';
+    if (stats.totalDollars > 0) html += '<li>💰 P&L positif. Augmente progressivement la taille des positions gagnantes.</li>';
+    html += '</ul>';
+
+    return { html, stats, weekClosed, patterns };
+}
+
+function generatePDF() {
+    if (!window.jspdf?.jsPDF) { toast('jsPDF non chargé', 'error'); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const report = buildWeeklyReport();
+    const stats = report.stats;
+
+    let y = 15;
+    doc.setFontSize(20);
+    doc.setTextColor(30, 30, 30);
+    doc.text('Rapport de Trading SMC', 15, y); y += 10;
+    doc.setFontSize(10);
+    doc.setTextColor(120);
+    doc.text('Semaine du ' + formatDateLong(Date.now() - 7 * 24 * 60 * 60 * 1000), 15, y); y += 4;
+    doc.text('au ' + formatDateLong(Date.now()), 15, y); y += 12;
+
+    // Statistiques
+    doc.setFontSize(14);
+    doc.setTextColor(30, 30, 30);
+    doc.text('Statistiques', 15, y); y += 7;
+    doc.setFontSize(10);
+    doc.setTextColor(80);
+    doc.text('Trades fermés : ' + stats.total, 15, y); y += 5;
+    doc.text('Gagnants (TP) : ' + stats.wins, 15, y); y += 5;
+    doc.text('Perdants (SL) : ' + stats.losses, 15, y); y += 5;
+    doc.text('Break Even : ' + stats.be, 15, y); y += 5;
+    doc.text('Winrate : ' + stats.winrate + '%', 15, y); y += 5;
+    doc.text('Total pips : ' + (stats.totalPips > 0 ? '+' : '') + stats.totalPips, 15, y); y += 5;
+    doc.text('P&L total : ' + (stats.totalDollars > 0 ? '+' : '') + stats.totalDollars + '$', 15, y); y += 12;
+
+    // Trades
+    if (report.weekClosed.length) {
+        doc.setFontSize(14);
+        doc.setTextColor(30, 30, 30);
+        doc.text('Trades de la semaine', 15, y); y += 7;
+        doc.setFontSize(9);
+        doc.setTextColor(80);
+        for (const t of report.weekClosed) {
+            if (y > 270) { doc.addPage(); y = 15; }
+            const result = t.result === 'tp' ? 'TP' : t.result === 'be' ? 'BE' : 'SL';
+            const pnl = t.pnl?.dollars || 0;
+            doc.text(t.instrument + ' ' + (t.direction === 'buy' ? 'ACHAT' : 'VENTE') + ' — ' + result + ' — ' + (pnl > 0 ? '+' : '') + pnl + '$', 15, y); y += 5;
+        }
+        y += 5;
+    }
+
+    // Schémas
+    doc.setFontSize(14);
+    doc.setTextColor(30, 30, 30);
+    doc.text('Erreurs et schémas détectés', 15, y); y += 7;
+    doc.setFontSize(10);
+    doc.setTextColor(80);
+    if (report.patterns.length) {
+        for (const p of report.patterns) {
+            if (y > 270) { doc.addPage(); y = 15; }
+            const lines = doc.splitTextToSize('• ' + p.title + ' : ' + p.text, 180);
+            for (const line of lines) { doc.text(line, 15, y); y += 5; }
+            y += 2;
+        }
+    } else {
+        doc.text('Pas assez de données pour identifier des schémas.', 15, y); y += 8;
+    }
+    y += 5;
+
+    // Recommandations
+    doc.setFontSize(14);
+    doc.setTextColor(30, 30, 30);
+    doc.text('Recommandations', 15, y); y += 7;
+    doc.setFontSize(10);
+    doc.setTextColor(80);
+    if (stats.winrate >= 60) doc.text('• Excellent winrate. Continue ta stratégie.', 15, y), y += 5;
+    else if (stats.winrate >= 45) doc.text('• Winrate moyen. Analyse les trades perdants.', 15, y), y += 5;
+    else if (stats.total > 0) doc.text('• Winrate faible. Révise ta stratégie.', 15, y), y += 5;
+    if (stats.be > stats.wins) doc.text('• Prends partiel à 1:1 pour sécuriser plus de gains.', 15, y), y += 5;
+    if (stats.totalDollars < 0) doc.text('• Réduis la taille des positions jusqu\'à retrouver la confiance.', 15, y), y += 5;
+    else if (stats.totalDollars > 0) doc.text('• Augmente progressivement la taille des positions gagnantes.', 15, y), y += 5;
+
+    doc.save('rapport-trading-' + Date.now() + '.pdf');
+    toast('Rapport PDF généré ✓', 'success');
 }
 
 // ══════════════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════════════
-function initSymbols() {
-    const sel = $('symbol-select');
-    let html = '';
-    for (const [cat, list] of Object.entries(SYMBOLS)) {
-        html += '<optgroup label="' + cat + '">';
-        for (const s of list) html += '<option value="' + s.id + '">' + s.name + '</option>';
-        html += '</optgroup>';
-    }
-    sel.innerHTML = html;
-    sel.value = 'EUR/USD';
-    state.symbol = 'EUR/USD';
-    sel.addEventListener('change', (e) => {
-        state.symbol = e.target.value;
-        lastPrice = null;
-        if (state.ready) subscribeTicks(state.symbol);
-    });
-}
-
 function initTheme() {
     let dark = false;
     try { dark = localStorage.getItem(STORAGE.dark) === '1'; } catch (e) {}
@@ -1161,7 +1568,6 @@ function toggleTheme() {
     $('theme-toggle').textContent = dark ? '☀️' : '🌙';
     try { localStorage.setItem(STORAGE.dark, dark ? '1' : '0'); } catch (e) {}
 }
-
 function initTabs() {
     document.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', () => {
@@ -1169,36 +1575,26 @@ function initTabs() {
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             tab.classList.add('active');
             $('panel-' + tab.dataset.tab).classList.add('active');
-            if (tab.dataset.tab === 'history') renderHistory();
+            const tabName = tab.dataset.tab;
+            if (tabName === 'journal') renderTrades();
+            if (tabName === 'stats') renderStats();
+            if (tabName === 'report') { const r = buildWeeklyReport(); $('report-preview').innerHTML = r.html; }
         });
     });
 }
-
 function initSections() {
     document.querySelectorAll('.section-header').forEach(h => {
         h.addEventListener('click', () => h.parentElement.classList.toggle('open'));
     });
 }
-
 function initSettings() {
     const tk = getTwelveKey();
     if (tk) $('twelvedata-key').value = tk;
     $('save-twelvedata')?.addEventListener('click', async () => {
         const v = $('twelvedata-key').value.trim();
         try { localStorage.setItem(STORAGE.twelvedata, v); } catch (e) {}
-        if (v) {
-            const ok = await connectTwelveData();
-            toast(ok ? 'Clé Twelve Data valide ✓' : 'Clé invalide', ok ? 'success' : 'error');
-        } else {
-            toast('Clé supprimée', 'warn');
-        }
-    });
-    const hf = getHFToken();
-    if (hf) $('groq-key').value = hf;
-    $('save-groq')?.addEventListener('click', () => {
-        const v = $('groq-key').value.trim();
-        try { localStorage.setItem(STORAGE.hf, v); } catch (e) {}
-        toast(v ? 'Token Hugging Face enregistré ✓' : 'Token supprimé', v ? 'success' : 'warn');
+        if (v) { const ok = await connectTwelveData(); toast(ok ? 'Clé valide ✓' : 'Clé invalide', ok ? 'success' : 'error'); }
+        else toast('Clé supprimée', 'warn');
     });
     const cfg = getTelegramConfig();
     if (cfg.token) $('telegram-token').value = cfg.token;
@@ -1207,10 +1603,72 @@ function initSettings() {
         const token = $('telegram-token').value.trim();
         const chatId = $('telegram-chatid').value.trim();
         try { localStorage.setItem(STORAGE.telegram, JSON.stringify({ token, chatId })); } catch (e) {}
-        toast('Config Telegram enregistrée ✓', 'success');
+        toast('Config Telegram ✓', 'success');
     });
-    $('test-telegram')?.addEventListener('click', () => {
-        sendTelegram({ symbol: 'TEST', signal: 'ACHAT', confidence: 99, timestamp: Date.now(), levels: { entry: '—', sl: '—', tp: '—', riskReward: '—' } });
+    $('test-telegram')?.addEventListener('click', async () => {
+        const ok = await sendTelegramMessage('🧠 *SMC Trader Pro* — Test\n\n✅ Ton bot est bien configuré.\n\nTu recevras ici :\n• Signaux A+ du scanner\n• Alertes BE automatiques\n• Notifications de fermeture (TP/SL/BE)');
+        toast(ok ? 'Envoyé ✓' : 'Erreur envoi', ok ? 'success' : 'error');
+    });
+    $('clear-all-btn')?.addEventListener('click', () => {
+        if (!confirm('Effacer TOUTES les données (trades, alertes, logs) ?')) return;
+        localStorage.removeItem(STORAGE.trades);
+        localStorage.removeItem(STORAGE.alerts_sent);
+        localStorage.removeItem(STORAGE.scanlog);
+        renderTrades(); renderStats(); renderScanLog();
+        toast('Données effacées', 'warn');
+    });
+    $('export-data-btn')?.addEventListener('click', () => {
+        const data = {
+            trades: loadTrades(),
+            scanLog: loadScanLog(),
+            exportDate: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'smc-trader-backup-' + Date.now() + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        toast('Export réussi ✓', 'success');
+    });
+}
+
+function initTradeForm() {
+    $('add-trade-btn')?.addEventListener('click', () => {
+        const s = $('add-trade-section');
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
+        s.classList.add('open');
+    });
+    $('cancel-trade-btn')?.addEventListener('click', () => {
+        $('add-trade-section').style.display = 'none';
+    });
+    $('save-trade-btn')?.addEventListener('click', () => {
+        const inst = $('trade-instrument').value.trim();
+        const dir = $('trade-direction').value;
+        const entry = parseFloat($('trade-entry').value);
+        const sl = parseFloat($('trade-sl').value);
+        const tp = parseFloat($('trade-tp').value);
+        const size = parseFloat($('trade-size').value) || 1;
+        if (!inst || !entry || !sl || !tp) { toast('Remplis tous les champs', 'warn'); return; }
+        if (dir === 'buy' && (sl >= entry || tp <= entry)) { toast('SL doit être < Entrée < TP', 'error'); return; }
+        if (dir === 'sell' && (sl <= entry || tp >= entry)) { toast('SL doit être > Entrée > TP', 'error'); return; }
+        addTrade({ instrument: inst, direction: dir, entry, sl, tp, size, originalSl: sl });
+        $('trade-instrument').value = '';
+        $('trade-entry').value = '';
+        $('trade-sl').value = '';
+        $('trade-tp').value = '';
+        $('trade-size').value = '';
+        $('add-trade-section').style.display = 'none';
+        renderTrades();
+        renderStats();
+        toast('Position enregistrée ✓', 'success');
+    });
+    $('sync-prices-btn')?.addEventListener('click', async () => {
+        setStatus('Synchronisation des prix…');
+        await trackOpenTrades();
+        setStatus(null);
+        toast('Prix synchronisés ✓', 'success');
     });
 }
 
@@ -1218,32 +1676,34 @@ async function init() {
     initTheme();
     initTabs();
     initSections();
-    initSymbols();
     initSettings();
-    renderHistory();
+    initTradeForm();
+    renderTrades();
+    renderStats();
+    renderScanLog();
+
     $('theme-toggle').addEventListener('click', toggleTheme);
-    $('analyze-btn').addEventListener('click', runAnalysis);
-    $('save-history-btn')?.addEventListener('click', () => {
-        if (!state.lastAnalysis) { toast('Aucune analyse', 'warn'); return; }
-        saveHistory(state.lastAnalysis);
-        toast('Sauvegardé ✓', 'success');
+    $('scanner-toggle')?.addEventListener('click', () => {
+        if (state.scanning) stopScanner();
+        else startScanner();
     });
-    $('send-telegram-btn')?.addEventListener('click', () => {
-        if (!state.lastAnalysis) { toast('Aucune analyse', 'warn'); return; }
-        sendTelegram(state.lastAnalysis);
+    $('clear-log-btn')?.addEventListener('click', () => {
+        if (!confirm('Effacer le journal du scan ?')) return;
+        localStorage.removeItem(STORAGE.scanlog);
+        renderScanLog();
     });
-    $('clear-history-btn')?.addEventListener('click', () => {
-        if (!confirm('Effacer tout l\'historique ?')) return;
-        localStorage.removeItem(STORAGE.history);
-        renderHistory();
-    });
+    $('generate-report-btn')?.addEventListener('click', generatePDF);
+
     await connectTwelveData();
-    subscribeTicks(state.symbol);
-    log('SMC Analyzer Pro prêt');
+
+    // Surveillance auto toutes les 5 min
+    state.trackingInterval = setInterval(trackOpenTrades, 5 * 60 * 1000);
+    setTimeout(trackOpenTrades, 5000);
+
+    log('SMC Trader Pro prêt');
 }
 
 init();
 </script>
-
 </body>
 </html>
