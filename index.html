@@ -350,7 +350,7 @@
         </div>
 
         <div class="report-block">
-            <h3>🤖 Audit IA <span style="font-size:0.65rem;font-weight:400;">(Groq)</span></h3>
+            <h3>🤖 Audit IA <span style="font-size:0.65rem;font-weight:400;">(Hugging Face · Llama 3)</span></h3>
             <div id="audit-container">
                 <button class="btn-secondary" id="run-audit-btn">🔍 Lancer l'audit IA</button>
             </div>
@@ -393,18 +393,18 @@
 
     <div class="section open">
         <div class="section-header" data-toggle="section-groq">
-            <span class="section-title">🤖 Audit IA — Groq</span>
+            <span class="section-title">🤖 Audit IA — Hugging Face</span>
             <span class="chevron">▼</span>
         </div>
         <div class="section-body" id="section-groq">
             <div class="section-content">
                 <div class="control-row">
-                    <label class="control-label">Groq API Key</label>
-                    <input type="password" id="groq-key" placeholder="gsk_...">
+                    <label class="control-label">Hugging Face Token</label>
+                    <input type="password" id="groq-key" placeholder="hf_...">
                 </div>
                 <button class="btn-secondary" id="save-groq">Enregistrer</button>
                 <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;line-height:1.4;">
-                    Clé gratuite sur <strong>console.groq.com</strong> → API Keys → Create
+                    Token gratuit sur <strong>huggingface.co/settings/tokens</strong> → New token → Read
                 </div>
             </div>
         </div>
@@ -450,11 +450,10 @@
 // CONFIG
 // ══════════════════════════════════════════════════════════════════
 const TWELVEDATA_API = 'https://api.twelvedata.com';
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'llama-3.3-70b-versatile';
+const HF_API_URL = 'https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct';
 const STORAGE = {
     twelvedata: 'smc_twelvedata_key',
-    groq: 'smc_groq_key',
+    hf: 'smc_hf_token',
     telegram: 'smc_telegram',
     history: 'smc_history',
     dark: 'smc_dark'
@@ -633,7 +632,6 @@ async function fetchCandles(symbol, tf, count = 200) {
     if (data.status === 'error') throw new Error(data.message || 'Erreur API');
     if (!data.values || !data.values.length) throw new Error('Pas de données pour ' + symbol);
     
-    // Twelve Data retourne les bougies du plus récent au plus ancien
     return data.values.reverse().map(v => ({
         time: Math.floor(new Date(v.datetime).getTime() / 1000),
         open: parseFloat(v.open),
@@ -663,7 +661,7 @@ function subscribeTicks(symbol) {
     state.tickInterval = setInterval(async () => {
         const p = await fetchCurrentPrice(symbol);
         if (p) updatePriceTicker(p);
-    }, 15000); // 15s pour économiser les requêtes API
+    }, 15000);
 }
 
 let lastPrice = null;
@@ -680,7 +678,7 @@ function updatePriceTicker(price) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// ANALYSE SMC (identique à avant)
+// ANALYSE SMC
 // ══════════════════════════════════════════════════════════════════
 function findSwings(candles, lookback = 3) {
     const swings = [];
@@ -849,7 +847,6 @@ function computeSMCLevels(results, synthesis, currentPrice) {
     const entryTF = tfs[tfs.length - 1];
     const entryR = results[entryTF];
     const obs = entryR.obs || [];
-    const fvgs = entryR.fvgs || [];
     let entry, sl, tp, riskReward;
 
     if (synthesis.signal === 'ACHAT') {
@@ -964,58 +961,97 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
     ).join('');
 
     $('audit-container').innerHTML = '<button class="btn-secondary" id="run-audit-btn">🔍 Lancer l\'audit IA</button>';
-    $('run-audit-btn')?.addEventListener('click', runGroqAudit);
+    $('run-audit-btn')?.addEventListener('click', runHFAudit);
 
     state.lastAnalysis = { timestamp: Date.now(), symbol, signal: synthesis.signal, signalClass: synthesis.signalClass, confidence: synthesis.confidence, levels, results, scenarios, currentPrice };
     $('report-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ══════════════════════════════════════════════════════════════════
-// AUDIT IA GROQ
+// AUDIT IA — HUGGING FACE
 // ══════════════════════════════════════════════════════════════════
-function getGroqKey() {
-    try { return (localStorage.getItem(STORAGE.groq) || '').trim(); } catch (e) { return ''; }
+function getHFToken() {
+    try { return (localStorage.getItem(STORAGE.hf) || '').trim(); } catch (e) { return ''; }
 }
 
-async function runGroqAudit() {
-    const key = getGroqKey();
-    if (!key) { toast('Configure ta clé Groq dans Réglages', 'warn', 3500); return; }
+async function runHFAudit() {
+    const token = getHFToken();
+    if (!token) { toast('Configure ton token Hugging Face dans Réglages', 'warn', 3500); return; }
     const analysis = state.lastAnalysis;
     if (!analysis) return;
     const container = $('audit-container');
-    container.innerHTML = '<div style="text-align:center;padding:1rem;"><div class="spinner" style="margin:0 auto 0.5rem;"></div>Analyse IA…</div>';
+    container.innerHTML = '<div style="text-align:center;padding:1rem;"><div class="spinner" style="margin:0 auto 0.5rem;"></div>Analyse IA en cours… (10-20 sec)</div>';
+    
     const summary = {
-        symbol: analysis.symbol, signal: analysis.signal, confidence: analysis.confidence,
-        entry: analysis.levels.entry, sl: analysis.levels.sl, tp: analysis.levels.tp, rr: analysis.levels.riskReward,
-        currentPrice: analysis.currentPrice, tfs: {}
+        symbol: analysis.symbol,
+        signal: analysis.signal,
+        confidence: analysis.confidence,
+        entry: analysis.levels.entry,
+        sl: analysis.levels.sl,
+        tp: analysis.levels.tp,
+        rr: analysis.levels.riskReward,
+        currentPrice: analysis.currentPrice,
+        tfs: {}
     };
     for (const tf of Object.keys(analysis.results)) {
         const r = analysis.results[tf];
         if (!r) continue;
-        summary.tfs[tf] = { trend: r.direction, strength: r.strength, obsCount: r.obs.length, fvgsCount: r.fvgs.length, sweepsCount: r.sweeps.length, zone: r.pd.zone };
+        summary.tfs[tf] = {
+            trend: r.direction,
+            strength: r.strength,
+            obsCount: r.obs.length,
+            fvgsCount: r.fvgs.length,
+            sweepsCount: r.sweeps.length,
+            zone: r.pd.zone
+        };
     }
-    const prompt = 'Tu es un analyste trader expert en Smart Money Concepts. Fais un audit CRITIQUE de cette analyse.\n\nDONNÉES :\n' + JSON.stringify(summary, null, 2) + '\n\nRéponds en français, texte structuré SANS markdown, 5 sections :\n- Cohérence\n- Forces (3 puces)\n- Faiblesses (2-3 puces)\n- Risques (2-3 puces)\n- Verdict (note /100 + conseil)';
+    
+    const prompt = `Tu es un analyste trader expert en Smart Money Concepts. Fais un audit CRITIQUE de cette analyse.
+
+DONNÉES DE L'ANALYSE :
+${JSON.stringify(summary, null, 2)}
+
+Réponds en français, en 5 sections courtes SANS markdown :
+- Cohérence (2-3 phrases)
+- Forces (3 puces)
+- Faiblesses (2-3 puces)
+- Risques (2-3 puces)
+- Verdict (note /100 + conseil final en 1 phrase)`;
+
     try {
-        const res = await fetch(GROQ_API_URL, {
+        const res = await fetch(HF_API_URL, {
             method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
-                model: GROQ_MODEL,
-                messages: [
-                    { role: 'system', content: 'Tu es un analyste trading expert en SMC. Réponds de façon concise, sans markdown.' },
-                    { role: 'user', content: prompt }
-                ],
-                temperature: 0.4,
-                max_tokens: 1000
+                inputs: prompt,
+                parameters: {
+                    max_new_tokens: 800,
+                    temperature: 0.4,
+                    return_full_text: false
+                }
             })
         });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        
+        if (!res.ok) {
+            const err = await res.text();
+            throw new Error('HTTP ' + res.status + ' — ' + err.slice(0, 200));
+        }
+        
         const data = await res.json();
-        const text = data.choices?.[0]?.message?.content || 'Pas de réponse';
+        let text = '';
+        if (Array.isArray(data) && data[0] && data[0].generated_text) text = data[0].generated_text;
+        else if (data.generated_text) text = data.generated_text;
+        else if (typeof data === 'string') text = data;
+        else text = JSON.stringify(data).slice(0, 500);
+        
         renderAudit(text);
     } catch (e) {
-        container.innerHTML = '<p style="color:var(--error);">Erreur : ' + esc(e.message) + '</p><button class="btn-secondary" id="run-audit-btn">Réessayer</button>';
-        $('run-audit-btn')?.addEventListener('click', runGroqAudit);
+        log('HF error: ' + e.message);
+        container.innerHTML = '<p style="color:var(--error);">Erreur audit IA : ' + esc(e.message) + '</p><button class="btn-secondary" id="run-audit-btn">Réessayer</button>';
+        $('run-audit-btn')?.addEventListener('click', runHFAudit);
     }
 }
 
@@ -1037,7 +1073,7 @@ function renderAudit(text) {
         }
     }
     container.innerHTML = html + '<button class="btn-secondary" style="margin-top:0.5rem;" id="run-audit-btn">🔁 Relancer</button>';
-    $('run-audit-btn')?.addEventListener('click', runGroqAudit);
+    $('run-audit-btn')?.addEventListener('click', runHFAudit);
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -1062,7 +1098,7 @@ async function runAnalysis() {
             state.candles[tf] = candles;
             const r = analyzeTimeframe(candles);
             if (r) results[tf] = r;
-            await sleep(500); // Pause pour respecter les limites API
+            await sleep(500);
         }
         setStatus('Synthèse SMC…');
         const synthesis = synthesizeSMC(results, mode);
@@ -1196,13 +1232,13 @@ function initSettings() {
         }
     });
 
-    // Groq
-    const gk = getGroqKey();
-    if (gk) $('groq-key').value = gk;
+    // Hugging Face
+    const hf = getHFToken();
+    if (hf) $('groq-key').value = hf;
     $('save-groq')?.addEventListener('click', () => {
         const v = $('groq-key').value.trim();
-        try { localStorage.setItem(STORAGE.groq, v); } catch (e) {}
-        toast(v ? 'Clé Groq enregistrée ✓' : 'Clé supprimée', v ? 'success' : 'warn');
+        try { localStorage.setItem(STORAGE.hf, v); } catch (e) {}
+        toast(v ? 'Token Hugging Face enregistré ✓' : 'Token supprimé', v ? 'success' : 'warn');
     });
 
     // Telegram
@@ -1243,7 +1279,6 @@ async function init() {
         localStorage.removeItem(STORAGE.history);
         renderHistory();
     });
-    // Connexion initiale
     await connectTwelveData();
     subscribeTicks(state.symbol);
     log('SMC Analyzer Pro prêt');
