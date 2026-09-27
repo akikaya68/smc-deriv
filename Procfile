@@ -1,1 +1,1 @@
-web: node proxy_server.js
+web: npm install && node proxy_server.js
