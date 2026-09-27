@@ -13,7 +13,6 @@ app.get('/', (req, res) => {
     res.json({ status: 'ok', service: 'Deriv Proxy REST', timestamp: Date.now(), app_id: APP_ID });
 });
 
-// Endpoint générique qui relaie une requête vers l'API REST de Deriv
 app.post('/api/deriv', async (req, res) => {
     const payload = req.body;
     try {
@@ -24,27 +23,32 @@ app.post('/api/deriv', async (req, res) => {
     }
 });
 
-function callDerivAPI(payload) {
+function callDerivAPI(payload, host = 'api.deriv.com', path = '/websockets/v3', depth = 0) {
+    if (depth > 5) return Promise.reject(new Error('Trop de redirections'));
     return new Promise((resolve, reject) => {
-        // Requête vers l'API REST de Deriv
-        const body = JSON.stringify({
-            ...payload,
-            app_id: APP_ID,
-            req_id: Date.now()
-        });
-
+        const body = JSON.stringify({ ...payload, app_id: APP_ID, req_id: Date.now() });
         const options = {
-            hostname: 'api.deriv.com',
-            path: '/websockets/v3',
+            hostname: host,
+            path: path,
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Content-Length': Buffer.byteLength(body),
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json'
             }
         };
-
         const req = https.request(options, (resp) => {
+            // Gérer les redirections (301, 302, 307, 308)
+            if ([301, 302, 307, 308].includes(resp.statusCode) && resp.headers.location) {
+                try {
+                    const newUrl = new URL(resp.headers.location);
+                    resolve(callDerivAPI(payload, newUrl.hostname, newUrl.pathname + newUrl.search, depth + 1));
+                } catch (e) {
+                    reject(new Error('Redirection invalide : ' + resp.headers.location));
+                }
+                return;
+            }
             let data = '';
             resp.on('data', (chunk) => data += chunk);
             resp.on('end', () => {
@@ -53,7 +57,7 @@ function callDerivAPI(payload) {
                     if (json.error) reject(new Error(json.error.message));
                     else resolve(json);
                 } catch (e) {
-                    reject(new Error('Réponse invalide: ' + data.slice(0, 100)));
+                    reject(new Error('Réponse non-JSON : ' + data.slice(0, 150)));
                 }
             });
         });
