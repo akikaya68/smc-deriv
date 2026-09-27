@@ -450,7 +450,8 @@
 // CONFIG
 // ══════════════════════════════════════════════════════════════════
 const TWELVEDATA_API = 'https://api.twelvedata.com';
-const HF_API_URL = 'https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct';
+const PROXY_URL = 'https://site--smc-deriv--vjf2vsfxsd4g.code.run';
+const HF_API_URL = PROXY_URL + '/api/hf';
 const STORAGE = {
     twelvedata: 'smc_twelvedata_key',
     hf: 'smc_hf_token',
@@ -458,7 +459,6 @@ const STORAGE = {
     history: 'smc_history',
     dark: 'smc_dark'
 };
-
 // ══════════════════════════════════════════════════════════════════
 // SYMBOLES
 // ══════════════════════════════════════════════════════════════════
@@ -578,20 +578,15 @@ function getDecimals(price) {
 function getTwelveKey() {
     try { return (localStorage.getItem(STORAGE.twelvedata) || '').trim(); } catch (e) { return ''; }
 }
-
 function updateConnStatus(status, text) {
     const el = $('conn-status');
     el.classList.remove('connected', 'connecting', 'error');
     if (status) el.classList.add(status);
     $('conn-text').textContent = text;
 }
-
 async function connectTwelveData() {
     const key = getTwelveKey();
-    if (!key) {
-        updateConnStatus('error', 'Clé API manquante');
-        return false;
-    }
+    if (!key) { updateConnStatus('error', 'Clé API manquante'); return false; }
     updateConnStatus('connecting', 'Vérification de la clé…');
     try {
         const res = await fetch(TWELVEDATA_API + '/api_usage?apikey=' + encodeURIComponent(key));
@@ -617,27 +612,19 @@ const TF_MAP = { H4: '4h', H1: '1h', M15: '15min', M5: '5min', D1: '1day' };
 async function fetchCandles(symbol, tf, count = 200) {
     const key = getTwelveKey();
     if (!key) throw new Error('Clé API Twelve Data manquante');
-    
     setStatus('Chargement ' + symbol + ' ' + tf + '…');
-    
     const url = TWELVEDATA_API + '/time_series?symbol=' + encodeURIComponent(symbol) +
-                '&interval=' + TF_MAP[tf] +
-                '&outputsize=' + count +
+                '&interval=' + TF_MAP[tf] + '&outputsize=' + count +
                 '&apikey=' + encodeURIComponent(key);
-    
     const res = await fetch(url);
     const data = await res.json();
-    
     if (data.code === 429) throw new Error('Limite API atteinte (attends 1 min)');
     if (data.status === 'error') throw new Error(data.message || 'Erreur API');
     if (!data.values || !data.values.length) throw new Error('Pas de données pour ' + symbol);
-    
     return data.values.reverse().map(v => ({
         time: Math.floor(new Date(v.datetime).getTime() / 1000),
-        open: parseFloat(v.open),
-        high: parseFloat(v.high),
-        low: parseFloat(v.low),
-        close: parseFloat(v.close)
+        open: parseFloat(v.open), high: parseFloat(v.high),
+        low: parseFloat(v.low), close: parseFloat(v.close)
     }));
 }
 
@@ -650,9 +637,7 @@ async function fetchCurrentPrice(symbol) {
         const data = await res.json();
         if (data.price) return parseFloat(data.price);
         return null;
-    } catch (e) {
-        return null;
-    }
+    } catch (e) { return null; }
 }
 
 function subscribeTicks(symbol) {
@@ -793,7 +778,6 @@ function analyzeTimeframe(candles) {
     const fvgs = detectFVG(candles);
     const pd = computePremiumDiscount(candles);
     const sweeps = detectLiquiditySweeps(candles, structure);
-
     let bullPoints = 0, bearPoints = 0;
     if (structure.trend === 'bullish') bullPoints += 3;
     else if (structure.trend === 'bearish') bearPoints += 3;
@@ -801,7 +785,6 @@ function analyzeTimeframe(candles) {
     if (lastEv) { if (lastEv.direction === 'bull') bullPoints += 1; else bearPoints += 1; }
     if (pd.zone === 'discount') bullPoints += 1; else bearPoints += 1;
     for (const s of sweeps) { if (s.type === 'bull') bullPoints += 2; else bearPoints += 2; }
-
     const total = bullPoints + bearPoints;
     let direction = 'range', strength = 50;
     if (total > 0) {
@@ -818,7 +801,6 @@ function synthesizeSMC(results, mode) {
     if (mode === 'h4h1') weights = { H4: 0.65, H1: 0.35 };
     else if (mode === 'h1m15') weights = { H1: 0.55, M15: 0.45 };
     else weights = { H1: 0.5, M15: 0.3, M5: 0.2 };
-
     let bullScore = 0, bearScore = 0, totalWeight = 0;
     for (const tf of tfs) {
         const w = weights[tf] || 0.33;
@@ -848,7 +830,6 @@ function computeSMCLevels(results, synthesis, currentPrice) {
     const entryR = results[entryTF];
     const obs = entryR.obs || [];
     let entry, sl, tp, riskReward;
-
     if (synthesis.signal === 'ACHAT') {
         const bullOBs = obs.filter(o => o.type === 'bull' && o.top < currentPrice).sort((a, b) => b.top - a.top);
         const entryOB = bullOBs[0];
@@ -911,7 +892,6 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
     $('signal-setup').textContent = 'Setup : ' + (setupParts.length ? setupParts.join(' + ') : 'structure ' + entryTF);
     $('confidence-fill').style.width = synthesis.confidence + '%';
     $('confidence-fill').style.background = synthesis.confidence > 65 ? 'var(--success)' : synthesis.confidence > 45 ? 'var(--info)' : 'var(--warn)';
-
     $('tf-grid').innerHTML = tfs.map(tf => {
         const r = results[tf];
         const cls = r.direction === 'bullish' ? 'bull' : r.direction === 'bearish' ? 'bear' : 'range';
@@ -920,12 +900,10 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
         const evTxt = lastEv ? (lastEv.type + ' ' + (lastEv.direction === 'bull' ? '↑' : '↓')) : '—';
         return '<div class="tf-card ' + cls + '"><div class="tf-name">' + tf + '</div><div class="tf-direction">' + label + '</div><div class="tf-detail">' + r.strength + '% · ' + evTxt + '</div></div>';
     }).join('');
-
     $('level-entry').textContent = levels.entry;
     $('level-sl').textContent = levels.sl;
     $('level-tp').textContent = levels.tp;
     $('level-rr').textContent = levels.riskReward;
-
     let structHTML = '<p><strong>Timeframe d\'entrée :</strong> ' + entryTF + '</p>';
     const lastEv = entryR.structure.events[entryR.structure.events.length - 1];
     structHTML += '<p><strong>Dernier événement :</strong> ';
@@ -935,40 +913,34 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
     structHTML += '<p><strong>Dernier High :</strong> ' + (entryR.structure.lastHigh ? formatPrice(entryR.structure.lastHigh.price) : '—') + '</p>';
     structHTML += '<p><strong>Dernier Low :</strong> ' + (entryR.structure.lastLow ? formatPrice(entryR.structure.lastLow.price) : '—') + '</p>';
     $('smc-structure').innerHTML = structHTML;
-
     const obs = entryR.obs || [];
     $('ob-container').innerHTML = obs.length ? obs.map(ob =>
         '<div style="margin-bottom:0.4rem;"><span class="smc-tag ' + (ob.type === 'bull' ? 'bull' : 'bear') + '">' +
         (ob.type === 'bull' ? '📈 OB Bullish' : '📉 OB Bearish') + '</span> ' + formatPrice(ob.bottom) + ' → ' + formatPrice(ob.top) + '</div>'
     ).join('') : '<p style="color:var(--ink-dim);">Aucun Order Block détecté.</p>';
-
     const fvgs = entryR.fvgs || [];
     $('fvg-container').innerHTML = fvgs.length ? fvgs.map(f =>
         '<div style="margin-bottom:0.4rem;"><span class="smc-tag ' + (f.type === 'bull' ? 'bull' : 'bear') + '">' +
         (f.type === 'bull' ? '💧 FVG Bullish' : '💧 FVG Bearish') + '</span> ' + formatPrice(f.bottom) + ' → ' + formatPrice(f.top) + '</div>'
     ).join('') : '<p style="color:var(--ink-dim);">Aucun FVG actif.</p>';
-
     const pd = entryR.pd;
     $('pd-container').innerHTML =
         '<p>Range : ' + formatPrice(pd.low) + ' → ' + formatPrice(pd.high) + '</p>' +
         '<p>Équilibre : ' + formatPrice(pd.equilibrium) + '</p>' +
         '<p>Zone : <span class="smc-tag ' + (pd.zone === 'discount' ? 'bull' : 'bear') + '">' +
         (pd.zone === 'discount' ? '💎 Discount' : '🔺 Premium') + ' (' + pd.position + '%)</span></p>';
-
     $('scenarios-container').innerHTML = scenarios.map(s =>
         '<div class="scenario ' + s.type + '"><div class="sc-title">' + esc(s.title) + '</div>' +
         '<div class="sc-prob">' + esc(s.prob) + '</div><div>' + esc(s.text) + '</div></div>'
     ).join('');
-
     $('audit-container').innerHTML = '<button class="btn-secondary" id="run-audit-btn">🔍 Lancer l\'audit IA</button>';
     $('run-audit-btn')?.addEventListener('click', runHFAudit);
-
     state.lastAnalysis = { timestamp: Date.now(), symbol, signal: synthesis.signal, signalClass: synthesis.signalClass, confidence: synthesis.confidence, levels, results, scenarios, currentPrice };
     $('report-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ══════════════════════════════════════════════════════════════════
-// AUDIT IA — HUGGING FACE
+// AUDIT IA — HUGGING FACE (via proxy Northflank)
 // ══════════════════════════════════════════════════════════════════
 function getHFToken() {
     try { return (localStorage.getItem(STORAGE.hf) || '').trim(); } catch (e) { return ''; }
@@ -980,7 +952,7 @@ async function runHFAudit() {
     const analysis = state.lastAnalysis;
     if (!analysis) return;
     const container = $('audit-container');
-    container.innerHTML = '<div style="text-align:center;padding:1rem;"><div class="spinner" style="margin:0 auto 0.5rem;"></div>Analyse IA en cours… (10-20 sec)</div>';
+    container.innerHTML = '<div style="text-align:center;padding:1rem;"><div class="spinner" style="margin:0 auto 0.5rem;"></div>Analyse IA en cours… (10-30 sec)</div>';
     
     const summary = {
         symbol: analysis.symbol,
@@ -1006,31 +978,21 @@ async function runHFAudit() {
         };
     }
     
-    const prompt = `Tu es un analyste trader expert en Smart Money Concepts. Fais un audit CRITIQUE de cette analyse.
-
-DONNÉES DE L'ANALYSE :
-${JSON.stringify(summary, null, 2)}
-
-Réponds en français, en 5 sections courtes SANS markdown :
-- Cohérence (2-3 phrases)
-- Forces (3 puces)
-- Faiblesses (2-3 puces)
-- Risques (2-3 puces)
-- Verdict (note /100 + conseil final en 1 phrase)`;
+    const prompt = 'Tu es un analyste trader expert en Smart Money Concepts. Fais un audit CRITIQUE de cette analyse.\n\nDONNÉES DE L\'ANALYSE :\n' + JSON.stringify(summary, null, 2) + '\n\nRéponds en français, en 5 sections courtes SANS markdown :\n- Cohérence (2-3 phrases)\n- Forces (3 puces)\n- Faiblesses (2-3 puces)\n- Risques (2-3 puces)\n- Verdict (note /100 + conseil final en 1 phrase)';
 
     try {
         const res = await fetch(HF_API_URL, {
             method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                inputs: prompt,
-                parameters: {
-                    max_new_tokens: 800,
-                    temperature: 0.4,
-                    return_full_text: false
+                token: token,
+                payload: {
+                    inputs: prompt,
+                    parameters: {
+                        max_new_tokens: 800,
+                        temperature: 0.4,
+                        return_full_text: false
+                    }
                 }
             })
         });
@@ -1041,6 +1003,8 @@ Réponds en français, en 5 sections courtes SANS markdown :
         }
         
         const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        
         let text = '';
         if (Array.isArray(data) && data[0] && data[0].generated_text) text = data[0].generated_text;
         else if (data.generated_text) text = data.generated_text;
@@ -1087,7 +1051,6 @@ async function runAnalysis() {
     try {
         const ok = await connectTwelveData();
         if (!ok) throw new Error('Clé API Twelve Data non configurée');
-        
         const mode = $('mtf-mode').value;
         state.mtfMode = mode;
         const tfsToFetch = mode === 'h4h1' ? ['H4', 'H1'] : mode === 'h1m15' ? ['H1', 'M15'] : ['H1', 'M15', 'M5'];
@@ -1218,7 +1181,6 @@ function initSections() {
 }
 
 function initSettings() {
-    // Twelve Data
     const tk = getTwelveKey();
     if (tk) $('twelvedata-key').value = tk;
     $('save-twelvedata')?.addEventListener('click', async () => {
@@ -1231,8 +1193,6 @@ function initSettings() {
             toast('Clé supprimée', 'warn');
         }
     });
-
-    // Hugging Face
     const hf = getHFToken();
     if (hf) $('groq-key').value = hf;
     $('save-groq')?.addEventListener('click', () => {
@@ -1240,8 +1200,6 @@ function initSettings() {
         try { localStorage.setItem(STORAGE.hf, v); } catch (e) {}
         toast(v ? 'Token Hugging Face enregistré ✓' : 'Token supprimé', v ? 'success' : 'warn');
     });
-
-    // Telegram
     const cfg = getTelegramConfig();
     if (cfg.token) $('telegram-token').value = cfg.token;
     if (cfg.chatId) $('telegram-chatid').value = cfg.chatId;
