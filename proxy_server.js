@@ -22,7 +22,7 @@ app.post('/api/deriv', async (req, res) => {
 
 function sendToDeriv(payload) {
     return new Promise((resolve, reject) => {
-        const url = 'wss://ws.binaryws.com/websockets/v3?app_id=36300&l=EN';
+        const url = 'wss://ws.derivws.com/websockets/v3?app_id=34vKV1G0NztPGAGnedRWK';
         const ws = new WebSocket(url);
         let settled = false;
         const timeout = setTimeout(() => {
