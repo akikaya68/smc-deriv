@@ -1,6 +1,6 @@
 const express = require('express');
-const WebSocket = require('ws');
 const cors = require('cors');
+const https = require('https');
 
 const app = express();
 app.use(cors());
@@ -9,74 +9,58 @@ app.use(express.json({ limit: '10mb' }));
 const APP_ID = '34vKV1G0NztPGAGnedRWK';
 const PORT = process.env.PORT || 3000;
 
-// Plusieurs endpoints Deriv essayés dans l'ordre
-const DERIV_ENDPOINTS = [
-    'wss://ws.derivws.com/websockets/v3?app_id=' + APP_ID + '&l=EN&brand=deriv&v=3',
-    'wss://ws.binaryws.com/websockets/v3?app_id=' + APP_ID + '&l=EN&brand=deriv',
-    'wss://ws.derivws.com/websockets/v3?app_id=' + APP_ID,
-    'wss://ws.binaryws.com/websockets/v3?app_id=' + APP_ID,
-    'wss://green.derivws.com/websockets/v3?app_id=' + APP_ID,
-    'wss://blue.derivws.com/websockets/v3?app_id=' + APP_ID,
-    'wss://red.derivws.com/websockets/v3?app_id=' + APP_ID
-];
-
 app.get('/', (req, res) => {
-    res.json({ status: 'ok', service: 'Deriv Proxy', timestamp: Date.now(), app_id: APP_ID });
+    res.json({ status: 'ok', service: 'Deriv Proxy REST', timestamp: Date.now(), app_id: APP_ID });
 });
 
+// Endpoint générique qui relaie une requête vers l'API REST de Deriv
 app.post('/api/deriv', async (req, res) => {
     const payload = req.body;
-    let lastError = null;
-
-    for (const url of DERIV_ENDPOINTS) {
-        try {
-            const result = await sendToDeriv(url, payload);
-            res.json(result);
-            return;
-        } catch (e) {
-            lastError = e;
-            console.log('Endpoint failed: ' + url.slice(0, 60) + ' — ' + e.message);
-        }
+    try {
+        const result = await callDerivAPI(payload);
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
-
-    res.status(500).json({ error: lastError ? lastError.message : 'Tous les endpoints Deriv ont échoué' });
 });
 
-function sendToDeriv(url, payload) {
+function callDerivAPI(payload) {
     return new Promise((resolve, reject) => {
-        const ws = new WebSocket(url, {
+        // Requête vers l'API REST de Deriv
+        const body = JSON.stringify({
+            ...payload,
+            app_id: APP_ID,
+            req_id: Date.now()
+        });
+
+        const options = {
+            hostname: 'api.deriv.com',
+            path: '/websockets/v3',
+            method: 'POST',
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Origin': 'https://app.deriv.com',
-                'Accept': '*/*'
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(body),
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             }
+        };
+
+        const req = https.request(options, (resp) => {
+            let data = '';
+            resp.on('data', (chunk) => data += chunk);
+            resp.on('end', () => {
+                try {
+                    const json = JSON.parse(data);
+                    if (json.error) reject(new Error(json.error.message));
+                    else resolve(json);
+                } catch (e) {
+                    reject(new Error('Réponse invalide: ' + data.slice(0, 100)));
+                }
+            });
         });
-        let settled = false;
-        const timeout = setTimeout(() => {
-            if (!settled) { settled = true; try { ws.close(); } catch (e) {} reject(new Error('Timeout')); }
-        }, 15000);
-        ws.on('open', () => ws.send(JSON.stringify(payload)));
-        ws.on('message', (data) => {
-            try {
-                const msg = JSON.parse(data.toString());
-                if (!msg.msg_type && !msg.error) return;
-                if (settled) return;
-                settled = true;
-                clearTimeout(timeout);
-                try { ws.close(); } catch (e) {}
-                if (msg.error) reject(new Error(msg.error.message));
-                else resolve(msg);
-            } catch (e) {
-                if (!settled) { settled = true; clearTimeout(timeout); try { ws.close(); } catch (ee) {} reject(e); }
-            }
-        });
-        ws.on('error', (err) => {
-            if (!settled) { settled = true; clearTimeout(timeout); reject(err); }
-        });
-        ws.on('close', (code) => {
-            if (!settled) { settled = true; clearTimeout(timeout); reject(new Error('Fermé (code ' + code + ')')); }
-        });
+        req.on('error', reject);
+        req.write(body);
+        req.end();
     });
 }
 
-app.listen(PORT, '0.0.0.0', () => console.log('Proxy actif sur port ' + PORT + ' — App ID: ' + APP_ID));
+app.listen(PORT, '0.0.0.0', () => console.log('Proxy actif sur port ' + PORT));
