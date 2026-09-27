@@ -541,10 +541,8 @@ const STORAGE = {
 };
 
 const SCAN_INSTRUMENTS = [
-    { id: 'EUR/USD', name: 'EUR/USD' },
     { id: 'XAU/USD', name: '🥇 Or' },
-    { id: 'SPX', name: 'S&P 500' },
-    { id: 'DAX', name: 'DAX 40' },
+    { id: 'EUR/USD', name: 'EUR/USD' },
     { id: 'BTC/USD', name: 'Bitcoin' }
 ];
 
@@ -881,7 +879,7 @@ async function analyzeInstrument(inst, minConf, minRR) {
             const candles = await fetchCandles(inst.id, tf, 200);
             const r = analyzeTF(candles);
             if (r) results[tf] = r;
-            await sleep(700);
+            await sleep(8000);
         } catch (e) {
             return { ok: false, error: tf + ' : ' + e.message };
         }
@@ -1358,7 +1356,7 @@ async function runScan() {
             } else {
                 addScanLog('⚠️ Échec envoi Telegram pour ' + inst.name, 'error');
             }
-            await sleep(1000);
+            await sleep(15000);
         } catch (e) {
             addScanLog('❌ ' + inst.name + ' : ' + e.message, 'error');
         }
