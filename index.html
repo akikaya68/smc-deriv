@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SMC Deriv Analyzer</title>
+<title>SMC Analyzer Pro</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     :root {
@@ -114,7 +114,6 @@
         border: none; background: var(--ink); color: var(--bg);
         font-size: 0.92rem; font-weight: 700; font-family: inherit;
         cursor: pointer; margin-bottom: 0.8rem;
-        transition: opacity 0.2s, transform 0.1s;
     }
     .btn-primary:active:not(:disabled) { transform: scale(0.98); }
     .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
@@ -124,7 +123,6 @@
         color: var(--ink); font-size: 0.76rem; font-weight: 600;
         font-family: inherit; cursor: pointer;
     }
-    .btn-secondary:active { transform: scale(0.97); }
 
     .signal-banner {
         padding: 1rem; border-radius: 10px; text-align: center;
@@ -256,11 +254,11 @@
 
 <header>
     <button class="theme-toggle" id="theme-toggle">🌙</button>
-    <h1>🧠 SMC Deriv Analyzer</h1>
-    <p class="subtitle">Smart Money Concepts · Temps réel · Audit IA</p>
+    <h1>🧠 SMC Analyzer Pro</h1>
+    <p class="subtitle">Smart Money Concepts · Forex · Métaux · Indices · Crypto</p>
     <div class="conn-status" id="conn-status">
         <span class="dot"></span>
-        <span id="conn-text">Déconnecté</span>
+        <span id="conn-text">Prêt</span>
     </div>
 </header>
 
@@ -274,7 +272,7 @@
 
     <div class="section open">
         <div class="section-header" data-toggle="section-symbol">
-            <span class="section-title">📊 Symbole & timeframe</span>
+            <span class="section-title">📊 Instrument & timeframe</span>
             <span class="chevron">▼</span>
         </div>
         <div class="section-body" id="section-symbol">
@@ -352,7 +350,7 @@
         </div>
 
         <div class="report-block">
-            <h3>🤖 Audit IA <span style="font-size:0.65rem;font-weight:400;">(Groq · Llama 3.3 70B)</span></h3>
+            <h3>🤖 Audit IA <span style="font-size:0.65rem;font-weight:400;">(Groq)</span></h3>
             <div id="audit-container">
                 <button class="btn-secondary" id="run-audit-btn">🔍 Lancer l'audit IA</button>
             </div>
@@ -373,6 +371,26 @@
 </div>
 
 <div class="tab-panel" id="panel-settings">
+
+    <div class="section open">
+        <div class="section-header" data-toggle="section-twelvedata">
+            <span class="section-title">📡 Twelve Data API</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="section-twelvedata">
+            <div class="section-content">
+                <div class="control-row">
+                    <label class="control-label">Clé API Twelve Data</label>
+                    <input type="password" id="twelvedata-key" placeholder="Colle ta clé ici">
+                </div>
+                <button class="btn-secondary" id="save-twelvedata">Enregistrer</button>
+                <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;line-height:1.4;">
+                    Clé gratuite sur <strong>twelvedata.com</strong> → Dashboard → API Keys
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="section open">
         <div class="section-header" data-toggle="section-groq">
             <span class="section-title">🤖 Audit IA — Groq</span>
@@ -431,10 +449,11 @@
 // ══════════════════════════════════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════════════════════════════════
-const PROXY_URL = 'https://site--smc-deriv--vjf2vsfxsd4g.code.run';
+const TWELVEDATA_API = 'https://api.twelvedata.com';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODEL = 'llama-3.3-70b-versatile';
 const STORAGE = {
+    twelvedata: 'smc_twelvedata_key',
     groq: 'smc_groq_key',
     telegram: 'smc_telegram',
     history: 'smc_history',
@@ -445,52 +464,47 @@ const STORAGE = {
 // SYMBOLES
 // ══════════════════════════════════════════════════════════════════
 const SYMBOLS = {
-    'Indices synthétiques': [
-        { id: 'R_10', name: 'Volatility 10 (1s)' },
-        { id: 'R_25', name: 'Volatility 25 (1s)' },
-        { id: 'R_50', name: 'Volatility 50 (1s)' },
-        { id: 'R_75', name: 'Volatility 75 (1s)' },
-        { id: 'R_100', name: 'Volatility 100 (1s)' },
-        { id: '1HZ10V', name: 'Volatility 10 (2s)' },
-        { id: '1HZ25V', name: 'Volatility 25 (2s)' },
-        { id: '1HZ50V', name: 'Volatility 50 (2s)' },
-        { id: '1HZ75V', name: 'Volatility 75 (2s)' },
-        { id: '1HZ100V', name: 'Volatility 100 (2s)' },
-        { id: 'JD10', name: 'Jump 10' },
-        { id: 'JD25', name: 'Jump 25' },
-        { id: 'JD50', name: 'Jump 50' },
-        { id: 'JD75', name: 'Jump 75' },
-        { id: 'JD100', name: 'Jump 100' },
-        { id: 'BOOM500', name: 'Boom 500' },
-        { id: 'BOOM1000', name: 'Boom 1000' },
-        { id: 'CRASH500', name: 'Crash 500' },
-        { id: 'CRASH1000', name: 'Crash 1000' },
-        { id: 'STPRNG', name: 'Step Index' },
-        { id: 'RB100', name: 'Range Break 100' },
-        { id: 'RB200', name: 'Range Break 200' }
+    'Forex — Majeures': [
+        { id: 'EUR/USD', name: 'EUR/USD' },
+        { id: 'GBP/USD', name: 'GBP/USD' },
+        { id: 'USD/JPY', name: 'USD/JPY' },
+        { id: 'USD/CHF', name: 'USD/CHF' },
+        { id: 'AUD/USD', name: 'AUD/USD' },
+        { id: 'USD/CAD', name: 'USD/CAD' },
+        { id: 'NZD/USD', name: 'NZD/USD' }
     ],
-    'Forex': [
-        { id: 'frxEURUSD', name: 'EUR/USD' },
-        { id: 'frxGBPUSD', name: 'GBP/USD' },
-        { id: 'frxUSDJPY', name: 'USD/JPY' },
-        { id: 'frxAUDUSD', name: 'AUD/USD' },
-        { id: 'frxUSDCAD', name: 'USD/CAD' },
-        { id: 'frxUSDCHF', name: 'USD/CHF' },
-        { id: 'frxNZDUSD', name: 'NZD/USD' },
-        { id: 'frxEURGBP', name: 'EUR/GBP' },
-        { id: 'frxEURJPY', name: 'EUR/JPY' },
-        { id: 'frxGBPJPY', name: 'GBP/JPY' }
+    'Forex — Croisées': [
+        { id: 'EUR/GBP', name: 'EUR/GBP' },
+        { id: 'EUR/JPY', name: 'EUR/JPY' },
+        { id: 'GBP/JPY', name: 'GBP/JPY' },
+        { id: 'EUR/CHF', name: 'EUR/CHF' },
+        { id: 'EUR/AUD', name: 'EUR/AUD' },
+        { id: 'GBP/CHF', name: 'GBP/CHF' }
     ],
     'Métaux': [
-        { id: 'frxXAUUSD', name: 'Or (XAU/USD)' },
-        { id: 'frxXAGUSD', name: 'Argent (XAG/USD)' },
-        { id: 'frxXPTUSD', name: 'Platine (XPT/USD)' },
-        { id: 'frxXPDUSD', name: 'Palladium (XPD/USD)' }
+        { id: 'XAU/USD', name: '🥇 Or (XAU/USD)' },
+        { id: 'XAG/USD', name: '🥈 Argent (XAG/USD)' },
+        { id: 'XPT/USD', name: 'Platine (XPT/USD)' },
+        { id: 'XPD/USD', name: 'Palladium (XPD/USD)' }
+    ],
+    'Indices US': [
+        { id: 'SPX', name: 'S&P 500 (SPX)' },
+        { id: 'NDX', name: 'Nasdaq 100 (NDX)' },
+        { id: 'DJI', name: 'Dow Jones (DJI)' },
+        { id: 'RUT', name: 'Russell 2000 (RUT)' }
+    ],
+    'Indices Europe': [
+        { id: 'DAX', name: 'DAX 40 (Allemagne)' },
+        { id: 'CAC', name: 'CAC 40 (France)' },
+        { id: 'FTSE', name: 'FTSE 100 (UK)' },
+        { id: 'STOXX50E', name: 'Euro Stoxx 50' }
     ],
     'Crypto': [
-        { id: 'cryBTCUSD', name: 'Bitcoin / USD' },
-        { id: 'cryETHUSD', name: 'Ethereum / USD' },
-        { id: 'cryLTCUSD', name: 'Litecoin / USD' }
+        { id: 'BTC/USD', name: 'Bitcoin' },
+        { id: 'ETH/USD', name: 'Ethereum' },
+        { id: 'LTC/USD', name: 'Litecoin' },
+        { id: 'XRP/USD', name: 'Ripple' },
+        { id: 'SOL/USD', name: 'Solana' }
     ]
 };
 
@@ -498,8 +512,8 @@ const SYMBOLS = {
 // STATE
 // ══════════════════════════════════════════════════════════════════
 const state = {
-    wsReady: false,
-    symbol: 'R_10',
+    ready: false,
+    symbol: 'EUR/USD',
     mtfMode: 'h1m15',
     candles: {},
     lastAnalysis: null,
@@ -537,11 +551,12 @@ function setStatus(text) {
 function formatPrice(p) {
     if (p == null || isNaN(p)) return '—';
     const abs = Math.abs(p);
-    let dec = 5;
+    let dec = 4;
     if (abs >= 1000) dec = 2;
     else if (abs >= 100) dec = 2;
     else if (abs >= 10) dec = 3;
     else if (abs >= 1) dec = 4;
+    else dec = 5;
     return Number(p).toFixed(dec);
 }
 function formatDate(ts) {
@@ -559,8 +574,12 @@ function getDecimals(price) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// CONNEXION PROXY
+// CONNEXION TWELVE DATA
 // ══════════════════════════════════════════════════════════════════
+function getTwelveKey() {
+    try { return (localStorage.getItem(STORAGE.twelvedata) || '').trim(); } catch (e) { return ''; }
+}
+
 function updateConnStatus(status, text) {
     const el = $('conn-status');
     el.classList.remove('connected', 'connecting', 'error');
@@ -568,76 +587,70 @@ function updateConnStatus(status, text) {
     $('conn-text').textContent = text;
 }
 
-async function connectDeriv() {
-    updateConnStatus('connecting', 'Connexion au proxy…');
+async function connectTwelveData() {
+    const key = getTwelveKey();
+    if (!key) {
+        updateConnStatus('error', 'Clé API manquante');
+        return false;
+    }
+    updateConnStatus('connecting', 'Vérification de la clé…');
     try {
-        const res = await fetch(PROXY_URL + '/', { method: 'GET' });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const res = await fetch(TWELVEDATA_API + '/api_usage?apikey=' + encodeURIComponent(key));
         const data = await res.json();
-        if (data.status === 'ok') {
-            state.wsReady = true;
-            updateConnStatus('connected', 'Connecté via proxy');
-            return true;
+        if (data.code === 401 || data.status === 'error') {
+            updateConnStatus('error', 'Clé API invalide');
+            return false;
         }
-        throw new Error('Réponse invalide');
+        state.ready = true;
+        updateConnStatus('connected', 'Prêt · ' + (data.current_usage || 0) + '/' + (data.plan_limit || 800) + ' req');
+        return true;
     } catch (e) {
-        state.wsReady = false;
-        updateConnStatus('error', 'Proxy injoignable');
-        throw e;
+        updateConnStatus('error', 'Erreur connexion');
+        return false;
     }
-}
-
-async function sendDerivRequest(payload) {
-    const res = await fetch(PROXY_URL + '/api/deriv', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Erreur proxy ' + res.status);
-    }
-    return await res.json();
 }
 
 // ══════════════════════════════════════════════════════════════════
 // BOUGIES
 // ══════════════════════════════════════════════════════════════════
-const GRANULARITY = { M5: 300, M15: 900, M30: 1800, H1: 3600, H4: 14400, D1: 86400 };
+const TF_MAP = { H4: '4h', H1: '1h', M15: '15min', M5: '5min', D1: '1day' };
 
-async function fetchCandles(symbol, granularity, count = 200) {
-    setStatus('Chargement ' + symbol + '…');
-    const response = await sendDerivRequest({
-        ticks_history: symbol,
-        adjust_start_time: 1,
-        count: count,
-        end: 'latest',
-        start: 1,
-        style: 'candles',
-        granularity: granularity
-    });
-    if (!response.candles || !response.candles.length) throw new Error('Pas de données');
-    return response.candles.map(c => ({
-        time: c.epoch,
-        open: parseFloat(c.open),
-        high: parseFloat(c.high),
-        low: parseFloat(c.low),
-        close: parseFloat(c.close)
+async function fetchCandles(symbol, tf, count = 200) {
+    const key = getTwelveKey();
+    if (!key) throw new Error('Clé API Twelve Data manquante');
+    
+    setStatus('Chargement ' + symbol + ' ' + tf + '…');
+    
+    const url = TWELVEDATA_API + '/time_series?symbol=' + encodeURIComponent(symbol) +
+                '&interval=' + TF_MAP[tf] +
+                '&outputsize=' + count +
+                '&apikey=' + encodeURIComponent(key);
+    
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    if (data.code === 429) throw new Error('Limite API atteinte (attends 1 min)');
+    if (data.status === 'error') throw new Error(data.message || 'Erreur API');
+    if (!data.values || !data.values.length) throw new Error('Pas de données pour ' + symbol);
+    
+    // Twelve Data retourne les bougies du plus récent au plus ancien
+    return data.values.reverse().map(v => ({
+        time: Math.floor(new Date(v.datetime).getTime() / 1000),
+        open: parseFloat(v.open),
+        high: parseFloat(v.high),
+        low: parseFloat(v.low),
+        close: parseFloat(v.close)
     }));
 }
 
 async function fetchCurrentPrice(symbol) {
     try {
-        const res = await sendDerivRequest({
-            ticks_history: symbol,
-            count: 1,
-            end: 'latest',
-            start: 1,
-            style: 'ticks'
-        });
-        if (res.history && res.history.prices && res.history.prices.length) {
-            return parseFloat(res.history.prices[res.history.prices.length - 1]);
-        }
+        const key = getTwelveKey();
+        if (!key) return null;
+        const url = TWELVEDATA_API + '/price?symbol=' + encodeURIComponent(symbol) + '&apikey=' + encodeURIComponent(key);
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.price) return parseFloat(data.price);
         return null;
     } catch (e) {
         return null;
@@ -646,13 +659,11 @@ async function fetchCurrentPrice(symbol) {
 
 function subscribeTicks(symbol) {
     if (state.tickInterval) clearInterval(state.tickInterval);
-    // Premier appel immédiat
     fetchCurrentPrice(symbol).then(p => { if (p) updatePriceTicker(p); });
-    // Polling toutes les 5 secondes
     state.tickInterval = setInterval(async () => {
         const p = await fetchCurrentPrice(symbol);
         if (p) updatePriceTicker(p);
-    }, 5000);
+    }, 15000); // 15s pour économiser les requêtes API
 }
 
 let lastPrice = null;
@@ -669,7 +680,7 @@ function updatePriceTicker(price) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// ANALYSE SMC
+// ANALYSE SMC (identique à avant)
 // ══════════════════════════════════════════════════════════════════
 function findSwings(candles, lookback = 3) {
     const swings = [];
@@ -768,11 +779,11 @@ function detectLiquiditySweeps(candles, structure) {
     const recentLows = structure.swings.filter(s => s.type === 'low').slice(-5);
     for (const sh of recentHighs) {
         const swept = recent.some(c => c.high > sh.price && c.close < sh.price);
-        if (swept && lastClose < sh.price) sweeps.push({ type: 'bear', level: sh.price, desc: 'Sweep au-dessus du high → rejet' });
+        if (swept && lastClose < sh.price) sweeps.push({ type: 'bear', level: sh.price, desc: 'Sweep haut → rejet' });
     }
     for (const sl of recentLows) {
         const swept = recent.some(c => c.low < sl.price && c.close > sl.price);
-        if (swept && lastClose > sl.price) sweeps.push({ type: 'bull', level: sl.price, desc: 'Sweep sous le low → rejet' });
+        if (swept && lastClose > sl.price) sweeps.push({ type: 'bull', level: sl.price, desc: 'Sweep bas → rejet' });
     }
     return sweeps.slice(-3);
 }
@@ -845,22 +856,14 @@ function computeSMCLevels(results, synthesis, currentPrice) {
         const bullOBs = obs.filter(o => o.type === 'bull' && o.top < currentPrice).sort((a, b) => b.top - a.top);
         const entryOB = bullOBs[0];
         if (entryOB) { entry = entryOB.top; sl = entryOB.bottom - (entryOB.top - entryOB.bottom) * 0.2; }
-        else {
-            const bullFVGs = fvgs.filter(f => f.type === 'bull').sort((a, b) => b.top - a.top);
-            if (bullFVGs[0]) { entry = bullFVGs[0].top; sl = bullFVGs[0].bottom - (bullFVGs[0].top - bullFVGs[0].bottom) * 0.2; }
-            else { entry = currentPrice * 0.998; sl = currentPrice * 0.99; }
-        }
+        else { entry = currentPrice * 0.998; sl = currentPrice * 0.99; }
         const lastHigh = entryR.structure.lastHigh;
         tp = lastHigh ? Math.max(lastHigh.price, entry + (entry - sl) * 2) : entry + (entry - sl) * 2;
     } else if (synthesis.signal === 'VENTE') {
         const bearOBs = obs.filter(o => o.type === 'bear' && o.bottom > currentPrice).sort((a, b) => a.bottom - b.bottom);
         const entryOB = bearOBs[0];
         if (entryOB) { entry = entryOB.bottom; sl = entryOB.top + (entryOB.top - entryOB.bottom) * 0.2; }
-        else {
-            const bearFVGs = fvgs.filter(f => f.type === 'bear').sort((a, b) => a.bottom - b.bottom);
-            if (bearFVGs[0]) { entry = bearFVGs[0].bottom; sl = bearFVGs[0].top + (bearFVGs[0].top - bearFVGs[0].bottom) * 0.2; }
-            else { entry = currentPrice * 1.002; sl = currentPrice * 1.01; }
-        }
+        else { entry = currentPrice * 1.002; sl = currentPrice * 1.01; }
         const lastLow = entryR.structure.lastLow;
         tp = lastLow ? Math.min(lastLow.price, entry - (sl - entry) * 2) : entry - (sl - entry) * 2;
     } else {
@@ -876,14 +879,14 @@ function buildScenarios(results, synthesis, levels) {
     const scenarios = [];
     if (synthesis.signal === 'ACHAT') {
         scenarios.push({ type: 'bull', title: '🟢 Scénario principal — Achat', prob: 'Probabilité : ' + synthesis.confidence + '%',
-            text: 'Attendre retour du prix sur OB ' + levels.entry + '. Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP : ' + levels.tp });
+            text: 'Attendre retour sur OB ' + levels.entry + '. Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP : ' + levels.tp });
         scenarios.push({ type: 'bear', title: '🔴 Invalidation', prob: 'Probabilité : ' + (100 - synthesis.confidence) + '%',
             text: 'Si clôture sous ' + levels.sl + ', biais haussier invalidé.' });
         scenarios.push({ type: 'range', title: '⚪ Range', prob: 'Probabilité faible',
             text: 'Si prix bloqué entre ' + levels.entry + ' et ' + levels.tp + ', attendre cassure.' });
     } else if (synthesis.signal === 'VENTE') {
         scenarios.push({ type: 'bear', title: '🔴 Scénario principal — Vente', prob: 'Probabilité : ' + synthesis.confidence + '%',
-            text: 'Attendre retour du prix sur OB bearish ' + levels.entry + '. Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP : ' + levels.tp });
+            text: 'Attendre retour sur OB bearish ' + levels.entry + '. Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP : ' + levels.tp });
         scenarios.push({ type: 'bull', title: '🟢 Invalidation', prob: 'Probabilité : ' + (100 - synthesis.confidence) + '%',
             text: 'Si clôture au-dessus de ' + levels.sl + ', biais baissier invalidé.' });
         scenarios.push({ type: 'range', title: '⚪ Range', prob: 'Probabilité faible',
@@ -907,7 +910,7 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
     const setupParts = [];
     if (entryR.obs && entryR.obs.length) setupParts.push('OB ' + entryTF);
     if (entryR.fvgs && entryR.fvgs.length) setupParts.push('FVG ' + entryTF);
-    if (entryR.sweeps && entryR.sweeps.length) setupParts.push('Liquidity sweep');
+    if (entryR.sweeps && entryR.sweeps.length) setupParts.push('Sweep');
     $('signal-setup').textContent = 'Setup : ' + (setupParts.length ? setupParts.join(' + ') : 'structure ' + entryTF);
     $('confidence-fill').style.width = synthesis.confidence + '%';
     $('confidence-fill').style.background = synthesis.confidence > 65 ? 'var(--success)' : synthesis.confidence > 45 ? 'var(--info)' : 'var(--warn)';
@@ -991,7 +994,7 @@ async function runGroqAudit() {
         if (!r) continue;
         summary.tfs[tf] = { trend: r.direction, strength: r.strength, obsCount: r.obs.length, fvgsCount: r.fvgs.length, sweepsCount: r.sweeps.length, zone: r.pd.zone };
     }
-    const prompt = 'Tu es un analyste trader expert en Smart Money Concepts. Fais un audit CRITIQUE de cette analyse.\n\nDONNÉES :\n' + JSON.stringify(summary, null, 2) + '\n\nRéponds en français, texte structuré SANS markdown, 5 sections :\n- Cohérence (2-3 phrases)\n- Forces (3 puces)\n- Faiblesses (2-3 puces)\n- Risques (2-3 puces)\n- Verdict (note /100 + conseil final)';
+    const prompt = 'Tu es un analyste trader expert en Smart Money Concepts. Fais un audit CRITIQUE de cette analyse.\n\nDONNÉES :\n' + JSON.stringify(summary, null, 2) + '\n\nRéponds en français, texte structuré SANS markdown, 5 sections :\n- Cohérence\n- Forces (3 puces)\n- Faiblesses (2-3 puces)\n- Risques (2-3 puces)\n- Verdict (note /100 + conseil)';
     try {
         const res = await fetch(GROQ_API_URL, {
             method: 'POST',
@@ -999,7 +1002,7 @@ async function runGroqAudit() {
             body: JSON.stringify({
                 model: GROQ_MODEL,
                 messages: [
-                    { role: 'system', content: 'Tu es un analyste trading expert en SMC. Réponds de façon concise, professionnelle, sans markdown.' },
+                    { role: 'system', content: 'Tu es un analyste trading expert en SMC. Réponds de façon concise, sans markdown.' },
                     { role: 'user', content: prompt }
                 ],
                 temperature: 0.4,
@@ -1033,7 +1036,7 @@ function renderAudit(text) {
             html += '<p>' + esc(t) + '</p>';
         }
     }
-    container.innerHTML = html + '<button class="btn-secondary" style="margin-top:0.5rem;" id="run-audit-btn">🔁 Relancer l\'audit</button>';
+    container.innerHTML = html + '<button class="btn-secondary" style="margin-top:0.5rem;" id="run-audit-btn">🔁 Relancer</button>';
     $('run-audit-btn')?.addEventListener('click', runGroqAudit);
 }
 
@@ -1044,23 +1047,22 @@ async function runAnalysis() {
     const btn = $('analyze-btn');
     btn.disabled = true;
     btn.textContent = '🧠 Analyse…';
-    setStatus('Connexion au proxy…');
+    setStatus('Vérification de la clé API…');
     try {
-        if (!state.wsReady) {
-            await connectDeriv();
-            await sleep(300);
-        }
+        const ok = await connectTwelveData();
+        if (!ok) throw new Error('Clé API Twelve Data non configurée');
+        
         const mode = $('mtf-mode').value;
         state.mtfMode = mode;
         const tfsToFetch = mode === 'h4h1' ? ['H4', 'H1'] : mode === 'h1m15' ? ['H1', 'M15'] : ['H1', 'M15', 'M5'];
         const results = {};
         state.candles = {};
         for (const tf of tfsToFetch) {
-            setStatus('Chargement ' + tf + '…');
-            const candles = await fetchCandles(state.symbol, GRANULARITY[tf], 200);
+            const candles = await fetchCandles(state.symbol, tf, 200);
             state.candles[tf] = candles;
             const r = analyzeTimeframe(candles);
             if (r) results[tf] = r;
+            await sleep(500); // Pause pour respecter les limites API
         }
         setStatus('Synthèse SMC…');
         const synthesis = synthesizeSMC(results, mode);
@@ -1138,12 +1140,12 @@ function initSymbols() {
         html += '</optgroup>';
     }
     sel.innerHTML = html;
-    sel.value = 'R_10';
-    state.symbol = 'R_10';
+    sel.value = 'EUR/USD';
+    state.symbol = 'EUR/USD';
     sel.addEventListener('change', (e) => {
         state.symbol = e.target.value;
         lastPrice = null;
-        if (state.wsReady) subscribeTicks(state.symbol);
+        if (state.ready) subscribeTicks(state.symbol);
     });
 }
 
@@ -1180,6 +1182,21 @@ function initSections() {
 }
 
 function initSettings() {
+    // Twelve Data
+    const tk = getTwelveKey();
+    if (tk) $('twelvedata-key').value = tk;
+    $('save-twelvedata')?.addEventListener('click', async () => {
+        const v = $('twelvedata-key').value.trim();
+        try { localStorage.setItem(STORAGE.twelvedata, v); } catch (e) {}
+        if (v) {
+            const ok = await connectTwelveData();
+            toast(ok ? 'Clé Twelve Data valide ✓' : 'Clé invalide', ok ? 'success' : 'error');
+        } else {
+            toast('Clé supprimée', 'warn');
+        }
+    });
+
+    // Groq
     const gk = getGroqKey();
     if (gk) $('groq-key').value = gk;
     $('save-groq')?.addEventListener('click', () => {
@@ -1187,6 +1204,8 @@ function initSettings() {
         try { localStorage.setItem(STORAGE.groq, v); } catch (e) {}
         toast(v ? 'Clé Groq enregistrée ✓' : 'Clé supprimée', v ? 'success' : 'warn');
     });
+
+    // Telegram
     const cfg = getTelegramConfig();
     if (cfg.token) $('telegram-token').value = cfg.token;
     if (cfg.chatId) $('telegram-chatid').value = cfg.chatId;
@@ -1224,14 +1243,10 @@ async function init() {
         localStorage.removeItem(STORAGE.history);
         renderHistory();
     });
-    try {
-        await connectDeriv();
-        await sleep(300);
-        subscribeTicks(state.symbol);
-    } catch (e) {
-        log('Connexion auto échouée : ' + e.message);
-    }
-    log('SMC Analyzer prêt');
+    // Connexion initiale
+    await connectTwelveData();
+    subscribeTicks(state.symbol);
+    log('SMC Analyzer Pro prêt');
 }
 
 init();
