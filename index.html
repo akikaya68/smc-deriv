@@ -228,7 +228,6 @@
     .chart-container { background: var(--panel-2); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; height: 220px; position: relative; }
     .chart-container canvas { width: 100%; height: 100%; }
 
-    /* GRAPHIQUE BOUGIES */
     .candles-container {
         background: var(--panel-2); border-radius: 10px;
         padding: 0.5rem; margin-bottom: 0.7rem;
@@ -242,7 +241,6 @@
     .chart-legend .legend-item { display: flex; align-items: center; gap: 0.25rem; }
     .chart-legend .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
 
-    /* MULTI-TELEGRAM */
     .tg-account {
         padding: 0.7rem; border-radius: 8px;
         border: 1px solid var(--border); background: var(--panel-2);
@@ -264,7 +262,6 @@
         cursor: pointer; font-size: 1rem; padding: 0 0.3rem;
     }
 
-    /* SCANNER PERSONNALISÉ */
     .scan-instrument {
         display: flex; justify-content: space-between; align-items: center;
         padding: 0.5rem 0.7rem; border-radius: 6px;
@@ -281,6 +278,55 @@
     }
     .add-instrument-row input { flex: 1; }
     .add-instrument-row button { padding: 0.5rem 0.8rem; }
+
+    /* MODALE */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.7); z-index: 2000;
+        display: none; align-items: center; justify-content: center;
+        padding: 1rem;
+    }
+    .modal-overlay.visible { display: flex; }
+    .modal-box {
+        background: var(--panel); border-radius: 12px;
+        max-width: 420px; width: 100%;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        max-height: 85vh; overflow-y: auto;
+    }
+    .modal-header {
+        padding: 1rem 1.2rem;
+        border-bottom: 1px solid var(--border);
+    }
+    .modal-header h2 {
+        font-size: 1rem; font-weight: 700; color: var(--ink);
+    }
+    .modal-body {
+        padding: 1rem 1.2rem;
+        font-size: 0.85rem; line-height: 1.5;
+    }
+    .modal-body .m-row {
+        display: flex; justify-content: space-between;
+        padding: 0.4rem 0; border-bottom: 1px solid var(--border);
+    }
+    .modal-body .m-row:last-child { border-bottom: none; }
+    .modal-body .m-label { color: var(--ink-dim); font-weight: 600; }
+    .modal-body .m-value { font-family: ui-monospace, monospace; font-weight: 700; }
+    .modal-body .m-value.entry { color: var(--info); }
+    .modal-body .m-value.sl { color: var(--error); }
+    .modal-body .m-value.tp { color: var(--success); }
+    .modal-body .m-signal {
+        text-align: center; padding: 0.6rem;
+        border-radius: 8px; font-weight: 700;
+        font-size: 1rem; margin-bottom: 0.8rem;
+    }
+    .modal-body .m-signal.buy { background: #dcfce7; color: var(--success); }
+    .modal-body .m-signal.sell { background: #fee2e2; color: var(--error); }
+    .modal-actions {
+        padding: 1rem 1.2rem;
+        border-top: 1px solid var(--border);
+        display: flex; gap: 0.5rem; justify-content: flex-end;
+    }
+    .modal-actions button { margin: 0; }
 
     .disclaimer { font-size: 0.68rem; color: var(--ink-dim); text-align: center; padding: 0.7rem; border-top: 1px solid var(--border); margin-top: 0.8rem; }
 </style>
@@ -344,7 +390,6 @@
             <div class="confidence-bar"><div class="confidence-fill" id="confidence-fill" style="width:0%"></div></div>
         </div>
 
-        <!-- GRAPHIQUE BOUGIES -->
         <div class="report-block">
             <h3>📈 Graphique SMC</h3>
             <div class="chart-legend">
@@ -378,15 +423,8 @@
         <div class="report-block"><h3>💧 Fair Value Gaps (FVG)</h3><div id="fvg-container"></div></div>
         <div class="report-block"><h3>💰 Zones Premium / Discount</h3><div id="pd-container"></div></div>
         <div class="report-block"><h3>🎲 Scénarios probabilistes</h3><div id="scenarios-container"></div></div>
-        <div class="report-block">
-            <h3>🤖 Audit IA</h3>
-            <div id="audit-container">
-                <button class="btn-secondary" id="run-audit-btn">🔍 Lancer l'audit IA</button>
-            </div>
-        </div>
         <div style="margin-top:0.5rem;">
-            <button class="btn-secondary" id="save-history-btn">💾 Sauvegarder</button>
-            <button class="btn-secondary" id="send-telegram-btn">📤 Telegram</button>
+            <button class="btn-secondary" id="send-telegram-btn">📤 Envoyer sur Telegram</button>
         </div>
     </div>
 </div>
@@ -483,7 +521,7 @@
     </div>
 </div>
 
-<!-- SCANNER PERSONNALISÉ -->
+<!-- SCANNER -->
 <div class="tab-panel" id="panel-scanner">
     <div class="section open">
         <div class="section-header" data-toggle="sec-scan-list">
@@ -571,7 +609,6 @@
         </div>
     </div>
 
-    <!-- MULTI-TELEGRAM -->
     <div class="section open">
         <div class="section-header" data-toggle="sec-multitelegram">
             <span class="section-title">📤 Multi-Telegram</span>
@@ -622,9 +659,24 @@
 <div class="disclaimer">⚠️ Outil d'analyse éducatif. Pas un conseil financier.</div>
 <div class="status-bar" id="status-bar"><div class="spinner"></div><span id="status-text">Préparation…</span></div>
 <div class="toast" id="toast"><span id="toast-text">Message</span></div>
+
+<!-- MODALE : Proposition d'enregistrement automatique -->
+<div class="modal-overlay" id="auto-trade-modal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>📥 Enregistrer cette position ?</h2>
+        </div>
+        <div class="modal-body" id="auto-trade-details"></div>
+        <div class="modal-actions">
+            <button class="btn-secondary" id="auto-trade-no">Non, ignorer</button>
+            <button class="btn-secondary btn-success" id="auto-trade-yes">Oui, enregistrer</button>
+        </div>
+    </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════════════════════════
-// SERVICE WORKER INLINE
+// SERVICE WORKER
 // ══════════════════════════════════════════════════════════════════
 const SW_CODE = `
 const CACHE_NAME = 'smc-trader-v3';
@@ -670,7 +722,6 @@ const STORAGE = {
     twelvedata: 'smc_twelvedata_key_v3',
     telegramAccounts: 'smc_tg_accounts_v3',
     trades: 'smc_trades_v3',
-    history: 'smc_history_v3',
     dark: 'smc_dark_v3',
     scanInstruments: 'smc_scan_instruments_v3',
     scanLog: 'smc_scan_log_v3',
@@ -1160,7 +1211,7 @@ function drawCandlesChart(candles, analysis, tfLabel) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// TELEGRAM AUTO
+// TELEGRAM AUTO + PROPOSITION D'ENREGISTREMENT
 // ══════════════════════════════════════════════════════════════════
 async function autoSendToTelegram(synthesis, levels, results, symbol) {
     if (synthesis.signal === 'ATTENDRE') return;
@@ -1207,6 +1258,65 @@ async function autoSendToTelegram(synthesis, levels, results, symbol) {
         try { localStorage.setItem(STORAGE.lastTgSent, JSON.stringify(lastTelegramSent)); } catch (e) {}
         sendNotification('🚨 Signal ' + synthesis.signal, symbol + ' — ' + synthesis.confidence + '%');
     }
+    proposeAutoTrade(synthesis, levels, results, symbol);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PROPOSITION D'ENREGISTREMENT AUTOMATIQUE
+// ══════════════════════════════════════════════════════════════════
+function proposeAutoTrade(synthesis, levels, results, symbol) {
+    const modal = $('auto-trade-modal');
+    const details = $('auto-trade-details');
+    if (!modal || !details) return;
+    const tfs = Object.keys(results).filter(k => results[k]);
+    const entryTF = tfs[tfs.length - 1];
+    const entryR = results[entryTF];
+    const setupParts = [];
+    if (entryR.obs && entryR.obs.length) setupParts.push('OB ' + entryTF);
+    if (entryR.fvgs && entryR.fvgs.length) setupParts.push('FVG ' + entryTF);
+    if (entryR.sweeps && entryR.sweeps.length) setupParts.push('Sweep');
+    const direction = synthesis.signal === 'ACHAT' ? 'buy' : 'sell';
+    const capital = parseFloat(localStorage.getItem('smc_capital') || '100');
+    const risk = parseFloat(localStorage.getItem('smc_risk') || '1');
+    const sizeResult = computePositionSize(capital, risk, levels.entryPrice, levels.slPrice, symbol);
+    details.innerHTML =
+        '<div class="m-signal ' + (direction === 'buy' ? 'buy' : 'sell') + '">' +
+            (direction === 'buy' ? '🟢 ACHAT' : '🔴 VENTE') + ' — ' + esc(symbol) +
+        '</div>' +
+        '<div class="m-row"><span class="m-label">Confiance</span><span class="m-value">' + synthesis.confidence + '%</span></div>' +
+        '<div class="m-row"><span class="m-label">Setup</span><span class="m-value">' + esc(setupParts.join(' + ') || 'Structure') + '</span></div>' +
+        '<div class="m-row"><span class="m-label">Zone</span><span class="m-value">' + (entryR.pd.zone === 'discount' ? '💎 Discount' : '🔺 Premium') + ' (' + entryR.pd.position + '%)</span></div>' +
+        '<div class="m-row"><span class="m-label">📥 Entrée</span><span class="m-value entry">' + levels.entry + '</span></div>' +
+        '<div class="m-row"><span class="m-label">🛑 Stop Loss</span><span class="m-value sl">' + levels.sl + '</span></div>' +
+        '<div class="m-row"><span class="m-label">🎯 Take Profit</span><span class="m-value tp">' + levels.tp + '</span></div>' +
+        '<div class="m-row"><span class="m-label">⚖️ Ratio R/R</span><span class="m-value">' + levels.riskReward + '</span></div>' +
+        '<div class="m-row"><span class="m-label">💰 Capital</span><span class="m-value">' + capital + '€</span></div>' +
+        '<div class="m-row"><span class="m-label">⚠️ Risque</span><span class="m-value">' + risk + '% (' + sizeResult.risk + '€)</span></div>' +
+        '<div class="m-row"><span class="m-label">📊 Taille</span><span class="m-value">' + sizeResult.size + ' lots</span></div>';
+    window._pendingTrade = { direction, symbol, levels, results, sizeResult, capital, risk };
+    modal.classList.add('visible');
+}
+
+function executeAutoTrade() {
+    const data = window._pendingTrade;
+    if (!data) return;
+    const trade = {
+        instrument: data.symbol,
+        direction: data.direction,
+        entry: data.levels.entryPrice,
+        sl: data.levels.slPrice,
+        tp: data.levels.tpPrice,
+        size: data.sizeResult.size,
+        capital: data.capital,
+        risk: data.risk,
+        autoAdded: true
+    };
+    addTrade(trade);
+    renderTrades();
+    renderStats();
+    toast('✅ Position ajoutée au journal', 'success');
+    window._pendingTrade = null;
+    $('auto-trade-modal').classList.remove('visible');
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -1298,6 +1408,7 @@ function computePositionSize(capital, riskPct, entry, sl, symbol) {
         message: 'Risque ' + riskAmount.toFixed(2) + '€ · ' + pipsDistance.toFixed(1) + ' pips · Taille ' + size.toFixed(4) + ' lots'
     };
 }
+
 // ══════════════════════════════════════════════════════════════════
 // TRADES
 // ══════════════════════════════════════════════════════════════════
@@ -1660,7 +1771,7 @@ async function sendToAllTelegram(text) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// SCANNER PERSONNALISÉ
+// SCANNER
 // ══════════════════════════════════════════════════════════════════
 function loadScanInstruments() {
     try {
@@ -2066,6 +2177,20 @@ function initScanner() {
         $(id)?.addEventListener('change', saveScanConfig);
     });
 }
+function initModal() {
+    $('auto-trade-yes')?.addEventListener('click', executeAutoTrade);
+    $('auto-trade-no')?.addEventListener('click', () => {
+        window._pendingTrade = null;
+        $('auto-trade-modal').classList.remove('visible');
+        toast('Position ignorée', 'warn');
+    });
+    $('auto-trade-modal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'auto-trade-modal') {
+            window._pendingTrade = null;
+            $('auto-trade-modal').classList.remove('visible');
+        }
+    });
+}
 
 async function init() {
     await registerServiceWorker();
@@ -2076,15 +2201,12 @@ async function init() {
     initSettings();
     initTradeForm();
     initScanner();
+    initModal();
     renderTrades();
     renderStats();
     renderTelegramAccounts();
     $('theme-toggle').addEventListener('click', toggleTheme);
     $('analyze-btn').addEventListener('click', runAnalysis);
-    $('save-history-btn')?.addEventListener('click', () => {
-        if (!state.lastAnalysis) { toast('Aucune analyse', 'warn'); return; }
-        toast('Sauvegardée ✓', 'success');
-    });
     $('send-telegram-btn')?.addEventListener('click', () => {
         if (!state.lastAnalysis) { toast('Aucune analyse', 'warn'); return; }
         const a = state.lastAnalysis;
@@ -2102,22 +2224,6 @@ async function init() {
         });
     });
     log('SMC Trader Pro v3 prêt');
-       // Modale auto-trade
-    $('auto-trade-yes')?.addEventListener('click', executeAutoTrade);
-    $('auto-trade-no')?.addEventListener('click', () => {
-        window._pendingTrade = null;
-        $('auto-trade-modal').classList.remove('visible');
-        toast('Position ignorée', 'warn');
-    });
-    $('auto-trade-modal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'auto-trade-modal') {
-            window._pendingTrade = null;
-            $('auto-trade-modal').classList.remove('visible');
-        }
-    });
-    log('SMC Trader Pro v3 prêt');
-}
-init();
 }
 init();
 </script>
