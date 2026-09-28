@@ -2102,6 +2102,22 @@ async function init() {
         });
     });
     log('SMC Trader Pro v3 prêt');
+       // Modale auto-trade
+    $('auto-trade-yes')?.addEventListener('click', executeAutoTrade);
+    $('auto-trade-no')?.addEventListener('click', () => {
+        window._pendingTrade = null;
+        $('auto-trade-modal').classList.remove('visible');
+        toast('Position ignorée', 'warn');
+    });
+    $('auto-trade-modal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'auto-trade-modal') {
+            window._pendingTrade = null;
+            $('auto-trade-modal').classList.remove('visible');
+        }
+    });
+    log('SMC Trader Pro v3 prêt');
+}
+init();
 }
 init();
 </script>
