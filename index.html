@@ -4,16 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>SMC Trader Pro</title>
-
-<!-- PWA -->
 <meta name="theme-color" content="#16a34a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SMC Trader">
-
-<!-- OneSignal -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     :root {
@@ -233,6 +228,60 @@
     .chart-container { background: var(--panel-2); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; height: 220px; position: relative; }
     .chart-container canvas { width: 100%; height: 100%; }
 
+    /* GRAPHIQUE BOUGIES */
+    .candles-container {
+        background: var(--panel-2); border-radius: 10px;
+        padding: 0.5rem; margin-bottom: 0.7rem;
+        height: 320px; position: relative; overflow: hidden;
+    }
+    .candles-container canvas { width: 100%; height: 100%; display: block; }
+    .chart-legend {
+        display: flex; gap: 0.7rem; flex-wrap: wrap;
+        font-size: 0.65rem; color: var(--ink-dim); margin-bottom: 0.5rem;
+    }
+    .chart-legend .legend-item { display: flex; align-items: center; gap: 0.25rem; }
+    .chart-legend .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+    /* MULTI-TELEGRAM */
+    .tg-account {
+        padding: 0.7rem; border-radius: 8px;
+        border: 1px solid var(--border); background: var(--panel-2);
+        margin-bottom: 0.5rem; position: relative;
+    }
+    .tg-account .tg-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    .tg-account .tg-name { font-weight: 700; font-size: 0.85rem; }
+    .tg-account .tg-toggle {
+        font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 4px;
+        font-weight: 700;
+    }
+    .tg-account .tg-toggle.active { background: var(--success); color: #fff; }
+    .tg-account .tg-toggle.inactive { background: var(--ink-faint); color: #fff; }
+    .tg-account .tg-remove {
+        background: transparent; border: none; color: var(--error);
+        cursor: pointer; font-size: 1rem; padding: 0 0.3rem;
+    }
+
+    /* SCANNER PERSONNALISÉ */
+    .scan-instrument {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 0.5rem 0.7rem; border-radius: 6px;
+        background: var(--panel-2); margin-bottom: 0.3rem;
+        font-size: 0.82rem;
+    }
+    .scan-instrument .si-name { flex: 1; font-family: ui-monospace, monospace; }
+    .scan-instrument .si-remove {
+        background: transparent; border: none; color: var(--error);
+        cursor: pointer; font-size: 0.9rem; padding: 0 0.3rem;
+    }
+    .add-instrument-row {
+        display: flex; gap: 0.3rem; margin-bottom: 0.5rem;
+    }
+    .add-instrument-row input { flex: 1; }
+    .add-instrument-row button { padding: 0.5rem 0.8rem; }
+
     .disclaimer { font-size: 0.68rem; color: var(--ink-dim); text-align: center; padding: 0.7rem; border-top: 1px solid var(--border); margin-top: 0.8rem; }
 </style>
 </head>
@@ -252,6 +301,7 @@
     <div class="tab active" data-tab="analyze">🔍 Analyse</div>
     <div class="tab" data-tab="journal">📓 Journal</div>
     <div class="tab" data-tab="stats">📊 Stats</div>
+    <div class="tab" data-tab="scanner">🤖 Scanner</div>
     <div class="tab" data-tab="settings">⚙️ Réglages</div>
 </div>
 
@@ -293,6 +343,26 @@
             <div class="signal-conf" id="signal-conf">—</div>
             <div class="confidence-bar"><div class="confidence-fill" id="confidence-fill" style="width:0%"></div></div>
         </div>
+
+        <!-- GRAPHIQUE BOUGIES -->
+        <div class="report-block">
+            <h3>📈 Graphique SMC</h3>
+            <div class="chart-legend">
+                <span class="legend-item"><span class="legend-dot" style="background:#16a34a"></span>Bougie haussière</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#dc2626"></span>Bougie baissière</span>
+                <span class="legend-item"><span class="legend-dot" style="background:rgba(34,197,94,0.3)"></span>OB Bullish</span>
+                <span class="legend-item"><span class="legend-dot" style="background:rgba(239,68,68,0.3)"></span>OB Bearish</span>
+                <span class="legend-item"><span class="legend-dot" style="background:rgba(168,85,247,0.3)"></span>FVG</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Sweep</span>
+            </div>
+            <div class="candles-container">
+                <canvas id="candles-canvas"></canvas>
+            </div>
+            <div style="font-size:0.7rem;color:var(--ink-dim);text-align:center;">
+                Timeframe : <strong id="chart-tf">H1</strong>
+            </div>
+        </div>
+
         <div class="tf-grid" id="tf-grid"></div>
         <div class="report-block">
             <h3>🎯 Niveaux clés</h3>
@@ -413,6 +483,79 @@
     </div>
 </div>
 
+<!-- SCANNER PERSONNALISÉ -->
+<div class="tab-panel" id="panel-scanner">
+    <div class="section open">
+        <div class="section-header" data-toggle="sec-scan-list">
+            <span class="section-title">🤖 Instruments à scanner</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="sec-scan-list">
+            <div class="section-content">
+                <div id="scan-instruments-list"></div>
+                <div class="add-instrument-row" style="margin-top:0.7rem;">
+                    <input type="text" id="new-instrument-input" placeholder="Ex: EUR/USD, XAU/USD, BTC/USD">
+                    <button class="btn-secondary btn-success" id="add-instrument-btn">➕</button>
+                </div>
+                <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;">
+                    Format : <strong>EUR/USD</strong>, <strong>XAU/USD</strong>, <strong>SPX</strong>, <strong>BTC/USD</strong>…
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="section open">
+        <div class="section-header" data-toggle="sec-scan-config">
+            <span class="section-title">⚙️ Configuration</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="sec-scan-config">
+            <div class="section-content">
+                <div class="control-grid">
+                    <div class="control-row">
+                        <label>Fréquence</label>
+                        <select id="scan-freq">
+                            <option value="15">15 min</option>
+                            <option value="30" selected>30 min</option>
+                            <option value="60">1 heure</option>
+                        </select>
+                    </div>
+                    <div class="control-row">
+                        <label>Confiance min.</label>
+                        <select id="scan-conf">
+                            <option value="85">85%</option>
+                            <option value="90" selected>90%</option>
+                            <option value="95">95%</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="control-row">
+                    <label>R/R minimum</label>
+                    <select id="scan-rr">
+                        <option value="1.5">1:1.5</option>
+                        <option value="2" selected>1:2</option>
+                        <option value="3">1:3</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="section open">
+        <div class="section-header" data-toggle="sec-scan-status">
+            <span class="section-title">📊 Statut</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="sec-scan-status">
+            <div class="section-content">
+                <div style="padding:0.7rem;border-radius:8px;background:var(--panel-2);font-size:0.8rem;margin-bottom:0.6rem;" id="scan-status-display">
+                    ⏸ Scanner arrêté
+                </div>
+                <button class="btn-primary" id="scanner-toggle">▶️ Démarrer le scanner</button>
+                <div id="scan-log" style="max-height:250px;overflow-y:auto;padding:0.5rem;background:var(--panel-2);border-radius:8px;font-family:ui-monospace,monospace;font-size:0.72rem;margin-top:0.6rem;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- RÉGLAGES -->
 <div class="tab-panel" id="panel-settings">
     <div class="section open">
@@ -427,20 +570,28 @@
             </div>
         </div>
     </div>
+
+    <!-- MULTI-TELEGRAM -->
     <div class="section open">
-        <div class="section-header" data-toggle="sec-telegram">
-            <span class="section-title">📤 Telegram</span>
+        <div class="section-header" data-toggle="sec-multitelegram">
+            <span class="section-title">📤 Multi-Telegram</span>
             <span class="chevron">▼</span>
         </div>
-        <div class="section-body" id="sec-telegram">
+        <div class="section-body" id="sec-multitelegram">
             <div class="section-content">
-                <div class="control-row"><label>Bot Token</label><input type="password" id="telegram-token" placeholder="123456:ABC..."></div>
-                <div class="control-row"><label>Chat ID</label><input type="text" id="telegram-chatid" placeholder="123456789"></div>
-                <button class="btn-secondary" id="save-telegram">Enregistrer</button>
-                <button class="btn-secondary" id="test-telegram">Tester</button>
+                <div id="telegram-accounts-list"></div>
+                <div style="margin-top:0.7rem;">
+                    <button class="btn-secondary btn-success" id="add-telegram-btn">➕ Ajouter un compte</button>
+                    <button class="btn-secondary" id="test-all-telegram-btn">📤 Tester tous</button>
+                </div>
+                <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;">
+                    Tu peux ajouter jusqu'à <strong>5 comptes Telegram</strong>.<br>
+                    Chaque compte peut être activé/désactivé individuellement.
+                </div>
             </div>
         </div>
     </div>
+
     <div class="section open">
         <div class="section-header" data-toggle="sec-notif">
             <span class="section-title">🔔 Notifications</span>
@@ -448,11 +599,9 @@
         </div>
         <div class="section-body" id="sec-notif">
             <div class="section-content">
-                <button class="btn-secondary" id="enable-push-btn">🔔 Activer les notifications</button>
-                <button class="btn-secondary" id="test-push-btn">🧪 Tester la notification</button>
-                <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;" id="push-status">
-                    Statut : en attente
-                </div>
+                <button class="btn-secondary" id="enable-push-btn">🔔 Activer</button>
+                <button class="btn-secondary" id="test-push-btn">🧪 Tester</button>
+                <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;" id="push-status">Statut : en attente</div>
             </div>
         </div>
     </div>
@@ -473,13 +622,12 @@
 <div class="disclaimer">⚠️ Outil d'analyse éducatif. Pas un conseil financier.</div>
 <div class="status-bar" id="status-bar"><div class="spinner"></div><span id="status-text">Préparation…</span></div>
 <div class="toast" id="toast"><span id="toast-text">Message</span></div>
-
 <script>
 // ══════════════════════════════════════════════════════════════════
-// SERVICE WORKER INLINE (généré dynamiquement)
+// SERVICE WORKER INLINE
 // ══════════════════════════════════════════════════════════════════
 const SW_CODE = `
-const CACHE_NAME = 'smc-trader-v1';
+const CACHE_NAME = 'smc-trader-v3';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', (event) => {
@@ -504,19 +652,14 @@ self.addEventListener('notificationclick', (event) => {
     }));
 });
 `;
-
 async function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return false;
     try {
         const blob = new Blob([SW_CODE], { type: 'application/javascript' });
         const swUrl = URL.createObjectURL(blob);
-        const reg = await navigator.serviceWorker.register(swUrl, { scope: './' });
-        console.log('[PWA] Service Worker enregistré ✓', reg.scope);
+        await navigator.serviceWorker.register(swUrl, { scope: './' });
         return true;
-    } catch (e) {
-        console.warn('[PWA] Erreur SW :', e.message);
-        return false;
-    }
+    } catch (e) { return false; }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -524,9 +667,17 @@ async function registerServiceWorker() {
 // ══════════════════════════════════════════════════════════════════
 const TWELVEDATA_API = 'https://api.twelvedata.com';
 const STORAGE = {
-    twelvedata: 'smc_twelvedata_key', telegram: 'smc_telegram', trades: 'smc_trades',
-    history: 'smc_history', dark: 'smc_dark', capital: 'smc_capital', risk: 'smc_risk'
+    twelvedata: 'smc_twelvedata_key_v3',
+    telegramAccounts: 'smc_tg_accounts_v3',
+    trades: 'smc_trades_v3',
+    history: 'smc_history_v3',
+    dark: 'smc_dark_v3',
+    scanInstruments: 'smc_scan_instruments_v3',
+    scanLog: 'smc_scan_log_v3',
+    scanConfig: 'smc_scan_config_v3',
+    lastTgSent: 'smc_last_tg_sent_v3'
 };
+
 const SYMBOLS = {
     'Forex — Majeures': ['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD'],
     'Forex — Croisées': ['EUR/GBP', 'EUR/JPY', 'GBP/JPY', 'EUR/CHF', 'EUR/AUD', 'GBP/CHF'],
@@ -536,10 +687,20 @@ const SYMBOLS = {
     'Crypto': ['BTC/USD', 'ETH/USD', 'LTC/USD', 'XRP/USD', 'SOL/USD']
 };
 
+const DEFAULT_SCAN_INSTRUMENTS = ['EUR/USD', 'XAU/USD', 'SPX', 'DAX', 'BTC/USD'];
+
 const state = {
-    ready: false, symbol: 'EUR/USD', candles: {},
-    lastAnalysis: null, tickInterval: null
+    ready: false,
+    symbol: 'EUR/USD',
+    candles: {},
+    lastAnalysis: null,
+    tickInterval: null,
+    scanning: false,
+    countdownTimer: null,
+    nextScanTime: null
 };
+
+let lastTelegramSent = {};
 
 // ══════════════════════════════════════════════════════════════════
 // UTILITAIRES
@@ -759,11 +920,11 @@ function detectLiquiditySweeps(candles, structure) {
     const recentLows = structure.swings.filter(s => s.type === 'low').slice(-5);
     for (const sh of recentHighs) {
         const swept = recent.some(c => c.high > sh.price && c.close < sh.price);
-        if (swept && lastClose < sh.price) sweeps.push({ type: 'bear', level: sh.price });
+        if (swept && lastClose < sh.price) sweeps.push({ type: 'bear', level: sh.price, index: sh.index });
     }
     for (const sl of recentLows) {
         const swept = recent.some(c => c.low < sl.price && c.close > sl.price);
-        if (swept && lastClose > sl.price) sweeps.push({ type: 'bull', level: sl.price });
+        if (swept && lastClose > sl.price) sweeps.push({ type: 'bull', level: sl.price, index: sl.index });
     }
     return sweeps.slice(-3);
 }
@@ -855,6 +1016,202 @@ function buildScenarios(results, synthesis, levels) {
     }
     return scenarios;
 }
+
+// ══════════════════════════════════════════════════════════════════
+// GRAPHIQUE BOUGIES
+// ══════════════════════════════════════════════════════════════════
+function drawCandlesChart(candles, analysis, tfLabel) {
+    const canvas = $('candles-canvas');
+    if (!canvas) return;
+    const $tfLabel = $('chart-tf');
+    if ($tfLabel) $tfLabel.textContent = tfLabel;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const W = rect.width, H = rect.height;
+    const isDark = document.body.classList.contains('dark');
+    ctx.clearRect(0, 0, W, H);
+    if (!candles || candles.length < 10) {
+        ctx.fillStyle = isDark ? '#6b7280' : '#9ca3af';
+        ctx.font = '13px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Pas assez de bougies', W/2, H/2);
+        return;
+    }
+    const visible = candles.slice(-60);
+    const margin = { top: 10, right: 60, bottom: 20, left: 10 };
+    const plotW = W - margin.left - margin.right;
+    const plotH = H - margin.top - margin.bottom;
+    const allHigh = Math.max(...visible.map(c => c.high));
+    const allLow = Math.min(...visible.map(c => c.low));
+    const padding = (allHigh - allLow) * 0.05;
+    const yMax = allHigh + padding;
+    const yMin = allLow - padding;
+    const candleWidth = plotW / visible.length;
+    const bodyWidth = candleWidth * 0.6;
+    const xScale = i => margin.left + i * candleWidth + candleWidth / 2;
+    const yScale = p => margin.top + plotH - ((p - yMin) / (yMax - yMin)) * plotH;
+    ctx.strokeStyle = isDark ? '#2d3744' : '#e5e7eb';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i <= 4; i++) {
+        const y = margin.top + i * plotH / 4;
+        ctx.moveTo(margin.left, y); ctx.lineTo(margin.left + plotW, y);
+    }
+    ctx.stroke();
+    ctx.fillStyle = isDark ? '#9ca3af' : '#6b7280';
+    ctx.font = '9px -apple-system, sans-serif';
+    ctx.textAlign = 'left';
+    for (let i = 0; i <= 4; i++) {
+        const price = yMax - (i * (yMax - yMin) / 4);
+        const y = margin.top + i * plotH / 4;
+        ctx.fillText(formatPrice(price), margin.left + plotW + 4, y + 3);
+    }
+    const visibleStartIdx = candles.length - visible.length;
+    if (analysis && analysis.obs) {
+        for (const ob of analysis.obs) {
+            if (ob.index < visibleStartIdx) continue;
+            const xPos = xScale(ob.index - visibleStartIdx);
+            const obColor = ob.type === 'bull' ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)';
+            const obBorder = ob.type === 'bull' ? 'rgba(34,197,94,0.8)' : 'rgba(239,68,68,0.8)';
+            const yTop = yScale(ob.top);
+            const yBottom = yScale(ob.bottom);
+            ctx.fillStyle = obColor;
+            ctx.fillRect(xPos - candleWidth * 3, yTop, candleWidth * 6, yBottom - yTop);
+            ctx.strokeStyle = obBorder;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(xPos - candleWidth * 3, yTop, candleWidth * 6, yBottom - yTop);
+        }
+    }
+    if (analysis && analysis.fvgs) {
+        for (const fvg of analysis.fvgs) {
+            if (fvg.index < visibleStartIdx) continue;
+            const xPos = xScale(fvg.index - visibleStartIdx);
+            const fvgColor = fvg.type === 'bull' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)';
+            const yTop = yScale(fvg.top);
+            const yBottom = yScale(fvg.bottom);
+            ctx.fillStyle = fvgColor;
+            ctx.fillRect(xPos - candleWidth * 2, yTop, candleWidth * 4, yBottom - yTop);
+            ctx.strokeStyle = 'rgba(168,85,247,0.6)';
+            ctx.setLineDash([3, 2]);
+            ctx.strokeRect(xPos - candleWidth * 2, yTop, candleWidth * 4, yBottom - yTop);
+            ctx.setLineDash([]);
+        }
+    }
+    visible.forEach((c, i) => {
+        const x = xScale(i);
+        const openY = yScale(c.open);
+        const closeY = yScale(c.close);
+        const highY = yScale(c.high);
+        const lowY = yScale(c.low);
+        const bullish = c.close >= c.open;
+        const color = bullish ? '#16a34a' : '#dc2626';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, highY);
+        ctx.lineTo(x, lowY);
+        ctx.stroke();
+        ctx.fillStyle = color;
+        const bodyTop = Math.min(openY, closeY);
+        const bodyHeight = Math.max(1, Math.abs(closeY - openY));
+        ctx.fillRect(x - bodyWidth / 2, bodyTop, bodyWidth, bodyHeight);
+    });
+    if (analysis && analysis.sweeps) {
+        for (const sweep of analysis.sweeps) {
+            if (sweep.index < visibleStartIdx) continue;
+            const xPos = xScale(sweep.index - visibleStartIdx);
+            const yPos = yScale(sweep.level);
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 3]);
+            ctx.beginPath();
+            ctx.moveTo(xPos - candleWidth * 4, yPos);
+            ctx.lineTo(xPos + candleWidth * 6, yPos);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    }
+    if (analysis && analysis.levels) {
+        const levels = analysis.levels;
+        const drawLevelLine = (price, color, label) => {
+            const y = yScale(price);
+            if (y < margin.top || y > margin.top + plotH) return;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([6, 3]);
+            ctx.beginPath();
+            ctx.moveTo(margin.left, y);
+            ctx.lineTo(margin.left + plotW, y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = color;
+            ctx.font = 'bold 9px -apple-system, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(label, margin.left + plotW - 4, y - 3);
+        };
+        drawLevelLine(levels.entryPrice, '#2563eb', 'Entrée');
+        drawLevelLine(levels.slPrice, '#dc2626', 'SL');
+        drawLevelLine(levels.tpPrice, '#16a34a', 'TP');
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TELEGRAM AUTO
+// ══════════════════════════════════════════════════════════════════
+async function autoSendToTelegram(synthesis, levels, results, symbol) {
+    if (synthesis.signal === 'ATTENDRE') return;
+    const key = symbol + '_' + synthesis.signal;
+    const now = Date.now();
+    if (lastTelegramSent[key] && (now - lastTelegramSent[key]) < 30 * 60 * 1000) return;
+    const accounts = loadTelegramAccounts().filter(a => a.enabled && a.token && a.chatId);
+    if (!accounts.length) return;
+    const tfs = Object.keys(results).filter(k => results[k]);
+    const entryTF = tfs[tfs.length - 1];
+    const entryR = results[entryTF];
+    const setupParts = [];
+    if (entryR.obs && entryR.obs.length) setupParts.push('OB ' + entryTF);
+    if (entryR.fvgs && entryR.fvgs.length) setupParts.push('FVG ' + entryTF);
+    if (entryR.sweeps && entryR.sweeps.length) setupParts.push('Sweep');
+    const emoji = synthesis.signal === 'ACHAT' ? '🟢' : '🔴';
+    const zoneEmoji = entryR.pd.zone === 'discount' ? '💎' : '🔺';
+    const confEmoji = synthesis.confidence >= 85 ? '🔥🔥🔥' : synthesis.confidence >= 70 ? '🔥🔥' : '🔥';
+    let text = '🚨 *SIGNAL SMC A+ DÉTECTÉ* 🚨\n\n';
+    text += '📊 *' + symbol + '*\n';
+    text += emoji + ' Signal : *' + synthesis.signal + '*\n';
+    text += '🎯 Confiance : *' + synthesis.confidence + '%* ' + confEmoji + '\n\n';
+    text += '━━━━━━━━━━━━━━\n';
+    text += '💰 Setup : ' + (setupParts.length ? setupParts.join(' + ') : 'Structure ' + entryTF) + '\n';
+    text += zoneEmoji + ' Zone : *' + (entryR.pd.zone === 'discount' ? 'Discount' : 'Premium') + '* (' + entryR.pd.position + '%)\n';
+    text += '📈 Tendance : ' + (entryR.direction === 'bullish' ? '📈 Haussière' : entryR.direction === 'bearish' ? '📉 Baissière' : '↔️ Range') + ' (' + entryR.strength + '%)\n\n';
+    text += '━━━━━━━━━━━━━━\n';
+    text += '📥 *Entrée* : `' + levels.entry + '`\n';
+    text += '🛑 *Stop Loss* : `' + levels.sl + '`\n';
+    text += '🎯 *Take Profit* : `' + levels.tp + '`\n';
+    text += '⚖️ *R/R* : *' + levels.riskReward + '*\n\n';
+    text += '📊 *Structure :*\n';
+    for (const tf of tfs) {
+        const r = results[tf];
+        const dirEmoji = r.direction === 'bullish' ? '📈' : r.direction === 'bearish' ? '📉' : '↔️';
+        const lastEv = r.structure.events[r.structure.events.length - 1];
+        const evTxt = lastEv ? ' · ' + lastEv.type : '';
+        text += '• ' + tf + ' : ' + dirEmoji + ' ' + r.strength + '%' + evTxt + '\n';
+    }
+    text += '\n🕐 ' + new Date().toLocaleString('fr-FR');
+    const sent = await sendToAllTelegram(text);
+    if (sent > 0) {
+        lastTelegramSent[key] = now;
+        try { localStorage.setItem(STORAGE.lastTgSent, JSON.stringify(lastTelegramSent)); } catch (e) {}
+        sendNotification('🚨 Signal ' + synthesis.signal, symbol + ' — ' + synthesis.confidence + '%');
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RENDU DU RAPPORT
+// ══════════════════════════════════════════════════════════════════
 function renderReport(results, synthesis, levels, scenarios, currentPrice, symbol) {
     $('report-container').style.display = 'block';
     const banner = $('signal-banner');
@@ -871,6 +1228,9 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
     $('signal-setup').textContent = 'Setup : ' + (setupParts.length ? setupParts.join(' + ') : 'structure ' + entryTF);
     $('confidence-fill').style.width = synthesis.confidence + '%';
     $('confidence-fill').style.background = synthesis.confidence > 65 ? 'var(--success)' : synthesis.confidence > 45 ? 'var(--info)' : 'var(--warn)';
+    if (state.candles[entryTF]) {
+        drawCandlesChart(state.candles[entryTF], { obs: entryR.obs, fvgs: entryR.fvgs, sweeps: entryR.sweeps, levels: levels }, entryTF);
+    }
     $('tf-grid').innerHTML = tfs.map(tf => {
         const r = results[tf];
         const cls = r.direction === 'bullish' ? 'bull' : r.direction === 'bearish' ? 'bear' : 'range';
@@ -912,19 +1272,18 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
         '<div class="scenario ' + s.type + '"><div class="sc-title" style="font-weight:700;margin-bottom:0.1rem;">' + esc(s.title) + '</div>' +
         '<div class="sc-prob" style="font-size:0.7rem;color:var(--ink-dim);">' + esc(s.prob) + '</div><div>' + esc(s.text) + '</div></div>'
     ).join('');
-    $('audit-container').innerHTML = '<button class="btn-secondary" id="run-audit-btn">🔍 Lancer l\'audit IA</button>';
-    $('run-audit-btn')?.addEventListener('click', () => toast('Audit IA disponible en V2', 'warn'));
     state.lastAnalysis = { timestamp: Date.now(), symbol, signal: synthesis.signal, signalClass: synthesis.signalClass, confidence: synthesis.confidence, levels, results, scenarios, currentPrice };
+    autoSendToTelegram(synthesis, levels, results, symbol);
     $('report-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ══════════════════════════════════════════════════════════════════
-// CALCUL TAILLE DE POSITION
+// CALCUL TAILLE
 // ══════════════════════════════════════════════════════════════════
 function computePositionSize(capital, riskPct, entry, sl, symbol) {
     const riskAmount = capital * (riskPct / 100);
     const distance = Math.abs(entry - sl);
-    if (distance === 0) return { size: 0, risk: 0, message: 'Distance SL = 0' };
+    if (distance === 0) return { size: 0, message: 'Distance SL = 0' };
     let pipValue = 0.0001;
     if (symbol.includes('JPY')) pipValue = 0.01;
     else if (symbol.includes('XAU') || symbol.includes('XAG')) pipValue = 0.01;
@@ -936,13 +1295,11 @@ function computePositionSize(capital, riskPct, entry, sl, symbol) {
         size: size.toFixed(4),
         risk: riskAmount.toFixed(2),
         pipsDistance: pipsDistance.toFixed(1),
-        pipValue: pipValue,
         message: 'Risque ' + riskAmount.toFixed(2) + '€ · ' + pipsDistance.toFixed(1) + ' pips · Taille ' + size.toFixed(4) + ' lots'
     };
 }
-
 // ══════════════════════════════════════════════════════════════════
-// TRADES (JOURNAL)
+// TRADES
 // ══════════════════════════════════════════════════════════════════
 function loadTrades() { try { return JSON.parse(localStorage.getItem(STORAGE.trades) || '[]'); } catch (e) { return []; } }
 function saveTrades(t) { try { localStorage.setItem(STORAGE.trades, JSON.stringify(t)); } catch (e) {} }
@@ -1004,8 +1361,8 @@ async function trackOpenTrades() {
                         trades2[idx].beMoved = true;
                         saveTrades(trades2);
                     }
-                    sendNotification('🎯 BE déplacement', trade.instrument + ' — Déplace ton SL à ' + formatPrice(trade.entry));
-                    sendTelegramMessage('🎯 *BE déplacement*\n\n' + trade.instrument + '\nR/R atteint 1:1\nSL → BE (' + formatPrice(trade.entry) + ')');
+                    sendNotification('🎯 BE déplacement', trade.instrument + ' — SL à ' + formatPrice(trade.entry));
+                    sendToAllTelegram('🎯 *BE déplacement*\n\n' + trade.instrument + '\nR/R atteint 1:1\nSL → BE (' + formatPrice(trade.entry) + ')');
                 }
             }
         } catch (e) {}
@@ -1028,7 +1385,7 @@ function closeTrade(id, result, exitPrice) {
     const emoji = result === 'tp' ? '🎉' : result === 'be' ? '⚖️' : '❌';
     const label = result === 'tp' ? 'TAKE PROFIT' : result === 'be' ? 'BREAK EVEN' : 'STOP LOSS';
     sendNotification(emoji + ' Position fermée', trade.instrument + ' — ' + label + ' — ' + (pnl.dollars > 0 ? '+' : '') + pnl.dollars + '€');
-    sendTelegramMessage(emoji + ' *Position fermée*\n\n' + trade.instrument + '\nRésultat : *' + label + '*\nPrix : ' + formatPrice(exitPrice) + '\nPips : ' + (pnl.pips > 0 ? '+' : '') + pnl.pips + '\nP&L : ' + (pnl.dollars > 0 ? '+' : '') + pnl.dollars + '€');
+    sendToAllTelegram(emoji + ' *Position fermée*\n\n' + trade.instrument + '\nRésultat : *' + label + '*\nPrix : ' + formatPrice(exitPrice) + '\nPips : ' + (pnl.pips > 0 ? '+' : '') + pnl.pips + '\nP&L : ' + (pnl.dollars > 0 ? '+' : '') + pnl.dollars + '€');
     renderTrades();
     renderStats();
 }
@@ -1039,7 +1396,6 @@ window.manualCloseTrade = function(id, result) {
     if (!trade) return;
     closeTrade(trade.id, result, trade.currentPrice || trade.entry);
 };
-
 function renderTrades() {
     const trades = loadTrades();
     const open = trades.filter(t => t.status === 'open');
@@ -1090,7 +1446,7 @@ function renderTrades() {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// STATS + COURBE
+// STATS
 // ══════════════════════════════════════════════════════════════════
 function computeStats(trades) {
     const closed = trades.filter(t => t.status === 'closed');
@@ -1212,7 +1568,7 @@ function renderPerformanceChart(trades) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// NOTIFICATIONS + TELEGRAM
+// NOTIFICATIONS
 // ══════════════════════════════════════════════════════════════════
 async function sendNotification(title, body) {
     if (!('Notification' in window)) return false;
@@ -1230,19 +1586,256 @@ async function sendNotification(title, body) {
     } catch (e) { return false; }
 }
 
-function getTelegramConfig() { try { return JSON.parse(localStorage.getItem(STORAGE.telegram) || '{}'); } catch (e) { return {}; } }
-async function sendTelegramMessage(text) {
-    const cfg = getTelegramConfig();
-    if (!cfg.token || !cfg.chatId) return false;
+// ══════════════════════════════════════════════════════════════════
+// MULTI-TELEGRAM
+// ══════════════════════════════════════════════════════════════════
+function loadTelegramAccounts() {
     try {
-        const res = await fetch('https://api.telegram.org/bot' + cfg.token + '/sendMessage', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: cfg.chatId, text, parse_mode: 'Markdown' })
+        const stored = JSON.parse(localStorage.getItem(STORAGE.telegramAccounts) || '[]');
+        const sent = JSON.parse(localStorage.getItem(STORAGE.lastTgSent) || '{}');
+        lastTelegramSent = sent;
+        return stored;
+    } catch (e) { return []; }
+}
+function saveTelegramAccounts(accounts) {
+    try { localStorage.setItem(STORAGE.telegramAccounts, JSON.stringify(accounts)); } catch (e) {}
+}
+function renderTelegramAccounts() {
+    const accounts = loadTelegramAccounts();
+    const list = $('telegram-accounts-list');
+    if (!accounts.length) {
+        list.innerHTML = '<div class="empty-state">Aucun compte Telegram configuré</div>';
+        return;
+    }
+    list.innerHTML = accounts.map((acc, i) =>
+        '<div class="tg-account">' +
+            '<div class="tg-header">' +
+                '<span class="tg-name">📱 ' + esc(acc.name || 'Compte ' + (i+1)) + '</span>' +
+                '<div>' +
+                    '<span class="tg-toggle ' + (acc.enabled ? 'active' : 'inactive') + '" data-toggle-idx="' + i + '">' + (acc.enabled ? 'ACTIF' : 'INACTIF') + '</span>' +
+                    '<button class="tg-remove" data-remove-idx="' + i + '">✕</button>' +
+                '</div>' +
+            '</div>' +
+            '<div style="font-size:0.72rem;color:var(--ink-dim);">' +
+                'Chat ID : ' + esc(acc.chatId) + ' · Token : ' + (acc.token ? acc.token.slice(0,10) + '...' : 'N/A') +
+            '</div>' +
+        '</div>'
+    ).join('');
+    list.querySelectorAll('[data-toggle-idx]').forEach(el => {
+        el.addEventListener('click', () => {
+            const idx = parseInt(el.dataset.toggleIdx, 10);
+            const accounts = loadTelegramAccounts();
+            accounts[idx].enabled = !accounts[idx].enabled;
+            saveTelegramAccounts(accounts);
+            renderTelegramAccounts();
         });
-        const data = await res.json();
-        return data.ok;
-    } catch (e) { return false; }
+    });
+    list.querySelectorAll('[data-remove-idx]').forEach(el => {
+        el.addEventListener('click', () => {
+            const idx = parseInt(el.dataset.removeIdx, 10);
+            if (!confirm('Supprimer ce compte ?')) return;
+            const accounts = loadTelegramAccounts();
+            accounts.splice(idx, 1);
+            saveTelegramAccounts(accounts);
+            renderTelegramAccounts();
+        });
+    });
+}
+async function sendToAllTelegram(text) {
+    const accounts = loadTelegramAccounts().filter(a => a.enabled && a.token && a.chatId);
+    let sent = 0;
+    for (const acc of accounts) {
+        try {
+            const res = await fetch('https://api.telegram.org/bot' + acc.token + '/sendMessage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: acc.chatId, text, parse_mode: 'Markdown' })
+            });
+            const data = await res.json();
+            if (data.ok) sent++;
+        } catch (e) {}
+    }
+    try { localStorage.setItem(STORAGE.lastTgSent, JSON.stringify(lastTelegramSent)); } catch (e) {}
+    return sent;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SCANNER PERSONNALISÉ
+// ══════════════════════════════════════════════════════════════════
+function loadScanInstruments() {
+    try {
+        const stored = JSON.parse(localStorage.getItem(STORAGE.scanInstruments) || 'null');
+        return stored || [...DEFAULT_SCAN_INSTRUMENTS];
+    } catch (e) { return [...DEFAULT_SCAN_INSTRUMENTS]; }
+}
+function saveScanInstruments(list) {
+    try { localStorage.setItem(STORAGE.scanInstruments, JSON.stringify(list)); } catch (e) {}
+}
+function renderScanInstruments() {
+    const list = loadScanInstruments();
+    const container = $('scan-instruments-list');
+    if (!list.length) {
+        container.innerHTML = '<div class="empty-state">Aucun instrument</div>';
+        return;
+    }
+    container.innerHTML = list.map((inst, i) =>
+        '<div class="scan-instrument">' +
+            '<span class="si-name">📊 ' + esc(inst) + '</span>' +
+            '<button class="si-remove" data-remove-scan="' + i + '">✕</button>' +
+        '</div>'
+    ).join('');
+    container.querySelectorAll('[data-remove-scan]').forEach(el => {
+        el.addEventListener('click', () => {
+            const idx = parseInt(el.dataset.removeScan, 10);
+            const list = loadScanInstruments();
+            list.splice(idx, 1);
+            saveScanInstruments(list);
+            renderScanInstruments();
+        });
+    });
+}
+function getScanConfig() {
+    try {
+        const c = JSON.parse(localStorage.getItem(STORAGE.scanConfig) || '{}');
+        return {
+            freqMin: c.freqMin || 30,
+            minConf: c.minConf || 90,
+            minRR: c.minRR || 2
+        };
+    } catch (e) {
+        return { freqMin: 30, minConf: 90, minRR: 2 };
+    }
+}
+function saveScanConfig() {
+    const config = {
+        freqMin: parseInt($('scan-freq').value, 10) || 30,
+        minConf: parseInt($('scan-conf').value, 10) || 90,
+        minRR: parseFloat($('scan-rr').value) || 2
+    };
+    try { localStorage.setItem(STORAGE.scanConfig, JSON.stringify(config)); } catch (e) {}
+}
+function addScanLog(message, type = 'info') {
+    const logs = JSON.parse(localStorage.getItem(STORAGE.scanLog) || '[]');
+    logs.unshift({ time: Date.now(), message, type });
+    if (logs.length > 50) logs.length = 50;
+    try { localStorage.setItem(STORAGE.scanLog, JSON.stringify(logs)); } catch (e) {}
+    renderScanLog();
+}
+function renderScanLog() {
+    const logs = JSON.parse(localStorage.getItem(STORAGE.scanLog) || '[]');
+    const container = $('scan-log');
+    if (!container) return;
+    if (!logs.length) { container.innerHTML = '<div class="empty-state">Aucun scan</div>'; return; }
+    container.innerHTML = logs.map(l => {
+        const time = new Date(l.time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const color = l.type === 'success' ? 'success' : l.type === 'error' ? 'error' : l.type === 'warn' ? 'warn' : 'info';
+        return '<div style="padding:0.3rem 0.5rem;border-left:3px solid var(--' + color + ');margin-bottom:0.3rem;background:var(--panel);border-radius:4px;"><span style="color:var(--ink-dim);font-size:0.65rem;">' + time + '</span> ' + esc(l.message) + '</div>';
+    }).join('');
+}
+async function analyzeInstrumentForScan(inst, minConf, minRR) {
+    const results = {};
+    for (const tf of ['H4', 'H1', 'M15']) {
+        try {
+            const candles = await fetchCandles(inst, tf, 200);
+            const r = analyzeTimeframe(candles);
+            if (r) results[tf] = r;
+            await sleep(8000);
+        } catch (e) {
+            return { ok: false, error: tf + ' : ' + e.message };
+        }
+    }
+    if (Object.keys(results).length < 2) return { ok: false, error: 'Données insuffisantes' };
+    const synthesis = synthesizeSMC(results, 'h4h1');
+    const entryR = results.M15 || results.H1;
+    const current = entryR.pd.current;
+    const levels = computeSMCLevels(results, synthesis, current);
+    let valid = true, reason = '';
+    if (synthesis.confidence < minConf) { valid = false; reason = 'Confiance ' + synthesis.confidence + '% < ' + minConf + '%'; }
+    else if (parseFloat(levels.riskReward.replace('1:', '')) < minRR) { valid = false; reason = 'R/R ' + levels.riskReward + ' < 1:' + minRR; }
+    else if (synthesis.signal === 'ACHAT' && entryR.pd.zone !== 'discount') { valid = false; reason = 'ACHAT en zone Premium'; }
+    else if (synthesis.signal === 'VENTE' && entryR.pd.zone !== 'premium') { valid = false; reason = 'VENTE en zone Discount'; }
+    else if (synthesis.signal === 'ATTENDRE') { valid = false; reason = 'Signal neutre'; }
+    return { ok: true, inst, synthesis, levels, valid, reason, results, current };
+}
+async function runScan() {
+    const config = getScanConfig();
+    const instruments = loadScanInstruments();
+    if (!instruments.length) { addScanLog('Aucun instrument configuré', 'warn'); return; }
+    const accounts = loadTelegramAccounts().filter(a => a.enabled);
+    if (!accounts.length) { addScanLog('Aucun compte Telegram actif', 'warn'); return; }
+    addScanLog('🔍 Scan démarré · ' + instruments.length + ' instruments', 'info');
+    let signalsFound = 0;
+    for (const inst of instruments) {
+        if (!state.scanning) { addScanLog('⏸ Scan interrompu', 'warn'); return; }
+        try {
+            addScanLog('📊 Analyse ' + inst + '…', 'info');
+            const analysis = await analyzeInstrumentForScan(inst, config.minConf, config.minRR);
+            if (!analysis.ok) { addScanLog('❌ ' + inst + ' : ' + analysis.error, 'error'); continue; }
+            if (!analysis.valid) { addScanLog('⏭ ' + inst + ' : ' + analysis.reason, 'info'); continue; }
+            const entryR = analysis.results.M15 || analysis.results.H1;
+            const setupParts = [];
+            if (entryR.obs?.length) setupParts.push('OB');
+            if (entryR.fvgs?.length) setupParts.push('FVG');
+            if (entryR.sweeps?.length) setupParts.push('Sweep');
+            const emoji = analysis.synthesis.signal === 'ACHAT' ? '🟢' : '🔴';
+            const zoneEmoji = entryR.pd.zone === 'discount' ? '💎' : '🔺';
+            let text = '🚨 *SIGNAL SMC A+* (Scan)\n\n';
+            text += '📊 *' + inst + '*\n';
+            text += emoji + ' Signal : *' + analysis.synthesis.signal + '*\n';
+            text += '🎯 Confiance : *' + analysis.synthesis.confidence + '%*\n\n';
+            text += '💰 Setup : ' + (setupParts.join(' + ') || 'Structure') + '\n';
+            text += zoneEmoji + ' Zone : *' + (entryR.pd.zone === 'discount' ? 'Discount' : 'Premium') + '* (' + entryR.pd.position + '%)\n\n';
+            text += '📥 Entrée : `' + analysis.levels.entry + '`\n';
+            text += '🛑 SL : `' + analysis.levels.sl + '`\n';
+            text += '🎯 TP : `' + analysis.levels.tp + '`\n';
+            text += '⚖️ R/R : *' + analysis.levels.riskReward + '*\n';
+            const sent = await sendToAllTelegram(text);
+            if (sent > 0) {
+                signalsFound++;
+                addScanLog('🚨 SIGNAL ' + analysis.synthesis.signal + ' ' + inst + ' (' + analysis.synthesis.confidence + '%)', 'success');
+                sendNotification('🚨 Signal SMC A+', inst + ' — ' + analysis.synthesis.signal + ' ' + analysis.synthesis.confidence + '%');
+            }
+            await sleep(15000);
+        } catch (e) {
+            addScanLog('❌ ' + inst + ' : ' + e.message, 'error');
+        }
+    }
+    addScanLog(signalsFound > 0 ? '✅ Terminé · ' + signalsFound + ' signal(aux)' : '✅ Terminé · aucun signal', 'info');
+}
+function startScanner() {
+    if (state.scanning) return;
+    state.scanning = true;
+    $('scanner-toggle').textContent = '⏹ Arrêter le scanner';
+    $('scanner-toggle').style.background = 'var(--error)';
+    $('scanner-toggle').style.color = '#fff';
+    $('scan-status-display').innerHTML = '🟢 <strong>Scanner actif</strong>';
+    saveScanConfig();
+    runScan().then(() => {
+        if (state.scanning) scheduleNextScan(getScanConfig().freqMin);
+    });
+}
+function scheduleNextScan(min) {
+    if (state.countdownTimer) clearInterval(state.countdownTimer);
+    state.nextScanTime = Date.now() + min * 60 * 1000;
+    state.countdownTimer = setInterval(() => {
+        if (!state.scanning) { clearInterval(state.countdownTimer); return; }
+        const rem = Math.max(0, state.nextScanTime - Date.now());
+        const m = Math.floor(rem / 60000);
+        const s = Math.floor((rem % 60000) / 1000);
+        $('scan-status-display').innerHTML = '🟢 <strong>Actif</strong> · Prochain scan dans ' + m + 'm ' + String(s).padStart(2, '0') + 's';
+        if (rem <= 0) {
+            clearInterval(state.countdownTimer);
+            if (state.scanning) runScan().then(() => { if (state.scanning) scheduleNextScan(getScanConfig().freqMin); });
+        }
+    }, 1000);
+}
+function stopScanner() {
+    state.scanning = false;
+    if (state.countdownTimer) { clearInterval(state.countdownTimer); state.countdownTimer = null; }
+    $('scanner-toggle').textContent = '▶️ Démarrer le scanner';
+    $('scanner-toggle').style.background = '';
+    $('scanner-toggle').style.color = '';
+    $('scan-status-display').innerHTML = '⏸ Scanner arrêté';
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -1303,6 +1896,14 @@ function toggleTheme() {
     $('theme-toggle').textContent = dark ? '☀️' : '🌙';
     try { localStorage.setItem(STORAGE.dark, dark ? '1' : '0'); } catch (e) {}
     renderStats();
+    if (state.lastAnalysis && state.candles) {
+        const tfs = Object.keys(state.lastAnalysis.results);
+        const entryTF = tfs[tfs.length - 1];
+        if (state.candles[entryTF]) {
+            const entryR = state.lastAnalysis.results[entryTF];
+            drawCandlesChart(state.candles[entryTF], { obs: entryR.obs, fvgs: entryR.fvgs, sweeps: entryR.sweeps, levels: state.lastAnalysis.levels }, entryTF);
+        }
+    }
 }
 function initTabs() {
     document.querySelectorAll('.tab').forEach(tab => {
@@ -1313,6 +1914,8 @@ function initTabs() {
             $('panel-' + tab.dataset.tab).classList.add('active');
             if (tab.dataset.tab === 'journal') renderTrades();
             if (tab.dataset.tab === 'stats') renderStats();
+            if (tab.dataset.tab === 'scanner') { renderScanInstruments(); renderScanLog(); }
+            if (tab.dataset.tab === 'settings') renderTelegramAccounts();
         });
     });
 }
@@ -1347,18 +1950,23 @@ function initSettings() {
         if (v) { const ok = await connectTwelveData(); toast(ok ? 'Clé valide ✓' : 'Clé invalide', ok ? 'success' : 'error'); }
         else toast('Clé supprimée', 'warn');
     });
-    const cfg = getTelegramConfig();
-    if (cfg.token) $('telegram-token').value = cfg.token;
-    if (cfg.chatId) $('telegram-chatid').value = cfg.chatId;
-    $('save-telegram')?.addEventListener('click', () => {
-        const token = $('telegram-token').value.trim();
-        const chatId = $('telegram-chatid').value.trim();
-        try { localStorage.setItem(STORAGE.telegram, JSON.stringify({ token, chatId })); } catch (e) {}
-        toast('Config Telegram ✓', 'success');
+    $('add-telegram-btn')?.addEventListener('click', () => {
+        const accounts = loadTelegramAccounts();
+        if (accounts.length >= 5) { toast('Maximum 5 comptes', 'warn'); return; }
+        const name = prompt('Nom du compte (ex: "Compte principal")');
+        if (!name) return;
+        const token = prompt('Bot Token (format 123456:ABC...)');
+        if (!token) return;
+        const chatId = prompt('Chat ID (format 123456789)');
+        if (!chatId) return;
+        accounts.push({ name, token, chatId, enabled: true });
+        saveTelegramAccounts(accounts);
+        renderTelegramAccounts();
+        toast('Compte ajouté ✓', 'success');
     });
-    $('test-telegram')?.addEventListener('click', async () => {
-        const ok = await sendTelegramMessage('🧠 *SMC Trader Pro* — Test\n\n✅ Ton bot fonctionne !');
-        toast(ok ? 'Envoyé ✓' : 'Erreur', ok ? 'success' : 'error');
+    $('test-all-telegram-btn')?.addEventListener('click', async () => {
+        const sent = await sendToAllTelegram('🧠 *SMC Trader Pro* — Test\n\n✅ Ton bot fonctionne !');
+        toast(sent > 0 ? 'Envoyé à ' + sent + ' compte(s) ✓' : 'Aucun compte actif', sent > 0 ? 'success' : 'warn');
     });
     $('enable-push-btn')?.addEventListener('click', async () => {
         if (!('Notification' in window)) { toast('Non supporté', 'warn'); return; }
@@ -1367,18 +1975,17 @@ function initSettings() {
         toast(perm === 'granted' ? 'Notifications activées ✓' : 'Refusées', perm === 'granted' ? 'success' : 'warn');
     });
     $('test-push-btn')?.addEventListener('click', async () => {
-        const ok = await sendNotification('🧠 Test SMC Trader', 'Si tu vois ça, les notifications fonctionnent !');
-        toast(ok ? 'Notification envoyée ✓' : 'Active d\'abord les notifications', ok ? 'success' : 'warn');
+        const ok = await sendNotification('🧠 Test SMC', 'Si tu vois ça, les notifications fonctionnent !');
+        toast(ok ? 'Envoyé ✓' : 'Active d\'abord les notifications', ok ? 'success' : 'warn');
     });
     $('clear-all-btn')?.addEventListener('click', () => {
-        if (!confirm('Effacer toutes les données ?')) return;
-        localStorage.removeItem(STORAGE.trades);
-        localStorage.removeItem(STORAGE.history);
-        renderTrades(); renderStats();
+        if (!confirm('Effacer TOUTES les données ?')) return;
+        Object.values(STORAGE).forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+        renderTrades(); renderStats(); renderTelegramAccounts(); renderScanInstruments();
         toast('Données effacées', 'warn');
     });
     $('export-data-btn')?.addEventListener('click', () => {
-        const data = { trades: loadTrades(), exportDate: new Date().toISOString() };
+        const data = { trades: loadTrades(), telegram: loadTelegramAccounts(), scanInstruments: loadScanInstruments(), exportDate: new Date().toISOString() };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url; a.download = 'smc-backup-' + Date.now() + '.json'; a.click();
@@ -1393,7 +2000,6 @@ function initTradeForm() {
         s.classList.add('open');
     });
     $('cancel-trade-btn')?.addEventListener('click', () => { $('add-trade-section').style.display = 'none'; });
-    // Recalcul auto taille
     ['trade-entry', 'trade-sl', 'trade-capital', 'trade-risk', 'trade-instrument'].forEach(id => {
         $(id)?.addEventListener('input', () => {
             const capital = parseFloat($('trade-capital').value) || 100;
@@ -1432,9 +2038,36 @@ function initTradeForm() {
         toast('Prix synchronisés ✓', 'success');
     });
 }
+function initScanner() {
+    renderScanInstruments();
+    renderScanLog();
+    const config = getScanConfig();
+    $('scan-freq').value = config.freqMin;
+    $('scan-conf').value = config.minConf;
+    $('scan-rr').value = config.minRR;
+    $('add-instrument-btn')?.addEventListener('click', () => {
+        const input = $('new-instrument-input');
+        const inst = input.value.trim().toUpperCase();
+        if (!inst) return;
+        const list = loadScanInstruments();
+        if (list.includes(inst)) { toast('Déjà dans la liste', 'warn'); return; }
+        if (list.length >= 10) { toast('Maximum 10 instruments', 'warn'); return; }
+        list.push(inst);
+        saveScanInstruments(list);
+        input.value = '';
+        renderScanInstruments();
+        toast(inst + ' ajouté ✓', 'success');
+    });
+    $('scanner-toggle')?.addEventListener('click', () => {
+        if (state.scanning) stopScanner();
+        else startScanner();
+    });
+    ['scan-freq', 'scan-conf', 'scan-rr'].forEach(id => {
+        $(id)?.addEventListener('change', saveScanConfig);
+    });
+}
 
 async function init() {
-    // Enregistrer le Service Worker
     await registerServiceWorker();
     initTheme();
     initTabs();
@@ -1442,8 +2075,10 @@ async function init() {
     initSymbols();
     initSettings();
     initTradeForm();
+    initScanner();
     renderTrades();
     renderStats();
+    renderTelegramAccounts();
     $('theme-toggle').addEventListener('click', toggleTheme);
     $('analyze-btn').addEventListener('click', runAnalysis);
     $('save-history-btn')?.addEventListener('click', () => {
@@ -1453,23 +2088,20 @@ async function init() {
     $('send-telegram-btn')?.addEventListener('click', () => {
         if (!state.lastAnalysis) { toast('Aucune analyse', 'warn'); return; }
         const a = state.lastAnalysis;
-        sendTelegramMessage('🧠 *SMC* — ' + a.symbol + '\n\nSignal : *' + a.signal + '* (' + a.confidence + '%)\nEntrée : ' + a.levels.entry + '\nSL : ' + a.levels.sl + '\nTP : ' + a.levels.tp);
+        sendToAllTelegram('🧠 *SMC* — ' + a.symbol + '\n\nSignal : *' + a.signal + '* (' + a.confidence + '%)\nEntrée : ' + a.levels.entry + '\nSL : ' + a.levels.sl + '\nTP : ' + a.levels.tp);
     });
     await connectTwelveData();
     subscribeTicks(state.symbol);
-    // Surveillance auto des positions toutes les 5 min
     setInterval(trackOpenTrades, 5 * 60 * 1000);
     setTimeout(trackOpenTrades, 5000);
-    // OneSignal
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
             appId: "86e53477-c701-4251-9f8a-53a737e5f759",
             notifyButton: { enable: true, position: 'bottom-right', size: 'medium', theme: 'default' }
         });
-        console.log('[OneSignal] ✓');
     });
-    log('SMC Trader Pro prêt');
+    log('SMC Trader Pro v3 prêt');
 }
 init();
 </script>
