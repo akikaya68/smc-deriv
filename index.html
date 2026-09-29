@@ -175,15 +175,6 @@
 
     .empty-state { text-align: center; padding: 1.8rem 1rem; color: var(--ink-faint); font-size: 0.8rem; }
 
-    .history-item { padding: 0.65rem 0.75rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 0.35rem; background: var(--panel); }
-    .history-item .h-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem; }
-    .history-item .h-instrument { font-weight: 700; font-size: 0.82rem; }
-    .history-item .h-signal { font-size: 0.7rem; padding: 0.12rem 0.45rem; border-radius: 6px; font-weight: 700; }
-    .history-item .h-signal.buy { background: #dcfce7; color: var(--success); }
-    .history-item .h-signal.sell { background: #fee2e2; color: var(--error); }
-    .history-item .h-signal.wait { background: #fef3c7; color: var(--warn); }
-    .history-item .h-meta { font-size: 0.68rem; color: var(--ink-dim); display: flex; justify-content: space-between; }
-
     .trade-item {
         padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border);
         margin-bottom: 0.5rem; background: var(--panel-2); position: relative;
@@ -279,7 +270,6 @@
     .add-instrument-row input { flex: 1; }
     .add-instrument-row button { padding: 0.5rem 0.8rem; }
 
-    /* MODALE */
     .modal-overlay {
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
         background: rgba(0, 0, 0, 0.7); z-index: 2000;
@@ -423,6 +413,10 @@
         <div class="report-block"><h3>💧 Fair Value Gaps (FVG)</h3><div id="fvg-container"></div></div>
         <div class="report-block"><h3>💰 Zones Premium / Discount</h3><div id="pd-container"></div></div>
         <div class="report-block"><h3>🎲 Scénarios probabilistes</h3><div id="scenarios-container"></div></div>
+        <div class="report-block" id="audit-analysis-container" style="display:none;">
+            <h3>🤖 Audit IA DeepSeek</h3>
+            <div id="audit-analysis-content"></div>
+        </div>
         <div style="margin-top:0.5rem;">
             <button class="btn-secondary" id="send-telegram-btn">📤 Envoyer sur Telegram</button>
         </div>
@@ -610,6 +604,27 @@
     </div>
 
     <div class="section open">
+        <div class="section-header" data-toggle="sec-deepseek">
+            <span class="section-title">🤖 Audit IA DeepSeek</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="sec-deepseek">
+            <div class="section-content">
+                <div class="control-row">
+                    <label>DeepSeek API Key</label>
+                    <input type="password" id="deepseek-key" placeholder="sk-...">
+                </div>
+                <button class="btn-secondary" id="save-deepseek">Enregistrer</button>
+                <button class="btn-secondary" id="test-deepseek">🧪 Tester</button>
+                <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;line-height:1.4;">
+                    Clé sur <strong>platform.deepseek.com/api_keys</strong><br>
+                    L'audit analyse automatiquement chaque signal SMC et chaque trade fermé.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section open">
         <div class="section-header" data-toggle="sec-multitelegram">
             <span class="section-title">📤 Multi-Telegram</span>
             <span class="chevron">▼</span>
@@ -620,10 +635,6 @@
                 <div style="margin-top:0.7rem;">
                     <button class="btn-secondary btn-success" id="add-telegram-btn">➕ Ajouter un compte</button>
                     <button class="btn-secondary" id="test-all-telegram-btn">📤 Tester tous</button>
-                </div>
-                <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;">
-                    Tu peux ajouter jusqu'à <strong>5 comptes Telegram</strong>.<br>
-                    Chaque compte peut être activé/désactivé individuellement.
                 </div>
             </div>
         </div>
@@ -660,7 +671,6 @@
 <div class="status-bar" id="status-bar"><div class="spinner"></div><span id="status-text">Préparation…</span></div>
 <div class="toast" id="toast"><span id="toast-text">Message</span></div>
 
-<!-- MODALE : Proposition d'enregistrement automatique -->
 <div class="modal-overlay" id="auto-trade-modal">
     <div class="modal-box">
         <div class="modal-header">
@@ -673,18 +683,17 @@
         </div>
     </div>
 </div>
-
 <script>
 // ══════════════════════════════════════════════════════════════════
 // SERVICE WORKER
 // ══════════════════════════════════════════════════════════════════
 const SW_CODE = `
-const CACHE_NAME = 'smc-trader-v3';
+const CACHE_NAME = 'smc-trader-v4';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
-    if (url.hostname.includes('onesignal') || url.hostname.includes('twelvedata') || url.hostname.includes('telegram')) return;
+    if (url.hostname.includes('onesignal') || url.hostname.includes('twelvedata') || url.hostname.includes('telegram') || url.hostname.includes('deepseek')) return;
     event.respondWith(caches.match(event.request).then((r) => r || fetch(event.request)));
 });
 self.addEventListener('push', (event) => {
@@ -718,15 +727,17 @@ async function registerServiceWorker() {
 // CONFIG
 // ══════════════════════════════════════════════════════════════════
 const TWELVEDATA_API = 'https://api.twelvedata.com';
+const DEEPSEEK_API = 'https://api.deepseek.com/v1/chat/completions';
 const STORAGE = {
-    twelvedata: 'smc_twelvedata_key_v3',
-    telegramAccounts: 'smc_tg_accounts_v3',
-    trades: 'smc_trades_v3',
-    dark: 'smc_dark_v3',
-    scanInstruments: 'smc_scan_instruments_v3',
-    scanLog: 'smc_scan_log_v3',
-    scanConfig: 'smc_scan_config_v3',
-    lastTgSent: 'smc_last_tg_sent_v3'
+    twelvedata: 'smc_twelvedata_key_v4',
+    telegramAccounts: 'smc_tg_accounts_v4',
+    trades: 'smc_trades_v4',
+    dark: 'smc_dark_v4',
+    scanInstruments: 'smc_scan_instruments_v4',
+    scanLog: 'smc_scan_log_v4',
+    scanConfig: 'smc_scan_config_v4',
+    lastTgSent: 'smc_last_tg_sent_v4',
+    deepseek: 'smc_deepseek_key_v4'
 };
 
 const SYMBOLS = {
@@ -1211,7 +1222,139 @@ function drawCandlesChart(candles, analysis, tfLabel) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// TELEGRAM AUTO + PROPOSITION D'ENREGISTREMENT
+// AUDIT IA DEEPSEEK
+// ══════════════════════════════════════════════════════════════════
+function getDeepSeekKey() {
+    try { return (localStorage.getItem(STORAGE.deepseek) || '').trim(); } catch (e) { return ''; }
+}
+function saveDeepSeekKey() {
+    const input = $('deepseek-key');
+    if (!input) return;
+    const key = input.value.trim();
+    if (key && !key.startsWith('sk-')) {
+        if (!confirm('La clé ne commence pas par "sk-". Continuer ?')) return;
+    }
+    try { localStorage.setItem(STORAGE.deepseek, key); } catch (e) {}
+    toast(key ? 'Clé DeepSeek enregistrée ✓' : 'Clé supprimée', key ? 'success' : 'warn');
+}
+
+async function callDeepSeek(prompt, maxTokens = 1200) {
+    const key = getDeepSeekKey();
+    if (!key) throw new Error('Clé DeepSeek non configurée');
+    const res = await fetch(DEEPSEEK_API, {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + key,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: 'deepseek-reasoner',
+            messages: [
+                { role: 'system', content: 'Tu es un analyste trader expert en Smart Money Concepts (SMC). Tu réponds de façon concise, professionnelle et structurée en français, sans markdown.' },
+                { role: 'user', content: prompt }
+            ],
+            max_tokens: maxTokens
+        })
+    });
+    if (!res.ok) {
+        const err = await res.text();
+        throw new Error('HTTP ' + res.status + ' — ' + err.slice(0, 200));
+    }
+    const data = await res.json();
+    if (!data.choices || !data.choices[0]) throw new Error('Réponse invalide');
+    return data.choices[0].message.content;
+}
+
+async function auditAnalysis(synthesis, levels, results, symbol) {
+    if (!getDeepSeekKey()) return null;
+    const tfs = Object.keys(results).filter(k => results[k]);
+    const entryTF = tfs[tfs.length - 1];
+    const entryR = results[entryTF];
+    const summary = {
+        symbol,
+        signal: synthesis.signal,
+        confidence: synthesis.confidence,
+        entry: levels.entry,
+        sl: levels.sl,
+        tp: levels.tp,
+        rr: levels.riskReward,
+        zone: entryR.pd.zone,
+        zonePosition: entryR.pd.position,
+        setup: {
+            ob: entryR.obs?.length || 0,
+            fvg: entryR.fvgs?.length || 0,
+            sweeps: entryR.sweeps?.length || 0
+        },
+        tfs: {}
+    };
+    for (const tf of tfs) {
+        const r = results[tf];
+        summary.tfs[tf] = {
+            trend: r.direction,
+            strength: r.strength,
+            lastEvent: r.structure.events.length ? r.structure.events[r.structure.events.length - 1].type : null
+        };
+    }
+    const prompt = `Audit CRITIQUE d'une analyse SMC :
+
+${JSON.stringify(summary, null, 2)}
+
+Réponds en français, format texte simple SANS markdown, 5 sections courtes :
+- Cohérence (2-3 phrases)
+- Forces (3 puces avec •)
+- Faiblesses (2-3 puces avec •)
+- Risques (2-3 puces avec •)
+- Verdict (note /100 + conseil final 1 phrase)`;
+    try { return await callDeepSeek(prompt, 1200); }
+    catch (e) { return 'Erreur audit : ' + e.message; }
+}
+
+async function auditClosedTrade(trade) {
+    if (!getDeepSeekKey()) return null;
+    const summary = {
+        instrument: trade.instrument,
+        direction: trade.direction,
+        entry: trade.entry,
+        sl: trade.sl,
+        tp: trade.tp,
+        exit: trade.exitPrice,
+        result: trade.result,
+        pnlPips: trade.pnl?.pips,
+        pnlDollars: trade.pnl?.dollars,
+        duration: Math.round((trade.closedAt - trade.openedAt) / 60000) + ' minutes',
+        beMoved: trade.beMoved,
+        risk: trade.risk,
+        capital: trade.capital
+    };
+    const prompt = `Audit CRITIQUE d'un trade fermé (trading SMC) :
+
+${JSON.stringify(summary, null, 2)}
+
+Réponds en français, format texte simple SANS markdown, 5 sections courtes :
+- Analyse du trade (2-3 phrases)
+- Ce qui a bien fonctionné (2-3 puces avec •)
+- Ce qui aurait pu être mieux (2-3 puces avec •)
+- Leçon à retenir (1-2 phrases)
+- Note globale (sur 100 + 1 conseil pour le prochain trade)`;
+    try { return await callDeepSeek(prompt, 1200); }
+    catch (e) { return 'Erreur audit : ' + e.message; }
+}
+
+async function testDeepSeek() {
+    const key = getDeepSeekKey();
+    if (!key) { toast('Enregistre d\'abord ta clé DeepSeek', 'warn'); return; }
+    toast('Test en cours… (30 sec)', 'warn', 35000);
+    try {
+        const reply = await callDeepSeek('Réponds juste "OK" pour tester la connexion.', 100);
+        toast('DeepSeek connecté ✓', 'success', 3500);
+        log('Test DeepSeek : ' + reply);
+    } catch (e) {
+        toast('Erreur : ' + e.message.slice(0, 60), 'error', 5000);
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TELEGRAM AUTO + POPUP
 // ══════════════════════════════════════════════════════════════════
 async function autoSendToTelegram(synthesis, levels, results, symbol) {
     if (synthesis.signal === 'ATTENDRE') return;
@@ -1262,7 +1405,7 @@ async function autoSendToTelegram(synthesis, levels, results, symbol) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// PROPOSITION D'ENREGISTREMENT AUTOMATIQUE
+// POPUP ENREGISTREMENT AUTO
 // ══════════════════════════════════════════════════════════════════
 function proposeAutoTrade(synthesis, levels, results, symbol) {
     const modal = $('auto-trade-modal');
@@ -1384,6 +1527,21 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
     ).join('');
     state.lastAnalysis = { timestamp: Date.now(), symbol, signal: synthesis.signal, signalClass: synthesis.signalClass, confidence: synthesis.confidence, levels, results, scenarios, currentPrice };
     autoSendToTelegram(synthesis, levels, results, symbol);
+
+    // ═══ AUDIT IA ANALYSE ═══
+    if (getDeepSeekKey()) {
+        const auditBox = $('audit-analysis-container');
+        const auditContent = $('audit-analysis-content');
+        auditBox.style.display = 'block';
+        auditContent.innerHTML = '<div style="color:var(--ink-dim);font-size:0.78rem;"><span class="spinner" style="display:inline-block;vertical-align:middle;"></span> Analyse IA en cours… (30 sec)</div>';
+        auditAnalysis(synthesis, levels, results, symbol).then(text => {
+            if (text) auditContent.innerHTML = '<div style="font-size:0.78rem;line-height:1.5;white-space:pre-wrap;">' + esc(text) + '</div>';
+            else auditBox.style.display = 'none';
+        });
+    } else {
+        $('audit-analysis-container').style.display = 'none';
+    }
+
     $('report-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -1481,7 +1639,7 @@ async function trackOpenTrades() {
     renderTrades();
     renderStats();
 }
-function closeTrade(id, result, exitPrice) {
+async function closeTrade(id, result, exitPrice) {
     const trades = loadTrades();
     const idx = trades.findIndex(t => t.id === id);
     if (idx < 0) return;
@@ -1497,6 +1655,24 @@ function closeTrade(id, result, exitPrice) {
     const label = result === 'tp' ? 'TAKE PROFIT' : result === 'be' ? 'BREAK EVEN' : 'STOP LOSS';
     sendNotification(emoji + ' Position fermée', trade.instrument + ' — ' + label + ' — ' + (pnl.dollars > 0 ? '+' : '') + pnl.dollars + '€');
     sendToAllTelegram(emoji + ' *Position fermée*\n\n' + trade.instrument + '\nRésultat : *' + label + '*\nPrix : ' + formatPrice(exitPrice) + '\nPips : ' + (pnl.pips > 0 ? '+' : '') + pnl.pips + '\nP&L : ' + (pnl.dollars > 0 ? '+' : '') + pnl.dollars + '€');
+
+    // ═══ AUDIT IA DU TRADE FERMÉ ═══
+    if (getDeepSeekKey()) {
+        const closedTrade = trades[idx];
+        auditClosedTrade(closedTrade).then(auditText => {
+            if (auditText) {
+                const allTrades = loadTrades();
+                const i2 = allTrades.findIndex(t => t.id === id);
+                if (i2 >= 0) {
+                    allTrades[i2].audit = auditText;
+                    saveTrades(allTrades);
+                }
+                renderTrades();
+                toast('Audit IA du trade disponible ✓', 'success', 3000);
+            }
+        });
+    }
+
     renderTrades();
     renderStats();
 }
@@ -1552,7 +1728,9 @@ function renderTrades() {
             '<div class="sl"><div class="p-label">Sortie</div><div class="p-value">' + formatPrice(t.exitPrice) + '</div></div>' +
             '<div class="tp"><div class="p-label">P&L</div><div class="p-value" style="color:' + (pnl.dollars >= 0 ? 'var(--success)' : 'var(--error)') + '">' + (pnl.dollars > 0 ? '+' : '') + pnl.dollars + '€</div></div>' +
             '</div>' +
-            '<div class="t-footer"><span>' + (t.direction === 'buy' ? 'ACHAT' : 'VENTE') + '</span><span>' + formatDate(t.closedAt) + '</span></div></div>';
+            '<div class="t-footer"><span>' + (t.direction === 'buy' ? 'ACHAT' : 'VENTE') + '</span><span>' + formatDate(t.closedAt) + '</span></div>' +
+            (t.audit ? '<div style="margin-top:0.5rem;padding:0.6rem;background:var(--panel);border-radius:6px;font-size:0.72rem;line-height:1.5;white-space:pre-wrap;">🤖 <strong>Audit IA :</strong><br>' + esc(t.audit) + '</div>' : '') +
+            '</div>';
     }).join('');
 }
 
@@ -2061,6 +2239,12 @@ function initSettings() {
         if (v) { const ok = await connectTwelveData(); toast(ok ? 'Clé valide ✓' : 'Clé invalide', ok ? 'success' : 'error'); }
         else toast('Clé supprimée', 'warn');
     });
+
+    const dk = getDeepSeekKey();
+    if (dk) $('deepseek-key').value = dk;
+    $('save-deepseek')?.addEventListener('click', saveDeepSeekKey);
+    $('test-deepseek')?.addEventListener('click', testDeepSeek);
+
     $('add-telegram-btn')?.addEventListener('click', () => {
         const accounts = loadTelegramAccounts();
         if (accounts.length >= 5) { toast('Maximum 5 comptes', 'warn'); return; }
@@ -2223,7 +2407,7 @@ async function init() {
             notifyButton: { enable: true, position: 'bottom-right', size: 'medium', theme: 'default' }
         });
     });
-    log('SMC Trader Pro v3 prêt');
+    log('SMC Trader Pro v4 prêt');
 }
 init();
 </script>
