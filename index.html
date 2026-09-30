@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SMC Trader Pro v5.0</title>
+<title>SMC Trader Pro v5.4 — Top-Down</title>
 <meta name="theme-color" content="#16a34a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,6 +99,7 @@
     label { display: block; font-size: 0.68rem; color: var(--ink-dim); margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
     select, input { width: 100%; padding: 0.65rem 0.8rem; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2); color: var(--ink); font-family: inherit; font-size: 0.85rem; -webkit-appearance: none; }
     select:focus, input:focus { outline: none; border-color: var(--ink); }
+    input[type=range] { padding: 0; height: 6px; }
     .control-row { margin-bottom: 0.7rem; }
     .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
     .control-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem; }
@@ -123,17 +124,17 @@
     .confidence-bar { height: 6px; background: rgba(0,0,0,0.08); border-radius: 3px; overflow: hidden; margin-top: 0.5rem; }
     .confidence-fill { height: 100%; background: var(--success); transition: width 0.6s; }
 
-    .tf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-bottom: 0.8rem; }
-    .tf-card { padding: 0.6rem 0.5rem; border-radius: 8px; background: var(--panel-2); text-align: center; border: 2px solid transparent; }
+    .tf-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.3rem; margin-bottom: 0.8rem; }
+    .tf-card { padding: 0.5rem 0.3rem; border-radius: 8px; background: var(--panel-2); text-align: center; border: 2px solid transparent; }
     .tf-card.bull { border-color: var(--bull); }
     .tf-card.bear { border-color: var(--bear); }
     .tf-card.range { border-color: var(--neutral); }
-    .tf-card .tf-name { font-size: 0.7rem; font-weight: 700; color: var(--ink-dim); margin-bottom: 0.2rem; }
-    .tf-card .tf-direction { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.15rem; }
+    .tf-card .tf-name { font-size: 0.62rem; font-weight: 700; color: var(--ink-dim); margin-bottom: 0.2rem; }
+    .tf-card .tf-direction { font-size: 0.75rem; font-weight: 700; margin-bottom: 0.1rem; }
     .tf-card.bull .tf-direction { color: var(--bull); }
     .tf-card.bear .tf-direction { color: var(--bear); }
     .tf-card.range .tf-direction { color: var(--neutral); }
-    .tf-card .tf-detail { font-size: 0.65rem; color: var(--ink-dim); }
+    .tf-card .tf-detail { font-size: 0.58rem; color: var(--ink-dim); }
 
     .levels-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-bottom: 0.6rem; }
     .level-card { padding: 0.65rem 0.4rem; border-radius: 8px; text-align: center; border: 1px solid var(--border); background: var(--panel-2); }
@@ -343,7 +344,6 @@
         font-style: italic; font-family: -apple-system, sans-serif;
     }
 
-    /* ✅ PHASE 3 — Backtest UI */
     .bt-progress {
         height: 8px; background: var(--panel-2); border-radius: 4px;
         overflow: hidden; margin: 0.6rem 0;
@@ -366,6 +366,13 @@
     .bt-trade-row.loss { background: #fef2f288; }
     body.dark .bt-trade-row.win { background: #052e1644; }
     body.dark .bt-trade-row.loss { background: #450a0a44; }
+
+    .ai-response {
+        font-size: 0.78rem; line-height: 1.6;
+        white-space: pre-wrap;
+        padding: 0.8rem; background: var(--panel-2);
+        border-radius: 8px; border-left: 3px solid var(--info);
+    }
 </style>
 </head>
 <body>
@@ -373,7 +380,7 @@
 <header>
     <button class="theme-toggle" id="theme-toggle">🌙</button>
     <h1>🧠 SMC Trader Pro</h1>
-    <p class="subtitle">Smart Money Concepts · v5.0 (Phase 3) · Forex · Métaux · Indices · Crypto</p>
+    <p class="subtitle">SMC Top-Down v5.4 · D1→H4→H1→M15→M5 · EUR/USD · XAU/USD · BTC/USD</p>
     <div class="conn-status" id="conn-status">
         <span class="dot"></span>
         <span id="conn-text">Prêt</span>
@@ -393,7 +400,7 @@
 <div class="tab-panel active" id="panel-analyze">
     <div class="section open">
         <div class="section-header" data-toggle="sec-symbol">
-            <span class="section-title">📊 Instrument & timeframe</span>
+            <span class="section-title">📊 Instrument</span>
             <span class="chevron">▼</span>
         </div>
         <div class="section-body" id="sec-symbol">
@@ -402,13 +409,9 @@
                     <label>Instrument</label>
                     <select id="symbol-select"></select>
                 </div>
-                <div class="control-row">
-                    <label>Mode multi-timeframe</label>
-                    <select id="mtf-mode">
-                        <option value="h4h1">H4 + H1 — Tendance de fond</option>
-                        <option value="h1m15" selected>H1 + M15 — Intraday principal</option>
-                        <option value="h1m15m5">H1 + M15 + M5 — Scalping</option>
-                    </select>
+                <div style="font-size:0.72rem;color:var(--info);padding:0.5rem;background:var(--panel-2);border-radius:6px;line-height:1.5;">
+                    🎯 <strong>Logique Top-Down active</strong><br>
+                    D1 (biais) → H4 (structure) → H1 (analyse) → M15 (confirmation) → M5 (entrée)
                 </div>
             </div>
         </div>
@@ -418,7 +421,7 @@
         <span class="pt-value" id="pt-value">—</span>
         <span class="pt-change" id="pt-change"></span>
     </div>
-    <button class="btn-primary" id="analyze-btn">🧠 Lancer l'analyse SMC</button>
+    <button class="btn-primary" id="analyze-btn">🧠 Lancer l'analyse Top-Down</button>
     <div id="report-container" style="display:none;">
         <div class="signal-banner" id="signal-banner">
             <div class="signal-label">Signal final</div>
@@ -428,8 +431,15 @@
             <div class="confidence-bar"><div class="confidence-fill" id="confidence-fill" style="width:0%"></div></div>
         </div>
 
+        <div class="tf-grid" id="tf-grid"></div>
+
+        <div class="report-block" id="topdown-container">
+            <h3>🎯 Cascade Top-Down D1 → M5</h3>
+            <div id="topdown-cascade"></div>
+        </div>
+
         <div class="report-block">
-            <h3>📈 Graphique SMC</h3>
+            <h3>📈 Graphique SMC (M5 entrée)</h3>
             <div class="chart-legend">
                 <span class="legend-item"><span class="legend-dot" style="background:#16a34a"></span>Bougie haussière</span>
                 <span class="legend-item"><span class="legend-dot" style="background:#dc2626"></span>Bougie baissière</span>
@@ -442,11 +452,10 @@
                 <canvas id="candles-canvas"></canvas>
             </div>
             <div style="font-size:0.7rem;color:var(--ink-dim);text-align:center;">
-                Timeframe : <strong id="chart-tf">H1</strong>
+                Timeframe : <strong id="chart-tf">M5</strong>
             </div>
         </div>
 
-        <div class="tf-grid" id="tf-grid"></div>
         <div class="report-block">
             <h3>🎯 Niveaux clés</h3>
             <div class="levels-grid">
@@ -464,11 +473,14 @@
         <div class="report-block"><h3>💰 Zones Premium / Discount</h3><div id="pd-container"></div></div>
         <div class="report-block"><h3>🎲 Scénarios probabilistes</h3><div id="scenarios-container"></div></div>
         <div class="report-block" id="audit-analysis-container" style="display:none;">
-            <h3>🤖 Audit IA DeepSeek</h3>
+            <h3>🤖 Audit IA DeepSeek — Analyse stratégique</h3>
             <div id="audit-analysis-content"></div>
         </div>
         <div style="margin-top:0.5rem;">
-            <button class="btn-secondary" id="send-telegram-btn">📤 Envoyer sur Telegram</button>
+            <button class="btn-secondary" id="send-telegram-btn">📤 Envoyer manuellement</button>
+            <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.4rem;line-height:1.5;">
+                ⓘ <strong>Envoi automatique activé</strong> : chaque signal validé (score ≥ <span id="auto-threshold-display">80</span>/100) est envoyé automatiquement sur Telegram.
+            </div>
         </div>
     </div>
 </div>
@@ -500,7 +512,7 @@
                     <div class="control-row"><label>Risque (%)</label><input type="number" id="trade-risk" value="1" step="0.1"></div>
                 </div>
                 <div class="control-row">
-                    <label>📊 Taille auto calculée (broker-grade)</label>
+                    <label>📊 Taille auto calculée</label>
                     <div id="auto-size-display" style="padding:0.7rem;background:var(--panel-2);border-radius:6px;font-size:0.85rem;font-family:ui-monospace,monospace;">
                         En attente des données…
                     </div>
@@ -544,6 +556,15 @@
         </div>
     </div>
     <div class="section open">
+        <div class="section-header" data-toggle="sec-stats-compliance">
+            <span class="section-title">🎯 Conformité aux seuils</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="sec-stats-compliance">
+            <div class="section-content"><div id="stats-compliance"></div></div>
+        </div>
+    </div>
+    <div class="section open">
         <div class="section-header" data-toggle="sec-chart">
             <span class="section-title">📈 Courbe de performance</span>
             <span class="chevron">▼</span>
@@ -565,36 +586,30 @@
     </div>
 </div>
 
-<!-- ✅ PHASE 3 — BACKTEST -->
+<!-- BACKTEST -->
 <div class="tab-panel" id="panel-backtest">
     <div class="section open">
         <div class="section-header" data-toggle="sec-bt-config">
-            <span class="section-title">🧪 Configuration du backtest</span>
+            <span class="section-title">🧪 Configuration du backtest Top-Down</span>
             <span class="chevron">▼</span>
         </div>
         <div class="section-body" id="sec-bt-config">
             <div class="section-content">
                 <div class="control-row">
                     <label>Instrument</label>
-                    <input type="text" id="bt-instrument" value="EUR/USD">
+                    <select id="bt-instrument">
+                        <option value="EUR/USD">EUR/USD</option>
+                        <option value="XAU/USD">XAU/USD</option>
+                        <option value="BTC/USD">BTC/USD</option>
+                    </select>
                 </div>
-                <div class="control-grid">
-                    <div class="control-row">
-                        <label>Timeframe</label>
-                        <select id="bt-tf">
-                            <option value="H1">H1</option>
-                            <option value="H4">H4</option>
-                            <option value="M15">M15</option>
-                        </select>
-                    </div>
-                    <div class="control-row">
-                        <label>Nb bougies</label>
-                        <select id="bt-bars">
-                            <option value="500">500</option>
-                            <option value="1000" selected>1000</option>
-                            <option value="2000">2000</option>
-                        </select>
-                    </div>
+                <div class="control-row">
+                    <label>Nb bougies M5 à analyser</label>
+                    <select id="bt-bars">
+                        <option value="500">500 (~2 jours)</option>
+                        <option value="1000" selected>1000 (~3.5 jours)</option>
+                        <option value="2000">2000 (~7 jours)</option>
+                    </select>
                 </div>
                 <div class="control-grid">
                     <div class="control-row">
@@ -615,10 +630,15 @@
                         <option value="3">1:3</option>
                     </select>
                 </div>
-                <div style="font-size:0.7rem;color:var(--ink-dim);margin-bottom:0.6rem;line-height:1.5;">
-                    ⓘ Le backtest reconstruit l'analyse <strong>bougie par bougie</strong> à partir du passé uniquement (non-repaint). Chaque trade est ensuite simulé jusqu'à TP ou SL.
+                <div class="control-row">
+                    <label>Seuil SMC minimum : <span id="bt-score-label" style="color:var(--info);font-weight:700;">80</span>/100</label>
+                    <input type="range" id="bt-score-min" min="60" max="95" step="5" value="80" style="width:100%;">
                 </div>
-                <button class="btn-primary" id="bt-run-btn">▶️ Lancer le backtest</button>
+                <div style="font-size:0.72rem;color:var(--info);padding:0.5rem;background:var(--panel-2);border-radius:6px;margin-bottom:0.7rem;line-height:1.5;">
+                    🎯 <strong>Logique Top-Down active</strong> : D1 (biais) → H4 (structure) → H1 (analyse) → M15 (confirmation) → M5 (entrée)<br>
+                    ⓘ Backtest non-repaint avec spread, slippage, commission, TP1/TP2.
+                </div>
+                <button class="btn-primary" id="bt-run-btn">▶️ Lancer le backtest Top-Down</button>
                 <div class="bt-progress" id="bt-progress" style="display:none;">
                     <div class="bt-progress-fill" id="bt-progress-fill"></div>
                 </div>
@@ -637,8 +657,12 @@
                 <div class="chart-container" style="margin-top:0.6rem;">
                     <canvas id="bt-equity-chart"></canvas>
                 </div>
+                <button class="btn-secondary btn-success" id="bt-audit-btn" style="width:100%;margin-top:0.6rem;">
+                    🧠 Analyser avec l'IA stratégique (30-45s)
+                </button>
+                <div id="bt-audit-result" style="display:none;margin-top:0.6rem;"></div>
                 <div style="margin-top:0.6rem;">
-                    <h3 style="font-size:0.7rem;text-transform:uppercase;color:var(--ink-dim);margin-bottom:0.4rem;letter-spacing:0.06em;">📋 Trades simulés</h3>
+                    <h3 style="font-size:0.7rem;text-transform:uppercase;color:var(--ink-dim);margin-bottom:0.4rem;letter-spacing:0.06em;">📋 Trades simulés (50 derniers)</h3>
                     <div class="bt-trades-list" id="bt-trades-list"></div>
                 </div>
             </div>
@@ -657,11 +681,11 @@
             <div class="section-content">
                 <div id="scan-instruments-list"></div>
                 <div class="add-instrument-row" style="margin-top:0.7rem;">
-                    <input type="text" id="new-instrument-input" placeholder="Ex: EUR/USD, XAU/USD, BTC/USD">
+                    <input type="text" id="new-instrument-input" placeholder="EUR/USD, XAU/USD ou BTC/USD">
                     <button class="btn-secondary btn-success" id="add-instrument-btn">➕</button>
                 </div>
                 <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;">
-                    Format : <strong>EUR/USD</strong>, <strong>XAU/USD</strong>, <strong>SPX</strong>, <strong>BTC/USD</strong>…
+                    ⓘ Uniquement 3 instruments disponibles : <strong>EUR/USD</strong>, <strong>XAU/USD</strong>, <strong>BTC/USD</strong>
                 </div>
             </div>
         </div>
@@ -673,22 +697,21 @@
         </div>
         <div class="section-body" id="sec-scan-config">
             <div class="section-content">
-                <div class="control-grid">
-                    <div class="control-row">
-                        <label>Fréquence</label>
-                        <select id="scan-freq">
-                            <option value="15">15 min</option>
-                            <option value="30" selected>30 min</option>
-                            <option value="60">1 heure</option>
-                        </select>
-                    </div>
-                    <div class="control-row">
-                        <label>Score SMC min.</label>
-                        <select id="scan-conf">
-                            <option value="70">70/100</option>
-                            <option value="80" selected>80/100</option>
-                            <option value="90">90/100</option>
-                        </select>
+                <div class="control-row">
+                    <label>Fréquence</label>
+                    <select id="scan-freq">
+                        <option value="15">15 min</option>
+                        <option value="30" selected>30 min</option>
+                        <option value="60">1 heure</option>
+                    </select>
+                </div>
+                <div class="control-row">
+                    <label>Score SMC minimum : <span id="scan-conf-label" style="color:var(--info);font-weight:700;">80</span>/100</label>
+                    <input type="range" id="scan-conf" min="60" max="95" step="5" value="80" style="width:100%;">
+                    <div style="display:flex;justify-content:space-between;font-size:0.62rem;color:var(--ink-dim);margin-top:0.2rem;">
+                        <span>60 (permissif)</span>
+                        <span>80 (défaut)</span>
+                        <span>95 (strict)</span>
                     </div>
                 </div>
                 <div class="control-row">
@@ -699,6 +722,27 @@
                         <option value="3">1:3</option>
                     </select>
                 </div>
+            </div>
+        </div>
+    </div>
+    <div class="section open">
+        <div class="section-header" data-toggle="sec-thresholds">
+            <span class="section-title">🎯 Seuils de validation</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="sec-thresholds">
+            <div class="section-content"><div id="thresholds-display"></div></div>
+        </div>
+    </div>
+    <div class="section open">
+        <div class="section-header" data-toggle="sec-scan-auto">
+            <span class="section-title">📤 Envois automatiques Telegram</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="sec-scan-auto">
+            <div class="section-content">
+                <div id="auto-send-stats" style="font-size:0.78rem;line-height:1.6;"></div>
+                <button class="btn-secondary" id="reset-auto-send-btn" style="margin-top:0.5rem;">🔄 Réinitialiser l'anti-spam</button>
             </div>
         </div>
     </div>
@@ -731,7 +775,7 @@
                 <div class="control-row"><label>Clé API</label><input type="password" id="twelvedata-key" placeholder="Colle ta clé"></div>
                 <button class="btn-secondary" id="save-twelvedata">Enregistrer</button>
                 <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;line-height:1.5;">
-                    ⓘ Cache API activé : les bougies sont mises en cache 5 min pour économiser ton quota.
+                    ⓘ Cache API activé : les bougies sont mises en cache 5 min.
                 </div>
             </div>
         </div>
@@ -750,6 +794,9 @@
                 </div>
                 <button class="btn-secondary" id="save-deepseek">Enregistrer</button>
                 <button class="btn-secondary" id="test-deepseek">🧪 Tester</button>
+                <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;line-height:1.5;">
+                    Modèle : <strong>deepseek-reasoner</strong> · Analyse profonde Top-Down
+                </div>
             </div>
         </div>
     </div>
@@ -872,6 +919,9 @@ async function registerServiceWorker() {
 // ══════════════════════════════════════════════════════════════════
 const TWELVEDATA_API = 'https://api.twelvedata.com';
 const DEEPSEEK_API = 'https://api.deepseek.com/v1/chat/completions';
+
+const ALLOWED_INSTRUMENTS = ['EUR/USD', 'XAU/USD', 'BTC/USD'];
+
 const STORAGE = {
     twelvedata: 'smc_twelvedata_key_v5',
     telegramAccounts: 'smc_tg_accounts_v5',
@@ -886,15 +936,10 @@ const STORAGE = {
 };
 
 const SYMBOLS = {
-    'Forex — Majeures': ['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD'],
-    'Forex — Croisées': ['EUR/GBP', 'EUR/JPY', 'GBP/JPY', 'EUR/CHF', 'EUR/AUD', 'GBP/CHF'],
-    'Métaux': ['XAU/USD', 'XAG/USD', 'XPT/USD', 'XPD/USD'],
-    'Indices US': ['SPX', 'NDX', 'DJI', 'RUT'],
-    'Indices Europe': ['DAX', 'CAC', 'FTSE', 'STOXX50E'],
-    'Crypto': ['BTC/USD', 'ETH/USD', 'LTC/USD', 'XRP/USD', 'SOL/USD']
+    'Disponibles': ['EUR/USD', 'XAU/USD', 'BTC/USD']
 };
 
-const DEFAULT_SCAN_INSTRUMENTS = ['EUR/USD', 'XAU/USD', 'SPX', 'DAX', 'BTC/USD'];
+const DEFAULT_SCAN_INSTRUMENTS = ['EUR/USD', 'XAU/USD', 'BTC/USD'];
 
 const state = {
     ready: false,
@@ -963,46 +1008,15 @@ function getDecimals(price) {
 // SPÉCIFICATIONS INSTRUMENTS
 // ══════════════════════════════════════════════════════════════════
 const INSTRUMENT_SPECS = {
-    'EUR/USD': { tickSize: 0.00001, tickValue: 1, contractSize: 100000, minLot: 0.01, lotStep: 0.01, pipValue: 0.0001, pipValuePerLot: 10 },
-    'GBP/USD': { tickSize: 0.00001, tickValue: 1, contractSize: 100000, minLot: 0.01, lotStep: 0.01, pipValue: 0.0001, pipValuePerLot: 10 },
-    'USD/JPY': { tickSize: 0.001, tickValue: 0.67, contractSize: 100000, minLot: 0.01, lotStep: 0.01, pipValue: 0.01, pipValuePerLot: 6.7 },
-    'USD/CHF': { tickSize: 0.00001, tickValue: 1.1, contractSize: 100000, minLot: 0.01, lotStep: 0.01, pipValue: 0.0001, pipValuePerLot: 11 },
-    'AUD/USD': { tickSize: 0.00001, tickValue: 1, contractSize: 100000, minLot: 0.01, lotStep: 0.01, pipValue: 0.0001, pipValuePerLot: 10 },
-    'USD/CAD': { tickSize: 0.00001, tickValue: 0.75, contractSize: 100000, minLot: 0.01, lotStep: 0.01, pipValue: 0.0001, pipValuePerLot: 7.5 },
-    'NZD/USD': { tickSize: 0.00001, tickValue: 1, contractSize: 100000, minLot: 0.01, lotStep: 0.01, pipValue: 0.0001, pipValuePerLot: 10 },
-    'EUR/GBP': { tickSize: 0.00001, tickValue: 1.35, contractSize: 100000, minLot: 0.01, lotStep: 0.01, pipValue: 0.0001, pipValuePerLot: 13.5 },
-    'EUR/JPY': { tickSize: 0.001, tickValue: 0.67, contractSize: 100000, minLot: 0.01, lotStep: 0.01, pipValue: 0.01, pipValuePerLot: 6.7 },
-    'GBP/JPY': { tickSize: 0.001, tickValue: 0.67, contractSize: 100000, minLot: 0.01, lotStep: 0.01, pipValue: 0.01, pipValuePerLot: 6.7 },
-    'EUR/CHF': { tickSize: 0.00001, tickValue: 1.1, contractSize: 100000, minLot: 0.01, lotStep: 0.01, pipValue: 0.0001, pipValuePerLot: 11 },
-    'XAU/USD': { tickSize: 0.01, tickValue: 1, contractSize: 100, minLot: 0.01, lotStep: 0.01, pipValue: 0.1, pipValuePerLot: 10 },
-    'XAG/USD': { tickSize: 0.001, tickValue: 5, contractSize: 5000, minLot: 0.01, lotStep: 0.01, pipValue: 0.01, pipValuePerLot: 50 },
-    'XPT/USD': { tickSize: 0.01, tickValue: 0.1, contractSize: 100, minLot: 0.01, lotStep: 0.01, pipValue: 0.1, pipValuePerLot: 1 },
-    'XPD/USD': { tickSize: 0.01, tickValue: 0.1, contractSize: 100, minLot: 0.01, lotStep: 0.01, pipValue: 0.1, pipValuePerLot: 1 },
-    'SPX': { tickSize: 0.1, tickValue: 0.1, contractSize: 1, minLot: 0.1, lotStep: 0.1, pipValue: 1, pipValuePerLot: 1 },
-    'NDX': { tickSize: 0.1, tickValue: 0.1, contractSize: 1, minLot: 0.1, lotStep: 0.1, pipValue: 1, pipValuePerLot: 1 },
-    'DJI': { tickSize: 0.1, tickValue: 0.1, contractSize: 1, minLot: 0.1, lotStep: 0.1, pipValue: 1, pipValuePerLot: 1 },
-    'RUT': { tickSize: 0.1, tickValue: 0.1, contractSize: 1, minLot: 0.1, lotStep: 0.1, pipValue: 1, pipValuePerLot: 1 },
-    'DAX': { tickSize: 0.1, tickValue: 0.1, contractSize: 1, minLot: 0.1, lotStep: 0.1, pipValue: 1, pipValuePerLot: 1 },
-    'CAC': { tickSize: 0.1, tickValue: 0.1, contractSize: 1, minLot: 0.1, lotStep: 0.1, pipValue: 1, pipValuePerLot: 1 },
-    'FTSE': { tickSize: 0.1, tickValue: 0.1, contractSize: 1, minLot: 0.1, lotStep: 0.1, pipValue: 1, pipValuePerLot: 1 },
-    'STOXX50E': { tickSize: 0.1, tickValue: 0.1, contractSize: 1, minLot: 0.1, lotStep: 0.1, pipValue: 1, pipValuePerLot: 1 },
-    'BTC/USD': { tickSize: 0.01, tickValue: 0.01, contractSize: 1, minLot: 0.001, lotStep: 0.001, pipValue: 1, pipValuePerLot: 1 },
-    'ETH/USD': { tickSize: 0.01, tickValue: 0.01, contractSize: 1, minLot: 0.01, lotStep: 0.01, pipValue: 0.1, pipValuePerLot: 0.1 },
-    'LTC/USD': { tickSize: 0.01, tickValue: 0.01, contractSize: 1, minLot: 0.01, lotStep: 0.01, pipValue: 0.1, pipValuePerLot: 0.1 },
-    'XRP/USD': { tickSize: 0.0001, tickValue: 0.0001, contractSize: 1, minLot: 0.1, lotStep: 0.1, pipValue: 0.0001, pipValuePerLot: 0.0001 },
-    'SOL/USD': { tickSize: 0.01, tickValue: 0.01, contractSize: 1, minLot: 0.01, lotStep: 0.01, pipValue: 0.01, pipValuePerLot: 0.01 }
+    'EUR/USD': { tickSize: 0.00001, tickValue: 1, contractSize: 100000, minLot: 0.01, lotStep: 0.01, pipValue: 0.0001, pipValuePerLot: 10, spreadPips: 1.0, commissionPerLot: 7 },
+    'XAU/USD': { tickSize: 0.01, tickValue: 1, contractSize: 100, minLot: 0.01, lotStep: 0.01, pipValue: 0.1, pipValuePerLot: 10, spreadPips: 20, commissionPerLot: 7 },
+    'BTC/USD': { tickSize: 0.01, tickValue: 0.01, contractSize: 1, minLot: 0.001, lotStep: 0.001, pipValue: 1, pipValuePerLot: 1, spreadPips: 500, commissionPerLot: 0 }
 };
 
 function getSpecs(symbol) {
     const clean = String(symbol || '').trim().toUpperCase();
     if (INSTRUMENT_SPECS[clean]) return INSTRUMENT_SPECS[clean];
-    if (clean.includes('JPY')) return { tickSize: 0.001, tickValue: 0.67, contractSize: 100000, minLot: 0.01, lotStep: 0.01, pipValue: 0.01, pipValuePerLot: 6.7 };
-    if (clean.includes('XAU')) return { tickSize: 0.01, tickValue: 1, contractSize: 100, minLot: 0.01, lotStep: 0.01, pipValue: 0.1, pipValuePerLot: 10 };
-    if (clean.includes('XAG')) return { tickSize: 0.001, tickValue: 5, contractSize: 5000, minLot: 0.01, lotStep: 0.01, pipValue: 0.01, pipValuePerLot: 50 };
-    if (clean.includes('BTC')) return { tickSize: 0.01, tickValue: 0.01, contractSize: 1, minLot: 0.001, lotStep: 0.001, pipValue: 1, pipValuePerLot: 1 };
-    if (clean.includes('ETH')) return { tickSize: 0.01, tickValue: 0.01, contractSize: 1, minLot: 0.01, lotStep: 0.01, pipValue: 0.1, pipValuePerLot: 0.1 };
-    if (['SPX','NDX','DAX','CAC','FTSE','DJI','RUT','STOXX50E'].includes(clean)) return { tickSize: 0.1, tickValue: 0.1, contractSize: 1, minLot: 0.1, lotStep: 0.1, pipValue: 1, pipValuePerLot: 1 };
-    return { tickSize: 0.00001, tickValue: 1, contractSize: 100000, minLot: 0.01, lotStep: 0.01, pipValue: 0.0001, pipValuePerLot: 10 };
+    return INSTRUMENT_SPECS['EUR/USD'];
 }
 
 function computePositionSizeBrokerGrade(capital, riskPct, entry, sl, symbol) {
@@ -1029,19 +1043,15 @@ function computePositionSizeBrokerGrade(capital, riskPct, entry, sl, symbol) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// ✅ PHASE 3 — CACHE API (économie de quota)
+// CACHE API
 // ══════════════════════════════════════════════════════════════════
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
 function getApiCache() {
-    try {
-        const raw = localStorage.getItem(STORAGE.apiCache) || '{}';
-        return JSON.parse(raw);
-    } catch (e) { return {}; }
+    try { return JSON.parse(localStorage.getItem(STORAGE.apiCache) || '{}'); } catch (e) { return {}; }
 }
 function saveApiCache(cache) {
     try {
-        // Nettoyage : garder max 100 entrées
         const keys = Object.keys(cache);
         if (keys.length > 100) {
             const sorted = keys.sort((a, b) => (cache[a].ts || 0) - (cache[b].ts || 0));
@@ -1054,11 +1064,7 @@ function getCached(key) {
     const cache = getApiCache();
     const entry = cache[key];
     if (!entry) return null;
-    if (Date.now() - entry.ts > CACHE_TTL_MS) {
-        delete cache[key];
-        saveApiCache(cache);
-        return null;
-    }
+    if (Date.now() - entry.ts > CACHE_TTL_MS) { delete cache[key]; saveApiCache(cache); return null; }
     return entry.data;
 }
 function setCache(key, data) {
@@ -1104,9 +1110,9 @@ async function connectTwelveData() {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// BOUGIES (avec cache)
+// BOUGIES
 // ══════════════════════════════════════════════════════════════════
-const TF_MAP = { H4: '4h', H1: '1h', M15: '15min', M5: '5min', D1: '1day' };
+const TF_MAP = { D1: '1day', H4: '4h', H1: '1h', M15: '15min', M5: '5min' };
 
 async function fetchCandles(symbol, tf, count = 200, useCache = true) {
     const key = getTwelveKey();
@@ -1114,10 +1120,7 @@ async function fetchCandles(symbol, tf, count = 200, useCache = true) {
     const cacheKey = 'candles_' + symbol + '_' + tf + '_' + count;
     if (useCache) {
         const cached = getCached(cacheKey);
-        if (cached) {
-            log('Cache hit : ' + cacheKey);
-            return cached;
-        }
+        if (cached) return cached;
     }
     setStatus('Chargement ' + symbol + ' ' + tf + '…');
     const url = TWELVEDATA_API + '/time_series?symbol=' + encodeURIComponent(symbol) + '&interval=' + TF_MAP[tf] + '&outputsize=' + count + '&apikey=' + encodeURIComponent(key);
@@ -1175,7 +1178,7 @@ function subscribeTicks(symbol) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// ✅ PHASE 3 — ATR (Average True Range)
+// ATR
 // ══════════════════════════════════════════════════════════════════
 function computeATR(candles, period = 14) {
     if (candles.length < period + 1) return null;
@@ -1224,7 +1227,7 @@ function findExternalSwings(candles, lookback = 5) {
 function detectStructure(candles) {
     const internalSwings = findSwings(candles, 3);
     const externalSwings = findExternalSwings(candles, 5);
-    if (internalSwings.length < 4) return { trend: 'range', events: [], swings: internalSwings, externalSwings, lastHigh: null, lastLow: null, externalTrend: 'range', externalLastHigh: null, externalLastLow: null };
+    if (internalSwings.length < 4) return { trend: 'range', events: [], swings: internalSwings, externalSwings, lastHigh: null, lastLow: null, externalTrend: 'range', externalEvents: [], externalLastHigh: null, externalLastLow: null };
 
     const events = [];
     let trend = 'range';
@@ -1454,7 +1457,6 @@ function analyzeTimeframe(candles) {
     const allEvents = [...(structure.events || []), ...(structure.externalEvents || [])];
     const lastEv = allEvents[allEvents.length - 1];
     if (lastEv) { if (lastEv.direction === 'bull') bullPoints += 1; else bearPoints += 1; }
-    if (pd.zone === 'discount') bullPoints += 1; else bearPoints += 1;
     for (const s of sweeps) {
         const weight = s.tier === 'weekly' ? 3 : s.tier === 'daily' ? 2.5 : s.tier === 'external' ? 2 : 1.5;
         if (s.type === 'bull') bullPoints += weight; else bearPoints += weight;
@@ -1468,13 +1470,114 @@ function analyzeTimeframe(candles) {
     return { structure, obs, fvgs, pd, sweeps, hierarchy, atr, direction, strength };
 }
 
+// ✅ SYNTHÈSE TOP-DOWN D1 → H4 → H1 → M15 → M5
+function synthesizeTopDown(results) {
+    const D1 = results.D1;
+    const H4 = results.H4;
+    const H1 = results.H1;
+    const M15 = results.M15;
+    const M5 = results.M5;
+
+    let d1Bias = 'range';
+    let d1Strength = 50;
+    if (D1) {
+        d1Bias = D1.direction;
+        d1Strength = D1.strength;
+    }
+
+    let h4Confirms = false;
+    let h4Direction = 'range';
+    if (H4) {
+        h4Direction = H4.direction;
+        h4Confirms = (d1Bias === 'bullish' && (H4.direction === 'bullish' || H4.direction === 'range'))
+                  || (d1Bias === 'bearish' && (H4.direction === 'bearish' || H4.direction === 'range'));
+    }
+
+    let h1Zone = 'unknown';
+    let h1Structure = 'range';
+    if (H1) {
+        h1Zone = H1.pd?.zone || 'unknown';
+        h1Structure = H1.direction;
+    }
+
+    let m15Confirms = false;
+    let m15HasMSS = false;
+    let m15HasSweep = false;
+    if (M15) {
+        const lastEvents = M15.structure.events.slice(-3);
+        m15HasMSS = lastEvents.some(e => e.type === 'MSS');
+        m15HasSweep = M15.sweeps && M15.sweeps.length > 0;
+        m15Confirms = m15HasMSS || m15HasSweep;
+    }
+
+    let m5Triggers = false;
+    if (M5) {
+        const hasDisplacement = M5.obs && M5.obs.some(o => o.displacement);
+        const hasSweep = M5.sweeps && M5.sweeps.length > 0;
+        m5Triggers = hasDisplacement || hasSweep;
+    }
+
+    let signal = 'ATTENDRE';
+    let signalClass = 'wait';
+    let confidence = 0;
+    let reason = '';
+
+    if (d1Bias === 'bullish' && h4Confirms && H1 && H1.pd) {
+        if (H1.pd.zone === 'discount' && m15Confirms && m5Triggers) {
+            signal = 'ACHAT';
+            signalClass = 'buy';
+            confidence = Math.min(95, Math.round((d1Strength + (H4?.strength || 50) + (M15?.strength || 50)) / 3));
+            reason = '✅ D1 haussier + H4 confirme + H1 Discount + M15 MSS/sweep + M5 trigger';
+        } else if (H1.pd.zone === 'premium') {
+            reason = '⏸ D1 haussier mais H1 en Premium — attendre retour en Discount';
+        } else if (!m15Confirms) {
+            reason = '⏸ D1 haussier + H1 Discount mais M15 ne confirme pas (attendre MSS/sweep)';
+        } else if (!m5Triggers) {
+            reason = '⏸ D1 haussier + H1 Discount + M15 OK mais M5 n\'a pas déclenché';
+        }
+    } else if (d1Bias === 'bearish' && h4Confirms && H1 && H1.pd) {
+        if (H1.pd.zone === 'premium' && m15Confirms && m5Triggers) {
+            signal = 'VENTE';
+            signalClass = 'sell';
+            confidence = Math.min(95, Math.round((d1Strength + (H4?.strength || 50) + (M15?.strength || 50)) / 3));
+            reason = '✅ D1 baissier + H4 confirme + H1 Premium + M15 MSS/sweep + M5 trigger';
+        } else if (H1.pd.zone === 'discount') {
+            reason = '⏸ D1 baissier mais H1 en Discount — attendre retour en Premium';
+        } else if (!m15Confirms) {
+            reason = '⏸ D1 baissier + H1 Premium mais M15 ne confirme pas';
+        } else if (!m5Triggers) {
+            reason = '⏸ D1 baissier + H1 Premium + M15 OK mais M5 n\'a pas déclenché';
+        }
+    } else if (!h4Confirms) {
+        reason = '⏸ H4 ne confirme pas le biais D1 (' + d1Bias + ' vs ' + h4Direction + ')';
+    } else {
+        reason = '⏸ Biais D1 indéterminé (' + d1Bias + ')';
+    }
+
+    const zone = H1?.pd?.zone || M15?.pd?.zone || 'unknown';
+
+    return {
+        signal, signalClass, confidence,
+        dominantStructure: d1Bias,
+        zone,
+        orientationReason: reason,
+        zoneValid: signal !== 'ATTENDRE',
+        topDown: {
+            d1Bias, d1Strength,
+            h4Confirms, h4Direction,
+            h1Zone, h1Structure,
+            m15Confirms, m15HasMSS, m15HasSweep,
+            m5Triggers
+        }
+    };
+}
+
 function synthesizeSMC(results, mode) {
+    if (mode === 'topdown') return synthesizeTopDown(results);
+    // Fallback ancien mode
     const tfs = Object.keys(results).filter(k => results[k]);
     if (!tfs.length) return null;
-    let weights = {};
-    if (mode === 'h4h1') weights = { H4: 0.65, H1: 0.35 };
-    else if (mode === 'h1m15') weights = { H1: 0.55, M15: 0.45 };
-    else weights = { H1: 0.5, M15: 0.3, M5: 0.2 };
+    let weights = { H4: 0.65, H1: 0.35 };
     let bullScore = 0, bearScore = 0, totalWeight = 0;
     for (const tf of tfs) {
         const w = weights[tf] || 0.33;
@@ -1485,37 +1588,42 @@ function synthesizeSMC(results, mode) {
     }
     const bullNorm = totalWeight > 0 ? bullScore / totalWeight : 0;
     const bearNorm = totalWeight > 0 ? bearScore / totalWeight : 0;
-    let signal = 'ATTENDRE', signalClass = 'wait', confidence = 0;
-    if (bullNorm > bearNorm * 1.4 && bullNorm > 0.4) { signal = 'ACHAT'; signalClass = 'buy'; confidence = Math.min(95, Math.round(bullNorm * 100)); }
-    else if (bearNorm > bullNorm * 1.4 && bearNorm > 0.4) { signal = 'VENTE'; signalClass = 'sell'; confidence = Math.min(95, Math.round(bearNorm * 100)); }
+    let dominantStructure = 'range';
+    let confidence = 0;
+    if (bullNorm > bearNorm * 1.4 && bullNorm > 0.4) { dominantStructure = 'bullish'; confidence = Math.min(95, Math.round(bullNorm * 100)); }
+    else if (bearNorm > bullNorm * 1.4 && bearNorm > 0.4) { dominantStructure = 'bearish'; confidence = Math.min(95, Math.round(bearNorm * 100)); }
     else confidence = Math.round(Math.max(bullNorm, bearNorm) * 60);
-
     const entryTF = tfs[tfs.length - 1];
     const entryR = results[entryTF];
-    if (entryR && entryR.pd) {
-        const zone = entryR.pd.zone;
-        if (signal === 'VENTE' && zone === 'discount') { signal = 'ATTENDRE'; signalClass = 'wait'; confidence = Math.round(confidence * 0.5); }
-        else if (signal === 'ACHAT' && zone === 'premium') { signal = 'ATTENDRE'; signalClass = 'wait'; confidence = Math.round(confidence * 0.5); }
-    }
-    if (signal !== 'ATTENDRE' && confidence < 55) { signal = 'ATTENDRE'; signalClass = 'wait'; }
-    return { signal, signalClass, confidence };
+    const zone = entryR?.pd?.zone || 'unknown';
+    const orientation = orientSignalByZone(dominantStructure, zone);
+    return {
+        signal: orientation.signal,
+        signalClass: orientation.signal === 'ACHAT' ? 'buy' : orientation.signal === 'VENTE' ? 'sell' : 'wait',
+        confidence, dominantStructure, zone,
+        orientationReason: orientation.reason,
+        zoneValid: orientation.valid
+    };
 }
 
-// ✅ PHASE 3 — computeSMCLevels avec ATR buffer
+function orientSignalByZone(structure, zone) {
+    if (structure === 'bullish' && zone === 'discount') return { signal: 'ACHAT', valid: true, reason: 'Structure haussière + Discount ✓' };
+    if (structure === 'bearish' && zone === 'premium') return { signal: 'VENTE', valid: true, reason: 'Structure baissière + Premium ✓' };
+    if (structure === 'bullish' && zone === 'premium') return { signal: 'ATTENDRE', valid: false, reason: 'Attendre retour en Discount' };
+    if (structure === 'bearish' && zone === 'discount') return { signal: 'ATTENDRE', valid: false, reason: 'Attendre retour en Premium' };
+    return { signal: 'ATTENDRE', valid: false, reason: 'Indéterminé' };
+}
+
 function computeSMCLevels(results, synthesis, currentPrice, entryR) {
-    const tfs = Object.keys(results).filter(k => results[k]);
+    const r = entryR || results.M5 || results.M15;
     const decimals = getDecimals(currentPrice);
     const fmt = p => p != null && !isNaN(p) ? Number(p).toFixed(decimals) : '—';
-    const entryTF = tfs[tfs.length - 1];
-    const r = entryR || results[entryTF];
     const obs = r.obs || [];
     const atr = r.atr || (currentPrice * 0.005);
 
     const specs = getSpecs(state.symbol);
     const MIN_SL_PIPS = state.symbol.includes('XAU') ? 30 : state.symbol.includes('BTC') ? 200 : 10;
     const MIN_SL_DISTANCE = MIN_SL_PIPS * specs.pipValue;
-
-    // ✅ ATR buffer : SL doit être à au moins 0.5 ATR au-delà du niveau
     const ATR_BUFFER = atr * 0.5;
 
     let entry, sl, tp, tp1, tp2, riskReward;
@@ -1528,19 +1636,13 @@ function computeSMCLevels(results, synthesis, currentPrice, entryR) {
             return sb - sa;
         });
         const entryOB = bullOBs[0];
-        if (entryOB) {
-            entry = entryOB.top;
-            sl = entryOB.bottom - ATR_BUFFER;
-        } else {
-            entry = currentPrice * 0.998;
-            sl = currentPrice * 0.99;
-        }
+        if (entryOB) { entry = entryOB.top; sl = entryOB.bottom - ATR_BUFFER; }
+        else { entry = currentPrice * 0.998; sl = currentPrice * 0.99; }
         if (Math.abs(entry - sl) < MIN_SL_DISTANCE) sl = entry - MIN_SL_DISTANCE;
         const swingHigh = r.structure.lastHigh ? r.structure.lastHigh.price : null;
         const extHigh = r.structure.externalLastHigh ? r.structure.externalLastHigh.price : null;
-        const pdh = hierarchy.pdh, pwh = hierarchy.pwh;
         tp1 = swingHigh && swingHigh > entry ? swingHigh : entry + Math.abs(entry - sl) * 2;
-        const candidates = [extHigh, pdh, pwh].filter(v => v != null && v > tp1);
+        const candidates = [extHigh, hierarchy.pdh, hierarchy.pwh].filter(v => v != null && v > tp1);
         tp2 = candidates.length ? Math.min(...candidates) : tp1 + Math.abs(entry - sl) * 2;
         tp = tp2;
     } else if (synthesis.signal === 'VENTE') {
@@ -1550,19 +1652,13 @@ function computeSMCLevels(results, synthesis, currentPrice, entryR) {
             return sb - sa;
         });
         const entryOB = bearOBs[0];
-        if (entryOB) {
-            entry = entryOB.bottom;
-            sl = entryOB.top + ATR_BUFFER;
-        } else {
-            entry = currentPrice * 1.002;
-            sl = currentPrice * 1.01;
-        }
+        if (entryOB) { entry = entryOB.bottom; sl = entryOB.top + ATR_BUFFER; }
+        else { entry = currentPrice * 1.002; sl = currentPrice * 1.01; }
         if (Math.abs(entry - sl) < MIN_SL_DISTANCE) sl = entry + MIN_SL_DISTANCE;
         const swingLow = r.structure.lastLow ? r.structure.lastLow.price : null;
         const extLow = r.structure.externalLastLow ? r.structure.externalLastLow.price : null;
-        const pdl = hierarchy.pdl, pwl = hierarchy.pwl;
         tp1 = swingLow && swingLow < entry ? swingLow : entry - Math.abs(sl - entry) * 2;
-        const candidates = [extLow, pdl, pwl].filter(v => v != null && v < tp1);
+        const candidates = [extLow, hierarchy.pdl, hierarchy.pwl].filter(v => v != null && v < tp1);
         tp2 = candidates.length ? Math.max(...candidates) : tp1 - Math.abs(sl - entry) * 2;
         tp = tp2;
     } else {
@@ -1580,19 +1676,37 @@ function computeSMCLevels(results, synthesis, currentPrice, entryR) {
     return {
         entry: fmt(entry), sl: fmt(sl), tp: fmt(tp),
         tp1: fmt(tp1), tp2: fmt(tp2),
-        riskReward, entryPrice: entry, slPrice: sl, tpPrice: tp
+        riskReward,
+        entryPrice: entry, slPrice: sl, tpPrice: tp,
+        tp1Price: parseFloat(fmt(tp1)), tp2Price: parseFloat(fmt(tp2))
     };
 }
 
 function computeSMCScore(results, synthesis, levels) {
-    const tfs = Object.keys(results).filter(k => results[k]);
-    const entryTF = tfs[tfs.length - 1];
-    const entryR = results[entryTF];
+    const entryR = results.M5 || results.M15 || results.H1;
     const scores = {
         structure: 0, liquidity: 0, displacement: 0, ob_quality: 0,
         fvg_quality: 0, zone: 0, mtf_alignment: 0, liquidity_hierarchy: 0
     };
-    scores.structure = Math.min(100, (entryR.strength || 50) + 10);
+
+    if (synthesis.topDown) {
+        scores.structure = Math.round((synthesis.topDown.d1Strength + (results.H4?.strength || 50)) / 2);
+        scores.mtf_alignment = synthesis.topDown.h4Confirms ? 90 : 30;
+        scores.zone = (synthesis.topDown.h1Zone === 'discount' && synthesis.topDown.d1Bias === 'bullish') ? 90
+                    : (synthesis.topDown.h1Zone === 'premium' && synthesis.topDown.d1Bias === 'bearish') ? 90
+                    : 40;
+    } else {
+        scores.structure = Math.min(100, (entryR.strength || 50) + 10);
+        const directions = ['H1', 'M15', 'M5'].map(tf => results[tf]?.direction).filter(Boolean);
+        const sameDir = directions.filter(d => d === directions[0]).length;
+        scores.mtf_alignment = directions.length ? Math.round((sameDir / directions.length) * 100) : 50;
+        const zone = entryR.pd?.zone;
+        const signal = synthesis.signal;
+        if ((signal === 'ACHAT' && zone === 'discount') || (signal === 'VENTE' && zone === 'premium')) scores.zone = 90;
+        else if (signal === 'ATTENDRE') scores.zone = 50;
+        else scores.zone = 20;
+    }
+
     const sweepCount = entryR.sweeps?.length || 0;
     scores.liquidity = Math.min(100, sweepCount * 25 + 40);
     const displacedOBs = (entryR.obs || []).filter(o => o.displacement);
@@ -1603,14 +1717,6 @@ function computeSMCScore(results, synthesis, levels) {
     const fvgCount = entryR.fvgs?.length || 0;
     const cleanFVGs = (entryR.fvgs || []).filter(f => f.fillPct === 0);
     scores.fvg_quality = Math.min(100, fvgCount * 10 + cleanFVGs.length * 15 + 20);
-    const zone = entryR.pd?.zone;
-    const signal = synthesis.signal;
-    if ((signal === 'ACHAT' && zone === 'discount') || (signal === 'VENTE' && zone === 'premium')) scores.zone = 90;
-    else if (signal === 'ATTENDRE') scores.zone = 50;
-    else scores.zone = 20;
-    const directions = tfs.map(tf => results[tf].direction);
-    const sameDir = directions.filter(d => d === directions[0]).length;
-    scores.mtf_alignment = Math.round((sameDir / directions.length) * 100);
     const h = entryR.hierarchy || {};
     let hierarchyScore = 0;
     if (h.pdh && h.pdl) hierarchyScore += 25;
@@ -1618,8 +1724,9 @@ function computeSMCScore(results, synthesis, levels) {
     if (h.equalHighs?.length) hierarchyScore += 25;
     if (h.equalLows?.length) hierarchyScore += 25;
     scores.liquidity_hierarchy = hierarchyScore;
+
     const weights = {
-        structure: 0.18, liquidity: 0.12, displacement: 0.12, ob_quality: 0.12,
+        structure: 0.20, liquidity: 0.10, displacement: 0.12, ob_quality: 0.12,
         fvg_quality: 0.10, zone: 0.12, mtf_alignment: 0.12, liquidity_hierarchy: 0.12
     };
     let total = 0;
@@ -1627,191 +1734,236 @@ function computeSMCScore(results, synthesis, levels) {
     return { total: Math.round(total), details: scores };
 }
 
+function getScoreStatus(score) {
+    if (score >= 85) return { level: 'excellent', label: '🟢 EXCELLENT', color: 'var(--success)', emoji: '🔥🔥🔥', action: 'Signal A+ prioritaire' };
+    if (score >= 75) return { level: 'acceptable', label: '🟡 ACCEPTABLE', color: 'var(--warn)', emoji: '🔥🔥', action: 'Trade possible, prudence' };
+    return { level: 'rejected', label: '❌ REJETÉ', color: 'var(--error)', emoji: '⛔', action: 'Signal ignoré' };
+}
+
+function isSignalValid(score) {
+    return score >= getScanConfig().minScore;
+}
+
 function buildScenarios(results, synthesis, levels) {
     const scenarios = [];
     if (synthesis.signal === 'ACHAT') {
-        scenarios.push({ type: 'bull', title: '🟢 Scénario principal — Achat', prob: 'SMC Score : ' + synthesis.confidence + '/100', text: 'Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP1 : ' + levels.tp1 + ' · TP2 : ' + levels.tp2 });
+        scenarios.push({ type: 'bull', title: '🟢 Scénario principal — Achat', prob: 'Score : ' + synthesis.confidence + '/100', text: 'Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP1 : ' + levels.tp1 + ' · TP2 : ' + levels.tp2 });
         scenarios.push({ type: 'bear', title: '🔴 Invalidation', prob: 'À surveiller', text: 'Si clôture sous ' + levels.sl + ', biais haussier invalidé.' });
         scenarios.push({ type: 'range', title: '⚪ Range', prob: 'Faible', text: 'Si prix bloqué entre ' + levels.entry + ' et ' + levels.tp1 + ', attendre cassure.' });
     } else if (synthesis.signal === 'VENTE') {
-        scenarios.push({ type: 'bear', title: '🔴 Scénario principal — Vente', prob: 'SMC Score : ' + synthesis.confidence + '/100', text: 'Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP1 : ' + levels.tp1 + ' · TP2 : ' + levels.tp2 });
+        scenarios.push({ type: 'bear', title: '🔴 Scénario principal — Vente', prob: 'Score : ' + synthesis.confidence + '/100', text: 'Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP1 : ' + levels.tp1 + ' · TP2 : ' + levels.tp2 });
         scenarios.push({ type: 'bull', title: '🟢 Invalidation', prob: 'À surveiller', text: 'Si clôture au-dessus de ' + levels.sl + ', biais baissier invalidé.' });
         scenarios.push({ type: 'range', title: '⚪ Range', prob: 'Faible', text: 'Si prix bloqué entre ' + levels.tp1 + ' et ' + levels.entry + ', attendre cassure.' });
     } else {
-        scenarios.push({ type: 'range', title: '⚪ Attente', prob: 'Indéterminé', text: 'Structure peu claire. Attendre MSS ou sweep de liquidité.' });
+        scenarios.push({ type: 'range', title: '⚪ Attente', prob: synthesis.orientationReason || 'Indéterminé', text: 'Tous les TF ne sont pas alignés. Attendre la confirmation complète D1→H4→H1→M15→M5.' });
     }
     return scenarios;
 }
 
 // ══════════════════════════════════════════════════════════════════
-// ✅ PHASE 3 — BACKTEST NON-REPAINT
+// BACKTEST TOP-DOWN
 // ══════════════════════════════════════════════════════════════════
 async function runBacktest() {
     if (state.backtestRunning) { toast('Backtest déjà en cours', 'warn'); return; }
     const symbol = $('bt-instrument').value.trim().toUpperCase();
-    const tf = $('bt-tf').value;
     const nbBars = parseInt($('bt-bars').value, 10);
     const capitalInit = parseFloat($('bt-capital').value) || 1000;
     const riskPct = parseFloat($('bt-risk').value) || 1;
     const minRR = parseFloat($('bt-minrr').value) || 2;
+    const minScore = parseInt($('bt-score-min').value, 10) || 80;
 
-    if (!symbol) { toast('Instrument manquant', 'warn'); return; }
+    if (!ALLOWED_INSTRUMENTS.includes(symbol)) { toast('Instrument non autorisé', 'error'); return; }
     if (nbBars > 2000) { toast('Maximum 2000 bougies', 'warn'); return; }
 
     state.backtestRunning = true;
     $('bt-run-btn').disabled = true;
-    $('bt-run-btn').textContent = '⏳ Chargement des données…';
+    $('bt-run-btn').textContent = '⏳ Chargement D1, H4, H1, M15, M5…';
     $('bt-progress').style.display = 'block';
     $('bt-progress-text').style.display = 'block';
     $('bt-progress-fill').style.width = '0%';
 
     try {
-        // Charger les bougies (cache désactivé pour éviter les données stale)
-        const allCandles = await fetchCandles(symbol, tf, nbBars, false);
-        if (allCandles.length < 200) throw new Error('Pas assez de bougies (min 200)');
+        // Charger D1, H4, H1, M15 en séquentiel (M5 en priorité)
+        const [m5Data, m15Data, h1Data, h4Data, d1Data] = await Promise.all([
+            fetchCandles(symbol, 'M5', nbBars, false),
+            fetchCandles(symbol, 'M15', Math.min(nbBars, 2000), false),
+            fetchCandles(symbol, 'H1', Math.min(nbBars, 2000), false),
+            fetchCandles(symbol, 'H4', Math.min(nbBars, 2000), false),
+            fetchCandles(symbol, 'D1', Math.min(nbBars, 2000), false)
+        ]);
 
-        log('Backtest : ' + allCandles.length + ' bougies chargées');
+        if (m5Data.length < 200) throw new Error('Pas assez de bougies M5 (min 200)');
 
-        // Phase de simulation : pour chaque bougie i (à partir de 100),
-        // on analyse les bougies [0..i] UNIQUEMENT (pas de look-ahead)
+        const specs = getSpecs(symbol);
+        const SPREAD_PIPS = specs.spreadPips || 1.2;
+        const COMMISSION_PER_LOT = specs.commissionPerLot || 7;
+        const SLIPPAGE_PIPS = 0.3;
+
         const trades = [];
-        const MIN_BARS_BEFORE = 100;
+        const MIN_BARS_BEFORE = 200;
         let equity = capitalInit;
         const equityCurve = [capitalInit];
 
-        for (let i = MIN_BARS_BEFORE; i < allCandles.length - 10; i++) {
-            const subset = allCandles.slice(0, i + 1);
-            const r = analyzeTimeframe(subset);
-            if (!r) continue;
+        // Ratios : 1 M15 = 3 M5, 1 H1 = 12 M5, 1 H4 = 48 M5, 1 D1 = 288 M5
+        const RATIO_M15 = 3;
+        const RATIO_H1 = 12;
+        const RATIO_H4 = 48;
+        const RATIO_D1 = 288;
 
-            const synthesis = synthesizeSMC({ [tf]: r }, tf === 'H4' ? 'h4h1' : tf === 'M15' ? 'h1m15' : 'h1m15');
+        for (let i = MIN_BARS_BEFORE; i < m5Data.length - 30; i++) {
+            const m5Subset = m5Data.slice(0, i + 1);
+            const rM5 = analyzeTimeframe(m5Subset);
+            if (!rM5) continue;
+
+            const m15Idx = Math.floor(i / RATIO_M15);
+            if (m15Idx < 30) continue;
+            const rM15 = analyzeTimeframe(m15Data.slice(0, Math.min(m15Idx + 1, m15Data.length)));
+
+            const h1Idx = Math.floor(i / RATIO_H1);
+            if (h1Idx < 30) continue;
+            const rH1 = analyzeTimeframe(h1Data.slice(0, Math.min(h1Idx + 1, h1Data.length)));
+
+            const h4Idx = Math.floor(i / RATIO_H4);
+            if (h4Idx < 20) continue;
+            const rH4 = analyzeTimeframe(h4Data.slice(0, Math.min(h4Idx + 1, h4Data.length)));
+
+            const d1Idx = Math.floor(i / RATIO_D1);
+            if (d1Idx < 15) continue;
+            const rD1 = analyzeTimeframe(d1Data.slice(0, Math.min(d1Idx + 1, d1Data.length)));
+
+            const results = { D1: rD1, H4: rH4, H1: rH1, M15: rM15, M5: rM5 };
+            const synthesis = synthesizeTopDown(results);
             if (!synthesis || synthesis.signal === 'ATTENDRE') continue;
 
-            // Vérifier qu'il y a un OB displacement + zone cohérente
-            const entryR = r;
+            const entryR = rM5;
             if (!(entryR.obs && entryR.obs.some(o => o.displacement))) continue;
 
-            const currentPrice = subset[subset.length - 1].close;
-            const levels = computeSMCLevels({ [tf]: r }, synthesis, currentPrice, entryR);
-            const smcScore = computeSMCScore({ [tf]: r }, synthesis, levels);
-            if (smcScore.total < 60) continue;
+            const currentPrice = m5Subset[m5Subset.length - 1].close;
+            const levels = computeSMCLevels(results, synthesis, currentPrice, entryR);
+            const smcScore = computeSMCScore(results, synthesis, levels);
+            if (smcScore.total < minScore) continue;
 
             const rrNum = parseFloat(levels.riskReward.replace('1:', ''));
             if (isNaN(rrNum) || rrNum < minRR) continue;
 
-            // Simuler le trade sur les bougies suivantes
-            const entry = levels.entryPrice, sl = levels.slPrice, tp = levels.tpPrice;
             const dir = synthesis.signal === 'ACHAT' ? 1 : -1;
-            let result = null, exitPrice = null, exitIdx = null;
+            const entryReal = dir > 0 ? levels.entryPrice + (SPREAD_PIPS / 2 + SLIPPAGE_PIPS) * specs.pipValue
+                                       : levels.entryPrice - (SPREAD_PIPS / 2 + SLIPPAGE_PIPS) * specs.pipValue;
+            const slReal = levels.slPrice;
+            const tp1Real = levels.tp1Price;
+            const tp2Real = levels.tp2Price;
 
-            for (let k = i + 1; k < Math.min(i + 100, allCandles.length); k++) {
-                const c = allCandles[k];
-                const hitTP = dir > 0 ? c.high >= tp : c.low <= tp;
-                const hitSL = dir > 0 ? c.low <= sl : c.high >= sl;
-                // Si SL touché en premier (bougie ambiguë : on privilégie SL par prudence)
-                if (hitSL && hitTP) {
-                    // On considère SL (worst case)
-                    result = 'sl'; exitPrice = sl; exitIdx = k; break;
+            let result = null, exitPrice = null, exitIdx = null;
+            let halfClosed = false;
+            let pnlDollars = 0;
+            const riskAmount = equity * (riskPct / 100);
+
+            for (let k = i + 1; k < Math.min(i + 200, m5Data.length); k++) {
+                const c = m5Data[k];
+                const hitTP1 = dir > 0 ? c.high >= tp1Real : c.low <= tp1Real;
+                const hitTP2 = dir > 0 ? c.high >= tp2Real : c.low <= tp2Real;
+                const hitSL = dir > 0 ? c.low <= slReal : c.high >= slReal;
+
+                if (hitTP1 && !halfClosed) {
+                    const halfRisk = riskAmount * 0.5;
+                    const rewardR1 = Math.abs(tp1Real - entryReal) / Math.abs(entryReal - slReal);
+                    pnlDollars += halfRisk * rewardR1;
+                    halfClosed = true;
                 }
-                if (hitSL) { result = 'sl'; exitPrice = sl; exitIdx = k; break; }
-                if (hitTP) { result = 'tp'; exitPrice = tp; exitIdx = k; break; }
+                if (hitSL) {
+                    if (halfClosed) { result = 'be'; exitPrice = entryReal; }
+                    else { pnlDollars += -riskAmount; result = 'sl'; exitPrice = slReal; }
+                    exitIdx = k; break;
+                }
+                if (hitTP2) {
+                    const rewardR2 = Math.abs(tp2Real - entryReal) / Math.abs(entryReal - slReal);
+                    if (halfClosed) pnlDollars += riskAmount * 0.5 * rewardR2;
+                    else pnlDollars += riskAmount * rewardR2;
+                    result = 'tp'; exitPrice = tp2Real; exitIdx = k; break;
+                }
             }
 
-            if (result === null) continue; // trade non clôturé dans la fenêtre
+            if (result === null) continue;
 
-            // Calcul P&L
-            const specs = getSpecs(symbol);
-            const priceDiff = (exitPrice - entry) * dir;
-            const pips = priceDiff / specs.pipValue;
-            const riskAmount = equity * (riskPct / 100);
-            const rrRealized = result === 'tp' ? Math.abs(tp - entry) / Math.abs(entry - sl) : -1;
-            const pnlDollars = result === 'tp'
-                ? riskAmount * Math.abs(tp - entry) / Math.abs(entry - sl)
-                : -riskAmount;
+            const sizeResult = computePositionSizeBrokerGrade(equity, riskPct, entryReal, slReal, symbol);
+            const lots = parseFloat(sizeResult.size) || 0.01;
+            const commission = COMMISSION_PER_LOT * lots * 2;
+            pnlDollars -= commission;
 
             equity += pnlDollars;
             equityCurve.push(equity);
 
             trades.push({
-                idx: i,
-                entryIdx: i,
-                exitIdx: exitIdx,
+                idx: i, entryIdx: i, exitIdx: exitIdx,
                 direction: synthesis.signal,
-                entry: entry, sl: sl, tp: tp, exitPrice: exitPrice,
+                entry: entryReal, sl: slReal, tp: tp2Real, exitPrice: exitPrice,
                 result: result,
-                pips: parseFloat(pips.toFixed(1)),
                 pnlDollars: parseFloat(pnlDollars.toFixed(2)),
                 equity: parseFloat(equity.toFixed(2)),
                 smcScore: smcScore.total,
-                rrTarget: rrNum
+                rrTarget: rrNum, lots
             });
 
-            // Mise à jour progression
-            const progress = ((i - MIN_BARS_BEFORE) / (allCandles.length - MIN_BARS_BEFORE - 10)) * 100;
+            const progress = ((i - MIN_BARS_BEFORE) / (m5Data.length - MIN_BARS_BEFORE - 30)) * 100;
             $('bt-progress-fill').style.width = progress + '%';
-            $('bt-progress-text').textContent = 'Bougie ' + i + ' / ' + (allCandles.length - 10) + ' · ' + trades.length + ' trades';
+            $('bt-progress-text').textContent = 'M5 #' + i + ' / ' + (m5Data.length - 30) + ' · ' + trades.length + ' trades';
 
-            // Yield toutes les 20 itérations pour ne pas bloquer l'UI
             if (i % 20 === 0) await sleep(0);
         }
 
-        // Calcul des stats
         const stats = computeBacktestStats(trades, capitalInit, equity);
-
-        // Affichage
+        window._lastBacktestTrades = trades;
+        window._lastBacktestStats = stats;
         renderBacktestResults(stats, trades, equityCurve);
 
-        toast('Backtest terminé : ' + trades.length + ' trades', 'success', 4000);
+        toast('Backtest Top-Down terminé : ' + trades.length + ' trades', 'success', 4000);
     } catch (e) {
         log('Erreur backtest : ' + e.message);
         toast('Erreur backtest : ' + e.message, 'error', 5000);
     } finally {
         state.backtestRunning = false;
         $('bt-run-btn').disabled = false;
-        $('bt-run-btn').textContent = '▶️ Lancer le backtest';
+        $('bt-run-btn').textContent = '▶️ Lancer le backtest Top-Down';
         $('bt-progress').style.display = 'none';
         $('bt-progress-text').style.display = 'none';
     }
 }
 
 function computeBacktestStats(trades, capitalInit, finalEquity) {
-    if (!trades.length) {
-        return { total: 0, wins: 0, losses: 0, winrate: 0, totalR: 0, avgR: 0, pnl: 0, pnlPct: 0, maxDD: 0, profitFactor: 0, sharpe: 0, capitalInit, finalEquity };
-    }
+    if (!trades.length) return { total: 0, wins: 0, losses: 0, be: 0, winrate: 0, totalR: 0, avgR: 0, pnl: 0, pnlPct: 0, maxDD: 0, profitFactor: 0, sharpe: 0, capitalInit, finalEquity, avgScore: 0 };
     const wins = trades.filter(t => t.result === 'tp').length;
+    const be = trades.filter(t => t.result === 'be').length;
     const losses = trades.filter(t => t.result === 'sl').length;
-    const winrate = (wins + losses) > 0 ? Math.round(wins / (wins + losses) * 100) : 0;
-    const totalR = trades.reduce((s, t) => {
+    const decided = wins + losses;
+    const winrate = decided > 0 ? Math.round(wins / decided * 100) : 0;
+    let totalR = 0;
+    for (const t of trades) {
         const risk = Math.abs(t.entry - t.sl);
         const reward = Math.abs(t.exitPrice - t.entry);
-        return s + (t.result === 'tp' ? reward / risk : -1);
-    }, 0);
+        if (t.result === 'tp') totalR += reward / risk;
+        else if (t.result === 'be') totalR += 0;
+        else totalR -= 1;
+    }
     const avgR = totalR / trades.length;
     const pnl = finalEquity - capitalInit;
     const pnlPct = (pnl / capitalInit) * 100;
-
-    // Max drawdown
     let peak = capitalInit, maxDD = 0;
     for (const t of trades) {
         if (t.equity > peak) peak = t.equity;
         const dd = (peak - t.equity) / peak * 100;
         if (dd > maxDD) maxDD = dd;
     }
-
-    // Profit factor
     const grossWin = trades.filter(t => t.pnlDollars > 0).reduce((s, t) => s + t.pnlDollars, 0);
     const grossLoss = Math.abs(trades.filter(t => t.pnlDollars < 0).reduce((s, t) => s + t.pnlDollars, 0));
     const profitFactor = grossLoss > 0 ? (grossWin / grossLoss) : (grossWin > 0 ? 999 : 0);
-
-    // Sharpe simplifié
     const returns = trades.map(t => t.pnlDollars / capitalInit);
     const avgReturn = returns.reduce((s, v) => s + v, 0) / returns.length;
     const variance = returns.reduce((s, v) => s + Math.pow(v - avgReturn, 2), 0) / returns.length;
     const stdDev = Math.sqrt(variance);
     const sharpe = stdDev > 0 ? (avgReturn / stdDev) * Math.sqrt(trades.length) : 0;
-
+    const avgScore = trades.reduce((s, t) => s + (t.smcScore || 0), 0) / trades.length;
     return {
-        total: trades.length, wins, losses, winrate,
+        total: trades.length, wins, losses, be, winrate,
         totalR: parseFloat(totalR.toFixed(2)),
         avgR: parseFloat(avgR.toFixed(2)),
         pnl: parseFloat(pnl.toFixed(2)),
@@ -1819,44 +1971,37 @@ function computeBacktestStats(trades, capitalInit, finalEquity) {
         maxDD: parseFloat(maxDD.toFixed(2)),
         profitFactor: parseFloat(profitFactor.toFixed(2)),
         sharpe: parseFloat(sharpe.toFixed(2)),
-        capitalInit, finalEquity: parseFloat(finalEquity.toFixed(2))
+        capitalInit, finalEquity: parseFloat(finalEquity.toFixed(2)),
+        avgScore: parseFloat(avgScore.toFixed(1))
     };
 }
 
 function renderBacktestResults(stats, trades, equityCurve) {
     $('bt-results-section').style.display = 'block';
-
     $('bt-stats').innerHTML =
         '<div class="stat-card"><div class="st-label">Trades</div><div class="st-value neutral">' + stats.total + '</div></div>' +
         '<div class="stat-card"><div class="st-label">Gagnants</div><div class="st-value win">' + stats.wins + '</div></div>' +
+        '<div class="stat-card"><div class="st-label">BE</div><div class="st-value neutral">' + stats.be + '</div></div>' +
         '<div class="stat-card"><div class="st-label">Perdants</div><div class="st-value loss">' + stats.losses + '</div></div>' +
-        '<div class="stat-card"><div class="st-label">Winrate</div><div class="st-value ' + (stats.winrate >= 50 ? 'win' : 'loss') + '">' + stats.winrate + '%</div></div>' +
+        '<div class="stat-card"><div class="st-label">Winrate</div><div class="st-value ' + (stats.winrate >= 45 ? 'win' : 'loss') + '">' + stats.winrate + '%</div></div>' +
         '<div class="stat-card"><div class="st-label">R total</div><div class="st-value ' + (stats.totalR >= 0 ? 'win' : 'loss') + '">' + (stats.totalR > 0 ? '+' : '') + stats.totalR + '</div></div>' +
         '<div class="stat-card"><div class="st-label">R moyen</div><div class="st-value ' + (stats.avgR >= 0 ? 'win' : 'loss') + '">' + (stats.avgR > 0 ? '+' : '') + stats.avgR + '</div></div>' +
         '<div class="stat-card"><div class="st-label">P&L €</div><div class="st-value ' + (stats.pnl >= 0 ? 'win' : 'loss') + '">' + (stats.pnl > 0 ? '+' : '') + stats.pnl + '€</div></div>' +
         '<div class="stat-card"><div class="st-label">P&L %</div><div class="st-value ' + (stats.pnlPct >= 0 ? 'win' : 'loss') + '">' + (stats.pnlPct > 0 ? '+' : '') + stats.pnlPct + '%</div></div>' +
         '<div class="stat-card"><div class="st-label">Max DD</div><div class="st-value loss">-' + stats.maxDD + '%</div></div>' +
         '<div class="stat-card"><div class="st-label">Profit factor</div><div class="st-value ' + (stats.profitFactor >= 1.5 ? 'win' : stats.profitFactor >= 1 ? 'neutral' : 'loss') + '">' + stats.profitFactor + '</div></div>' +
-        '<div class="stat-card"><div class="st-label">Sharpe</div><div class="st-value ' + (stats.sharpe >= 1 ? 'win' : stats.sharpe >= 0 ? 'neutral' : 'loss') + '">' + stats.sharpe + '</div></div>' +
-        '<div class="stat-card"><div class="st-label">Capital final</div><div class="st-value ' + (stats.finalEquity >= stats.capitalInit ? 'win' : 'loss') + '">' + stats.finalEquity + '€</div></div>';
-
-    // Graphique d'equity
+        '<div class="stat-card"><div class="st-label">Score moy.</div><div class="st-value neutral">' + stats.avgScore + '</div></div>';
     drawEquityCurve($('bt-equity-chart'), equityCurve);
-
-    // Liste des trades
     const list = $('bt-trades-list');
-    if (!trades.length) {
-        list.innerHTML = '<div class="empty-state">Aucun trade généré</div>';
-    } else {
-        list.innerHTML = trades.map(t =>
-            '<div class="bt-trade-row ' + (t.result === 'tp' ? 'win' : 'loss') + '">' +
-                '<span>#' + t.entryIdx + '</span>' +
-                '<span>' + t.direction + ' @ ' + formatPrice(t.entry) + ' → ' + formatPrice(t.exitPrice) + '</span>' +
-                '<span>' + (t.result === 'tp' ? '✅ TP' : '❌ SL') + '</span>' +
-                '<span style="text-align:right;color:' + (t.pnlDollars >= 0 ? 'var(--success)' : 'var(--error)') + ';">' + (t.pnlDollars > 0 ? '+' : '') + t.pnlDollars + '€</span>' +
-            '</div>'
-        ).join('');
-    }
+    if (!trades.length) list.innerHTML = '<div class="empty-state">Aucun trade généré</div>';
+    else list.innerHTML = trades.slice(-50).reverse().map(t =>
+        '<div class="bt-trade-row ' + (t.result === 'tp' ? 'win' : t.result === 'be' ? '' : 'loss') + '">' +
+            '<span>#' + t.entryIdx + '</span>' +
+            '<span>' + t.direction + ' @ ' + formatPrice(t.entry) + ' → ' + formatPrice(t.exitPrice) + '</span>' +
+            '<span>' + (t.result === 'tp' ? '✅ TP' : t.result === 'be' ? '⚖️ BE' : '❌ SL') + '</span>' +
+            '<span style="text-align:right;color:' + (t.pnlDollars >= 0 ? 'var(--success)' : 'var(--error)') + ';">' + (t.pnlDollars > 0 ? '+' : '') + t.pnlDollars + '€</span>' +
+        '</div>'
+    ).join('');
 }
 
 function drawEquityCurve(canvas, equityCurve) {
@@ -1884,7 +2029,6 @@ function drawEquityCurve(canvas, equityCurve) {
     const maxV = Math.max(...equityCurve);
     const xScale = i => margin.left + (i / (equityCurve.length - 1)) * plotW;
     const yScale = v => margin.top + plotH - ((v - minV) / Math.max(1, maxV - minV)) * plotH;
-
     ctx.strokeStyle = isDark ? '#2d3744' : '#e5e7eb';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -1893,7 +2037,6 @@ function drawEquityCurve(canvas, equityCurve) {
         ctx.moveTo(margin.left, y); ctx.lineTo(margin.left + plotW, y);
     }
     ctx.stroke();
-
     ctx.fillStyle = isDark ? '#9ca3af' : '#6b7280';
     ctx.font = '10px -apple-system, sans-serif';
     ctx.textAlign = 'right';
@@ -1902,10 +2045,8 @@ function drawEquityCurve(canvas, equityCurve) {
         const y = margin.top + i * plotH / 4;
         ctx.fillText(val.toFixed(0) + '€', margin.left - 6, y + 3);
     }
-
     const finalV = equityCurve[equityCurve.length - 1];
     const startV = equityCurve[0];
-
     ctx.beginPath();
     ctx.moveTo(xScale(0), yScale(startV));
     equityCurve.forEach((v, i) => ctx.lineTo(xScale(i), yScale(v)));
@@ -1914,7 +2055,6 @@ function drawEquityCurve(canvas, equityCurve) {
     ctx.closePath();
     ctx.fillStyle = finalV >= startV ? 'rgba(22,163,74,0.15)' : 'rgba(220,38,38,0.15)';
     ctx.fill();
-
     ctx.beginPath();
     equityCurve.forEach((v, i) => {
         const x = xScale(i), y = yScale(v);
@@ -1924,7 +2064,6 @@ function drawEquityCurve(canvas, equityCurve) {
     ctx.lineWidth = 2.5;
     ctx.lineJoin = 'round';
     ctx.stroke();
-
     ctx.fillStyle = isDark ? '#e8eaed' : '#1a1a1a';
     ctx.font = 'bold 11px -apple-system, sans-serif';
     ctx.textAlign = 'left';
@@ -2069,11 +2208,8 @@ function drawCandlesChart(candles, analysis, tfLabel) {
         };
         drawLevelLine(levels.entryPrice, '#2563eb', 'Entrée');
         drawLevelLine(levels.slPrice, '#dc2626', 'SL');
-        drawLevelLine(levels.tpPrice, '#16a34a', 'TP2');
-        if (levels.tp1 && parseFloat(levels.tp1) !== levels.tpPrice) {
-            const tp1Val = parseFloat(levels.tp1);
-            if (!isNaN(tp1Val)) drawLevelLine(tp1Val, '#22c55e', 'TP1', [3, 3]);
-        }
+        if (levels.tp2Price && !isNaN(levels.tp2Price)) drawLevelLine(levels.tp2Price, '#16a34a', 'TP2');
+        if (levels.tp1Price && !isNaN(levels.tp1Price) && levels.tp1Price !== levels.tp2Price) drawLevelLine(levels.tp1Price, '#22c55e', 'TP1', [3, 3]);
     }
 }
 
@@ -2094,22 +2230,29 @@ function saveDeepSeekKey() {
     toast(key ? 'Clé DeepSeek enregistrée ✓' : 'Clé supprimée', key ? 'success' : 'warn');
 }
 
-async function callDeepSeek(prompt, maxTokens = 1200) {
+async function callDeepSeek(prompt, options = {}) {
     const key = getDeepSeekKey();
     if (!key) throw new Error('Clé DeepSeek non configurée');
+    const systemPrompt = options.systemPrompt || `Tu es un analyste trader senior expert en Smart Money Concepts (SMC), avec 15+ ans d'expérience.
+
+MISSION :
+- Analyser en profondeur les setups SMC Top-Down (D1→H4→H1→M15→M5)
+- Vérifier la cohérence : D1 biais → H4 confirme → H1 zone → M15 confirmation → M5 trigger
+- Vérifier ACHAT en Discount / VENTE en Premium
+- Proposer des pistes d'amélioration CONCRÈTES
+- Donner un score de qualité /100
+
+STYLE : Français professionnel, texte simple SANS markdown, exigeant et critique.`;
     const res = await fetch(DEEPSEEK_API, {
         method: 'POST',
-        headers: {
-            'Authorization': 'Bearer ' + key,
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
         body: JSON.stringify({
             model: 'deepseek-reasoner',
             messages: [
-                { role: 'system', content: 'Tu es un analyste trader senior expert en Smart Money Concepts (SMC), très critique et rigoureux. Tu détectes impitoyablement les incohérences. Tu réponds en français, concis, sans markdown.' },
+                { role: 'system', content: systemPrompt },
                 { role: 'user', content: prompt }
             ],
-            max_tokens: maxTokens
+            max_tokens: options.maxTokens || 2000
         })
     });
     if (!res.ok) {
@@ -2123,66 +2266,76 @@ async function callDeepSeek(prompt, maxTokens = 1200) {
 
 async function auditAnalysis(synthesis, levels, results, symbol) {
     if (!getDeepSeekKey()) return null;
-    const tfs = Object.keys(results).filter(k => results[k]);
-    const entryTF = tfs[tfs.length - 1];
-    const entryR = results[entryTF];
+    const entryR = results.M5 || results.M15;
     const smcScore = computeSMCScore(results, synthesis, levels);
+    const status = getScoreStatus(smcScore.total);
     const summary = {
-        symbol, signal: synthesis.signal,
-        smc_score: smcScore.total, smc_details: smcScore.details,
-        entry: levels.entry, sl: levels.sl, tp: levels.tp, tp1: levels.tp1, tp2: levels.tp2,
+        symbol,
+        signal: synthesis.signal,
+        smc_score: smcScore.total,
+        smc_status: status.label,
+        smc_details: smcScore.details,
+        entry: levels.entry, sl: levels.sl, tp1: levels.tp1, tp2: levels.tp2,
         rr: levels.riskReward,
-        zone: entryR.pd.zone, zonePosition: entryR.pd.position,
-        atr: entryR.atr,
-        setup: {
-            ob_total: entryR.obs?.length || 0,
-            ob_fresh: (entryR.obs || []).filter(o => o.freshness === 'fresh').length,
-            ob_displaced: (entryR.obs || []).filter(o => o.displacement).length,
-            fvg_total: entryR.fvgs?.length || 0,
-            fvg_clean: (entryR.fvgs || []).filter(f => f.fillPct === 0).length,
-            sweeps: entryR.sweeps?.length || 0
-        },
-        tfs: {}
+        topdown: synthesis.topDown
     };
-    for (const tf of tfs) {
-        const r = results[tf];
-        summary.tfs[tf] = { trend: r.direction, strength: r.strength, externalTrend: r.structure.externalTrend };
-    }
-    const prompt = `Audit CRITIQUE d'une analyse SMC (v5.0 Phase 3) :
+    const prompt = `Analyse STRATÉGIQUE Top-Down d'un setup SMC :
 
 ${JSON.stringify(summary, null, 2)}
 
-Réponds en français, format texte simple SANS markdown, 5 sections courtes :
-- Cohérence (2-3 phrases)
-- Forces (3 puces avec •)
-- Faiblesses (2-3 puces avec •)
-- Risques (2-3 puces avec •)
-- Verdict (note /100 + conseil final 1 phrase)`;
-    try { return await callDeepSeek(prompt, 1200); }
+Rappel : D1 (biais) → H4 (structure) → H1 (analyse) → M15 (confirmation) → M5 (entrée). ACHAT en Discount de structure haussière, VENTE en Premium de structure baissière.
+
+Réponds en français, format texte SANS markdown, 6 sections numérotées :
+
+1. LECTURE DE LA CASCADE TOP-DOWN (3-4 phrases)
+2. VALIDATION LOGIQUE SMC (2-3 phrases)
+3. FORCES DU SETUP (3 puces avec •)
+4. FAIBLESSES ET RISQUES (3 puces avec •)
+5. PISTES D'AMÉLIORATION CONCRÈTES (3 puces avec •)
+6. VERDICT (note /100 + conseil final en 1 phrase)`;
+    try { return await callDeepSeek(prompt, { maxTokens: 2000 }); }
     catch (e) { return 'Erreur audit : ' + e.message; }
 }
 
-async function auditClosedTrade(trade) {
+async function auditBacktest(stats, trades, symbol, tf) {
     if (!getDeepSeekKey()) return null;
+    const scores = trades.map(t => t.smcScore).filter(s => s !== undefined);
+    const avgScore = scores.length ? scores.reduce((s, v) => s + v, 0) / scores.length : 0;
+    const highScoreTrades = trades.filter(t => t.smcScore >= 85);
+    const midScoreTrades = trades.filter(t => t.smcScore >= 75 && t.smcScore < 85);
+    const lowScoreTrades = trades.filter(t => t.smcScore < 75);
     const summary = {
-        instrument: trade.instrument, direction: trade.direction,
-        entry: trade.entry, sl: trade.sl, tp: trade.tp, exit: trade.exitPrice,
-        result: trade.result, pnlPips: trade.pnl?.pips, pnlDollars: trade.pnl?.dollars,
-        duration: Math.round((trade.closedAt - trade.openedAt) / 60000) + ' minutes',
-        beMoved: trade.beMoved
+        symbol, strategy: 'Top-Down D1→H4→H1→M15→M5',
+        total_trades: stats.total,
+        wins: stats.wins, losses: stats.losses, be: stats.be,
+        winrate: stats.winrate,
+        totalR: stats.totalR, avgR: stats.avgR,
+        pnlPct: stats.pnlPct, maxDD: stats.maxDD,
+        profitFactor: stats.profitFactor, sharpe: stats.sharpe,
+        avg_score: parseFloat(avgScore.toFixed(1)),
+        distribution: {
+            high_85plus: { count: highScoreTrades.length, winrate: highScoreTrades.length ? Math.round(highScoreTrades.filter(t => t.result === 'tp').length / highScoreTrades.length * 100) : 0 },
+            mid_75_84: { count: midScoreTrades.length, winrate: midScoreTrades.length ? Math.round(midScoreTrades.filter(t => t.result === 'tp').length / midScoreTrades.length * 100) : 0 },
+            low_below75: { count: lowScoreTrades.length, winrate: lowScoreTrades.length ? Math.round(lowScoreTrades.filter(t => t.result === 'tp').length / lowScoreTrades.length * 100) : 0 }
+        }
     };
-    const prompt = `Audit CRITIQUE d'un trade fermé :
+    const prompt = `Analyse STRATÉGIQUE des résultats d'un backtest SMC Top-Down :
 
 ${JSON.stringify(summary, null, 2)}
 
-Réponds en français, format texte simple SANS markdown, 5 sections courtes :
-- Analyse du trade (2-3 phrases)
-- Ce qui a bien fonctionné (2-3 puces avec •)
-- Ce qui aurait pu être mieux (2-3 puces avec •)
-- Leçon à retenir (1-2 phrases)
-- Note globale (sur 100 + 1 conseil)`;
-    try { return await callDeepSeek(prompt, 1200); }
-    catch (e) { return 'Erreur audit : ' + e.message; }
+Backtest avec spread, slippage, commission, TP1/TP2 partiels.
+
+Réponds en français, format texte SANS markdown, 7 sections numérotées :
+
+1. LECTURE GLOBALE (3-4 phrases)
+2. COMPARAISON AUX ATTENTES SMC (2-3 phrases)
+3. IMPACT DU SEUIL DE VALIDATION (3 puces avec •)
+4. FORCES DE LA STRATÉGIE (3 puces avec •)
+5. FAIBLESSES ET RISQUES (3 puces avec •)
+6. PISTES D'AMÉLIORATION CONCRÈTES (4 puces avec •)
+7. VERDICT STRATÉGIQUE (note /100 + recommandation)`;
+    try { return await callDeepSeek(prompt, { maxTokens: 2500 }); }
+    catch (e) { return 'Erreur audit backtest : ' + e.message; }
 }
 
 async function testDeepSeek() {
@@ -2190,7 +2343,7 @@ async function testDeepSeek() {
     if (!key) { toast('Enregistre d\'abord ta clé DeepSeek', 'warn'); return; }
     toast('Test en cours… (30 sec)', 'warn', 35000);
     try {
-        const reply = await callDeepSeek('Réponds juste "OK" pour tester la connexion.', 100);
+        const reply = await callDeepSeek('Réponds juste "OK".', { maxTokens: 100 });
         toast('DeepSeek connecté ✓', 'success', 3500);
         log('Test DeepSeek : ' + reply);
     } catch (e) {
@@ -2199,49 +2352,85 @@ async function testDeepSeek() {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// TELEGRAM + POPUP
+// TELEGRAM AUTOMATIQUE
 // ══════════════════════════════════════════════════════════════════
 async function autoSendToTelegram(synthesis, levels, results, symbol) {
     if (synthesis.signal === 'ATTENDRE') return;
-    const key = symbol + '_' + synthesis.signal;
-    const now = Date.now();
-    if (lastTelegramSent[key] && (now - lastTelegramSent[key]) < 30 * 60 * 1000) return;
+    const smcScore = computeSMCScore(results, synthesis, levels);
+    const threshold = getScanConfig().minScore;
+    if (smcScore.total < threshold) return;
     const accounts = loadTelegramAccounts().filter(a => a.enabled && a.token && a.chatId);
     if (!accounts.length) return;
-    const tfs = Object.keys(results).filter(k => results[k]);
-    const entryTF = tfs[tfs.length - 1];
-    const entryR = results[entryTF];
-    const smcScore = computeSMCScore(results, synthesis, levels);
+    const key = symbol + '_' + synthesis.signal;
+    const now = Date.now();
+    const ANTI_SPAM_MS = 30 * 60 * 1000;
+    if (lastTelegramSent[key] && (now - lastTelegramSent[key]) < ANTI_SPAM_MS) return;
+
+    const status = getScoreStatus(smcScore.total);
     const emoji = synthesis.signal === 'ACHAT' ? '🟢' : '🔴';
-    const zoneEmoji = entryR.pd.zone === 'discount' ? '💎' : '🔺';
-    let text = '🚨 *SIGNAL SMC v5.0* 🚨\n\n';
+    const priorityEmoji = smcScore.total >= 85 ? '🔥🔥🔥' : smcScore.total >= 75 ? '🔥🔥' : '🔥';
+
+    let text = '🚨 *SIGNAL SMC TOP-DOWN v5.4* 🚨\n\n';
     text += '📊 *' + symbol + '*\n';
     text += emoji + ' Signal : *' + synthesis.signal + '*\n';
-    text += '🎯 SMC Score : *' + smcScore.total + '/100*\n\n';
-    text += zoneEmoji + ' Zone : *' + (entryR.pd.zone === 'discount' ? 'Discount' : 'Premium') + '* (' + entryR.pd.position + '%)\n\n';
+    text += '🎯 SMC Score : *' + smcScore.total + '/100* ' + status.label + ' ' + priorityEmoji + '\n';
+    text += '🧭 ' + (synthesis.orientationReason || '') + '\n\n';
+    text += '━━━━━━━━━━━━━━\n';
+    text += '🎯 *CASCADE TOP-DOWN*\n';
+    if (synthesis.topDown) {
+        const td = synthesis.topDown;
+        text += '🧭 D1 : ' + (td.d1Bias === 'bullish' ? '📈' : td.d1Bias === 'bearish' ? '📉' : '↔️') + ' ' + td.d1Bias + '\n';
+        text += '🏛️ H4 : ' + (td.h4Confirms ? '✅' : '❌') + ' ' + td.h4Direction + '\n';
+        text += '🔍 H1 : ' + (td.h1Zone === 'discount' ? '💎 Discount' : '🔺 Premium') + '\n';
+        text += '✅ M15 : ' + (td.m15Confirms ? '✅' : '❌') + (td.m15HasMSS ? ' MSS' : '') + (td.m15HasSweep ? ' Sweep' : '') + '\n';
+        text += '🎯 M5 : ' + (td.m5Triggers ? '✅ Trigger' : '❌ Pas de trigger') + '\n';
+    }
+    text += '━━━━━━━━━━━━━━\n\n';
     text += '📥 Entrée : `' + levels.entry + '`\n';
     text += '🛑 SL : `' + levels.sl + '`\n';
     text += '🎯 TP1 : `' + levels.tp1 + '`\n';
     text += '🎯 TP2 : `' + levels.tp2 + '`\n';
-    text += '⚖️ R/R : *' + levels.riskReward + '*\n';
-    text += '\n🕐 ' + new Date().toLocaleString('fr-FR');
+    text += '⚖️ R/R : *' + levels.riskReward + '*\n\n';
+    text += '🕐 ' + new Date().toLocaleString('fr-FR');
+
     const sent = await sendToAllTelegram(text);
     if (sent > 0) {
         lastTelegramSent[key] = now;
         try { localStorage.setItem(STORAGE.lastTgSent, JSON.stringify(lastTelegramSent)); } catch (e) {}
-        sendNotification('🚨 Signal ' + synthesis.signal, symbol + ' — SMC Score ' + smcScore.total + '/100');
+        sendNotification('🚨 Signal ' + synthesis.signal, symbol + ' — Score ' + smcScore.total + '/100');
+        addScanLog('✅ Telegram envoyé : ' + synthesis.signal + ' ' + symbol + ' (score ' + smcScore.total + ', ' + sent + ' compte(s))', 'success');
+        renderAutoSendStats();
+        proposeAutoTrade(synthesis, levels, results, symbol);
     }
-    proposeAutoTrade(synthesis, levels, results, symbol);
+}
+
+function renderAutoSendStats() {
+    const el = $('auto-send-stats');
+    if (!el) return;
+    const sent = JSON.parse(localStorage.getItem(STORAGE.lastTgSent) || '{}');
+    const keys = Object.keys(sent);
+    if (!keys.length) { el.innerHTML = '<div style="color:var(--ink-dim);">Aucun envoi récent</div>'; return; }
+    el.innerHTML = '<div style="margin-bottom:0.3rem;"><strong>Derniers envois (anti-spam 30 min) :</strong></div>' +
+        keys.map(k => {
+            const parts = k.split('_');
+            const symbol = parts[0], direction = parts[1];
+            const elapsed = Math.round((Date.now() - sent[k]) / 60000);
+            const remaining = Math.max(0, 30 - elapsed);
+            return '<div style="padding:0.3rem;background:var(--panel-2);border-radius:4px;margin-bottom:0.2rem;">' +
+                '📤 <strong>' + symbol + '</strong> ' + direction + ' · il y a ' + elapsed + ' min' +
+                (remaining > 0 ? ' · <span style="color:var(--warn);">bloqué ' + remaining + ' min</span>' : ' · <span style="color:var(--success);">prêt</span>') +
+            '</div>';
+        }).join('');
 }
 
 function proposeAutoTrade(synthesis, levels, results, symbol) {
+    const smcScore = computeSMCScore(results, synthesis, levels);
+    if (!isSignalValid(smcScore.total)) return;
     const modal = $('auto-trade-modal');
     const details = $('auto-trade-details');
     if (!modal || !details) return;
-    const tfs = Object.keys(results).filter(k => results[k]);
-    const entryTF = tfs[tfs.length - 1];
-    const entryR = results[entryTF];
-    const smcScore = computeSMCScore(results, synthesis, levels);
+    const entryR = results.M5 || results.M15;
+    const status = getScoreStatus(smcScore.total);
     const direction = synthesis.signal === 'ACHAT' ? 'buy' : 'sell';
     const capital = parseFloat(localStorage.getItem('smc_capital') || '100');
     const risk = parseFloat(localStorage.getItem('smc_risk') || '1');
@@ -2250,8 +2439,9 @@ function proposeAutoTrade(synthesis, levels, results, symbol) {
         '<div class="m-signal ' + (direction === 'buy' ? 'buy' : 'sell') + '">' +
             (direction === 'buy' ? '🟢 ACHAT' : '🔴 VENTE') + ' — ' + esc(symbol) +
         '</div>' +
-        '<div class="m-row"><span class="m-label">SMC Score</span><span class="m-value">' + smcScore.total + '/100</span></div>' +
-        '<div class="m-row"><span class="m-label">Zone</span><span class="m-value">' + (entryR.pd.zone === 'discount' ? '💎 Discount' : '🔺 Premium') + ' (' + entryR.pd.position + '%)</span></div>' +
+        '<div class="m-row"><span class="m-label">SMC Score</span><span class="m-value">' + smcScore.total + '/100 ' + status.label + '</span></div>' +
+        '<div class="m-row"><span class="m-label">🧭 Raison</span><span class="m-value" style="font-size:0.72rem;">' + esc(synthesis.orientationReason || '') + '</span></div>' +
+        (synthesis.topDown ? '<div class="m-row"><span class="m-label">🧭 D1</span><span class="m-value">' + synthesis.topDown.d1Bias + '</span></div>' : '') +
         '<div class="m-row"><span class="m-label">📥 Entrée</span><span class="m-value entry">' + levels.entry + '</span></div>' +
         '<div class="m-row"><span class="m-label">🛑 Stop Loss</span><span class="m-value sl">' + levels.sl + '</span></div>' +
         '<div class="m-row"><span class="m-label">🎯 TP1</span><span class="m-value tp">' + levels.tp1 + '</span></div>' +
@@ -2260,7 +2450,7 @@ function proposeAutoTrade(synthesis, levels, results, symbol) {
         '<div class="m-row"><span class="m-label">💰 Capital</span><span class="m-value">' + capital + '€</span></div>' +
         '<div class="m-row"><span class="m-label">⚠️ Risque</span><span class="m-value">' + risk + '% (' + sizeResult.risk + '€)</span></div>' +
         '<div class="m-row"><span class="m-label">📊 Taille</span><span class="m-value">' + sizeResult.size + ' lots</span></div>';
-    window._pendingTrade = { direction, symbol, levels, results, sizeResult, capital, risk };
+    window._pendingTrade = { direction, symbol, levels, results, sizeResult, capital, risk, smcScore: smcScore.total };
     modal.classList.add('visible');
 }
 
@@ -2270,7 +2460,8 @@ function executeAutoTrade() {
     const trade = {
         instrument: data.symbol, direction: data.direction,
         entry: data.levels.entryPrice, sl: data.levels.slPrice, tp: data.levels.tpPrice,
-        size: data.sizeResult.size, capital: data.capital, risk: data.risk, autoAdded: true
+        size: data.sizeResult.size, capital: data.capital, risk: data.risk,
+        smcScore: data.smcScore, autoAdded: true
     };
     addTrade(trade);
     renderTrades(); renderStats();
@@ -2289,10 +2480,14 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
     $('signal-value').textContent = synthesis.signal;
 
     const smcScore = computeSMCScore(results, synthesis, levels);
-    const totalColor = smcScore.total >= 70 ? 'var(--success)' : smcScore.total >= 50 ? 'var(--info)' : 'var(--warn)';
+    const status = getScoreStatus(smcScore.total);
+    const totalColor = status.color;
+
     $('signal-conf').innerHTML =
         '<div class="smc-score-container">' +
-            '<div class="smc-score-total" style="color:' + totalColor + ';">SMC Score : ' + smcScore.total + '/100</div>' +
+            '<div class="smc-score-total" style="color:' + totalColor + ';">' +
+                status.emoji + ' SMC Score : ' + smcScore.total + '/100 ' + status.label +
+            '</div>' +
             '<div>├─ Structure&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ' + smcScore.details.structure + '/100</div>' +
             '<div>├─ Liquidité&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ' + smcScore.details.liquidity + '/100</div>' +
             '<div>├─ Displacement&nbsp;: ' + smcScore.details.displacement + '/100</div>' +
@@ -2301,27 +2496,74 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
             '<div>├─ Zone&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ' + smcScore.details.zone + '/100</div>' +
             '<div>├─ MTF align.&nbsp;&nbsp;: ' + smcScore.details.mtf_alignment + '/100</div>' +
             '<div>└─ Liq. hierarchy: ' + smcScore.details.liquidity_hierarchy + '/100</div>' +
-            '<div class="score-note">ⓘ Score de qualité — PAS une probabilité de réussite</div>' +
+            '<div class="score-note">' + status.action + ' (seuil : ' + getScanConfig().minScore + '/100)</div>' +
         '</div>';
 
     $('confidence-fill').style.width = smcScore.total + '%';
     $('confidence-fill').style.background = totalColor;
+    $('signal-setup').innerHTML = '🧭 ' + (synthesis.orientationReason || 'Analyse Top-Down');
 
-    const tfs = Object.keys(results).filter(k => results[k]);
-    const entryTF = tfs[tfs.length - 1];
-    const entryR = results[entryTF];
-    $('signal-setup').textContent = 'Setup : OB ' + entryTF + ' · ATR SL buffer';
+    const entryTF = 'M5';
+    const entryR = results[entryTF] || results.M15 || results.H1;
 
-    if (state.candles[entryTF]) {
-        drawCandlesChart(state.candles[entryTF], { obs: entryR.obs, fvgs: entryR.fvgs, sweeps: entryR.sweeps, levels: levels }, entryTF);
-    }
-    $('tf-grid').innerHTML = tfs.map(tf => {
+    // TF grid 5 cartes
+    const tfRoles = {
+        D1: { icon: '🧭', label: 'Biais' },
+        H4: { icon: '🏛️', label: 'Structure' },
+        H1: { icon: '🔍', label: 'Analyse' },
+        M15: { icon: '✅', label: 'Confirm' },
+        M5: { icon: '🎯', label: 'Entrée' }
+    };
+    $('tf-grid').innerHTML = Object.keys(tfRoles).map(tf => {
         const r = results[tf];
+        const role = tfRoles[tf];
+        if (!r) return '<div class="tf-card range" style="opacity:0.4;"><div class="tf-name">' + role.icon + ' ' + tf + '</div><div class="tf-direction">—</div><div class="tf-detail">N/A</div></div>';
         const cls = r.direction === 'bullish' ? 'bull' : r.direction === 'bearish' ? 'bear' : 'range';
         const label = r.direction === 'bullish' ? '📈 Bull' : r.direction === 'bearish' ? '📉 Bear' : '↔️ Range';
-        const extLabel = r.structure.externalTrend === 'bullish' ? 'ext↗' : r.structure.externalTrend === 'bearish' ? 'ext↘' : 'ext→';
-        return '<div class="tf-card ' + cls + '"><div class="tf-name">' + tf + '</div><div class="tf-direction">' + label + '</div><div class="tf-detail">' + r.strength + '% · ' + extLabel + '</div></div>';
+        return '<div class="tf-card ' + cls + '">' +
+            '<div class="tf-name">' + role.icon + ' ' + tf + '</div>' +
+            '<div class="tf-direction">' + label + '</div>' +
+            '<div class="tf-detail">' + role.label + '</div>' +
+        '</div>';
     }).join('');
+
+    // Cascade Top-Down
+    const td = synthesis.topDown;
+    if (td) {
+        const tdEl = $('topdown-cascade');
+        if (tdEl) {
+            tdEl.innerHTML =
+                '<div style="font-size:0.78rem;line-height:1.8;">' +
+                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;margin-bottom:0.3rem;">' +
+                        '<strong>🧭 D1 Biais :</strong> ' +
+                        '<span class="smc-tag ' + (td.d1Bias === 'bullish' ? 'bull' : td.d1Bias === 'bearish' ? 'bear' : 'neutral') + '">' + td.d1Bias + '</span> (' + td.d1Strength + '%)' +
+                    '</div>' +
+                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;margin-bottom:0.3rem;">' +
+                        '<strong>🏛️ H4 Confirme :</strong> ' +
+                        (td.h4Confirms ? '<span class="smc-tag bull">✅ OUI</span>' : '<span class="smc-tag bear">❌ NON</span>') + ' (' + td.h4Direction + ')' +
+                    '</div>' +
+                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;margin-bottom:0.3rem;">' +
+                        '<strong>🔍 H1 Zone :</strong> ' +
+                        '<span class="smc-tag ' + (td.h1Zone === 'discount' ? 'bull' : td.h1Zone === 'premium' ? 'bear' : 'neutral') + '">' + td.h1Zone + '</span>' +
+                    '</div>' +
+                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;margin-bottom:0.3rem;">' +
+                        '<strong>✅ M15 Confirme :</strong> ' +
+                        (td.m15Confirms ? '<span class="smc-tag bull">✅ OUI</span>' : '<span class="smc-tag bear">❌ NON</span>') +
+                        (td.m15HasMSS ? ' <span class="smc-tag info">MSS</span>' : '') +
+                        (td.m15HasSweep ? ' <span class="smc-tag warn">Sweep</span>' : '') +
+                    '</div>' +
+                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;">' +
+                        '<strong>🎯 M5 Trigger :</strong> ' +
+                        (td.m5Triggers ? '<span class="smc-tag bull">✅ OUI</span>' : '<span class="smc-tag bear">❌ NON</span>') +
+                    '</div>' +
+                '</div>';
+        }
+    }
+
+    if (state.candles.M5) {
+        drawCandlesChart(state.candles.M5, { obs: entryR.obs, fvgs: entryR.fvgs, sweeps: entryR.sweeps, levels: levels }, 'M5');
+    }
+
     $('level-entry').textContent = levels.entry;
     $('level-sl').textContent = levels.sl;
     $('level-tp').textContent = levels.tp;
@@ -2329,8 +2571,9 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
     $('level-tp2').textContent = levels.tp2;
     $('level-rr').textContent = levels.riskReward;
 
-    let structHTML = '<p><strong>TF entrée :</strong> ' + entryTF + ' · ATR : ' + (entryR.atr ? formatPrice(entryR.atr) : '—') + '</p>';
-    structHTML += '<p><strong>Structure interne :</strong> ' + entryR.structure.trend + ' · <strong>externe :</strong> ' + entryR.structure.externalTrend + '</p>';
+    let structHTML = '<p><strong>TF entrée :</strong> M5 · ATR : ' + (entryR.atr ? formatPrice(entryR.atr) : '—') + '</p>';
+    structHTML += '<p><strong>Structure M5 :</strong> ' + entryR.structure.trend + ' · <strong>externe :</strong> ' + entryR.structure.externalTrend + '</p>';
+    structHTML += '<p><strong>Structure dominante D1 :</strong> ' + (synthesis.dominantStructure || 'range') + '</p>';
     $('smc-structure').innerHTML = structHTML;
 
     const h = entryR.hierarchy || {};
@@ -2359,22 +2602,22 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
     }).join('') : '<p style="color:var(--ink-dim);">Aucun FVG.</p>';
 
     const pd = entryR.pd;
-    $('pd-container').innerHTML = '<p>Range : ' + formatPrice(pd.low) + ' → ' + formatPrice(pd.high) + '</p><p>Zone : <span class="smc-tag ' + (pd.zone === 'discount' ? 'bull' : 'bear') + '">' + (pd.zone === 'discount' ? '💎 Discount' : '🔺 Premium') + ' (' + pd.position + '%)</span></p>';
+    $('pd-container').innerHTML = '<p>Range M5 : ' + formatPrice(pd.low) + ' → ' + formatPrice(pd.high) + '</p><p>Zone M5 : <span class="smc-tag ' + (pd.zone === 'discount' ? 'bull' : 'bear') + '">' + (pd.zone === 'discount' ? '💎 Discount' : '🔺 Premium') + ' (' + pd.position + '%)</span></p>';
 
     $('scenarios-container').innerHTML = scenarios.map(s =>
         '<div class="scenario ' + s.type + '"><div style="font-weight:700;">' + esc(s.title) + '</div><div style="font-size:0.7rem;color:var(--ink-dim);">' + esc(s.prob) + '</div><div>' + esc(s.text) + '</div></div>'
     ).join('');
 
-    state.lastAnalysis = { timestamp: Date.now(), symbol, signal: synthesis.signal, levels, results, currentPrice };
+    state.lastAnalysis = { timestamp: Date.now(), symbol, signal: synthesis.signal, levels, results, currentPrice, smcScore: smcScore.total };
     autoSendToTelegram(synthesis, levels, results, symbol);
 
     if (getDeepSeekKey()) {
         const auditBox = $('audit-analysis-container');
         const auditContent = $('audit-analysis-content');
         auditBox.style.display = 'block';
-        auditContent.innerHTML = '<div style="color:var(--ink-dim);font-size:0.78rem;"><span class="spinner" style="display:inline-block;vertical-align:middle;"></span> Analyse IA en cours… (30 sec)</div>';
+        auditContent.innerHTML = '<div style="color:var(--ink-dim);font-size:0.78rem;"><span class="spinner" style="display:inline-block;vertical-align:middle;"></span> Analyse IA stratégique en cours… (30-45 sec)</div>';
         auditAnalysis(synthesis, levels, results, symbol).then(text => {
-            if (text) auditContent.innerHTML = '<div style="font-size:0.78rem;line-height:1.5;white-space:pre-wrap;">' + esc(text) + '</div>';
+            if (text) auditContent.innerHTML = '<div class="ai-response">' + esc(text) + '</div>';
         });
     }
     $('report-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2444,16 +2687,6 @@ async function closeTrade(id, result, exitPrice) {
     const emoji = result === 'tp' ? '🎉' : result === 'be' ? '⚖️' : '❌';
     const label = result === 'tp' ? 'TAKE PROFIT' : result === 'be' ? 'BREAK EVEN' : 'STOP LOSS';
     sendNotification(emoji + ' Position fermée', trade.instrument + ' — ' + label);
-    if (getDeepSeekKey()) {
-        auditClosedTrade(trades[idx]).then(auditText => {
-            if (auditText) {
-                const allTrades = loadTrades();
-                const i2 = allTrades.findIndex(t => t.id === id);
-                if (i2 >= 0) { allTrades[i2].audit = auditText; saveTrades(allTrades); }
-                renderTrades();
-            }
-        });
-    }
     renderTrades();
     renderStats();
 }
@@ -2503,7 +2736,6 @@ function renderTrades() {
             '<div class="tp"><div class="p-label">P&L</div><div class="p-value" style="color:' + (pnl.dollars >= 0 ? 'var(--success)' : 'var(--error)') + '">' + (pnl.dollars > 0 ? '+' : '') + pnl.dollars + '€</div></div>' +
             '</div>' +
             '<div class="t-footer"><span>' + (t.direction === 'buy' ? 'ACHAT' : 'VENTE') + '</span><span>' + formatDate(t.closedAt) + '</span></div>' +
-            (t.audit ? '<div style="margin-top:0.5rem;padding:0.6rem;background:var(--panel);border-radius:6px;font-size:0.72rem;line-height:1.5;white-space:pre-wrap;">🤖 ' + esc(t.audit) + '</div>' : '') +
             '</div>';
     }).join('');
 }
@@ -2519,12 +2751,9 @@ function computeStats(trades) {
     const be = closed.filter(t => t.result === 'be').length;
     const totalPips = closed.reduce((s, t) => s + (t.pnl?.pips || 0), 0);
     const totalDollars = closed.reduce((s, t) => s + (t.pnl?.dollars || 0), 0);
-    const winrate = (wins + losses) > 0 ? Math.round(wins / (wins + losses) * 100) : 0;
-    return {
-        total: closed.length, wins, losses, be, winrate,
-        totalPips: parseFloat(totalPips.toFixed(1)),
-        totalDollars: parseFloat(totalDollars.toFixed(2))
-    };
+    const decided = wins + losses;
+    const winrate = decided > 0 ? Math.round(wins / decided * 100) : 0;
+    return { total: closed.length, wins, losses, be, winrate, totalPips: parseFloat(totalPips.toFixed(1)), totalDollars: parseFloat(totalDollars.toFixed(2)) };
 }
 function renderStatCards(container, s) {
     container.innerHTML =
@@ -2542,6 +2771,23 @@ function renderStats() {
     const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const weekTrades = trades.filter(t => t.status === 'closed' && (t.closedAt || 0) > weekAgo);
     renderStatCards($('stats-week'), computeStats(weekTrades));
+    const closed = trades.filter(t => t.status === 'closed');
+    const threshold = getScanConfig().minScore;
+    const complianceEl = $('stats-compliance');
+    if (complianceEl) {
+        const withScore = closed.filter(t => t.smcScore !== undefined);
+        const above = withScore.filter(t => t.smcScore >= threshold);
+        const below = withScore.filter(t => t.smcScore < threshold);
+        const aboveWR = above.length ? Math.round(above.filter(t => t.result === 'tp').length / above.length * 100) : 0;
+        const belowWR = below.length ? Math.round(below.filter(t => t.result === 'tp').length / below.length * 100) : 0;
+        complianceEl.innerHTML =
+            '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.4rem;">' +
+                '<div class="stat-card"><div class="st-label">Seuil actuel</div><div class="st-value neutral">' + threshold + '</div></div>' +
+                '<div class="stat-card"><div class="st-label">≥ Seuil</div><div class="st-value win">' + above.length + ' (' + aboveWR + '%)</div></div>' +
+                '<div class="stat-card"><div class="st-label">&lt; Seuil</div><div class="st-value loss">' + below.length + ' (' + belowWR + '%)</div></div>' +
+                '<div class="stat-card"><div class="st-label">Sans score</div><div class="st-value neutral">' + (closed.length - withScore.length) + '</div></div>' +
+            '</div>';
+    }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -2630,7 +2876,10 @@ async function sendToAllTelegram(text) {
 function loadScanInstruments() {
     try {
         const stored = JSON.parse(localStorage.getItem(STORAGE.scanInstruments) || 'null');
-        return stored || [...DEFAULT_SCAN_INSTRUMENTS];
+        if (!stored) return [...DEFAULT_SCAN_INSTRUMENTS];
+        const filtered = stored.filter(inst => ALLOWED_INSTRUMENTS.includes(inst));
+        if (filtered.length === 0) return [...DEFAULT_SCAN_INSTRUMENTS];
+        return filtered;
     } catch (e) { return [...DEFAULT_SCAN_INSTRUMENTS]; }
 }
 function saveScanInstruments(list) {
@@ -2666,6 +2915,29 @@ function saveScanConfig() {
         minRR: parseFloat($('scan-rr').value) || 2
     };
     try { localStorage.setItem(STORAGE.scanConfig, JSON.stringify(config)); } catch (e) {}
+    const label = $('scan-conf-label');
+    if (label) label.textContent = config.minScore;
+    renderThresholdsDisplay();
+}
+function renderThresholdsDisplay() {
+    const el = $('thresholds-display');
+    if (!el) return;
+    const threshold = getScanConfig().minScore;
+    const autoDisplay = $('auto-threshold-display');
+    if (autoDisplay) autoDisplay.textContent = threshold;
+    el.innerHTML =
+        '<div style="font-size:0.75rem;line-height:1.6;">' +
+            '<div style="margin-bottom:0.4rem;"><strong>Seuil actuel : <span style="color:var(--info);">' + threshold + '/100</span></strong></div>' +
+            '<div style="padding:0.4rem;border-left:3px solid var(--error);margin-bottom:0.3rem;background:var(--panel-2);border-radius:4px;">' +
+                '<span class="smc-tag" style="background:var(--error);color:#fff;">❌ &lt; ' + threshold + '</span> Rejeté — pas d\'envoi Telegram' +
+            '</div>' +
+            '<div style="padding:0.4rem;border-left:3px solid var(--warn);margin-bottom:0.3rem;background:var(--panel-2);border-radius:4px;">' +
+                '<span class="smc-tag" style="background:var(--warn);color:#fff;">🟡 ' + threshold + ' - 84</span> Acceptable — envoi auto' +
+            '</div>' +
+            '<div style="padding:0.4rem;border-left:3px solid var(--success);background:var(--panel-2);border-radius:4px;">' +
+                '<span class="smc-tag" style="background:var(--success);color:#fff;">🟢 ≥ 85</span> Excellent — envoi auto prioritaire' +
+            '</div>' +
+        '</div>';
 }
 function addScanLog(message, type = 'info') {
     const logs = JSON.parse(localStorage.getItem(STORAGE.scanLog) || '[]');
@@ -2687,27 +2959,27 @@ function renderScanLog() {
 }
 async function analyzeInstrumentForScan(inst, minScore, minRR) {
     const results = {};
-    for (const tf of ['H4', 'H1', 'M15']) {
+    for (const tf of ['D1', 'H4', 'H1', 'M15', 'M5']) {
         try {
-            const candles = await fetchCandles(inst, tf, 200, true); // cache activé
+            const candles = await fetchCandles(inst, tf, 200, true);
             const r = analyzeTimeframe(candles);
             if (r) results[tf] = r;
-            await sleep(500); // réduit de 8000 à 500ms grâce au cache
+            await sleep(300);
         } catch (e) {
             return { ok: false, error: tf + ' : ' + e.message };
         }
     }
-    if (Object.keys(results).length < 2) return { ok: false, error: 'Données insuffisantes' };
-    const synthesis = synthesizeSMC(results, 'h4h1');
-    const entryR = results.M15 || results.H1;
+    if (Object.keys(results).length < 4) return { ok: false, error: 'Données insuffisantes' };
+    const synthesis = synthesizeTopDown(results);
+    const entryR = results.M5 || results.M15;
     const current = entryR.pd.current;
     const levels = computeSMCLevels(results, synthesis, current, entryR);
     const smcScore = computeSMCScore(results, synthesis, levels);
     let valid = true, reason = '';
     if (smcScore.total < minScore) { valid = false; reason = 'Score ' + smcScore.total + ' < ' + minScore; }
     else if (parseFloat(levels.riskReward.replace('1:', '')) < minRR) { valid = false; reason = 'R/R insuffisant'; }
-    else if (synthesis.signal === 'ATTENDRE') { valid = false; reason = 'Neutre'; }
-    else if (!(entryR.obs && entryR.obs.some(o => o.displacement))) { valid = false; reason = 'Pas de displacement'; }
+    else if (synthesis.signal === 'ATTENDRE') { valid = false; reason = synthesis.orientationReason || 'Signal neutre'; }
+    else if (!(entryR.obs && entryR.obs.some(o => o.displacement))) { valid = false; reason = 'Pas de displacement M5'; }
     return { ok: true, inst, synthesis, smcScore, levels, valid, reason, results, current, entryR };
 }
 async function runScan() {
@@ -2716,7 +2988,7 @@ async function runScan() {
     if (!instruments.length) { addScanLog('Aucun instrument', 'warn'); return; }
     const accounts = loadTelegramAccounts().filter(a => a.enabled);
     if (!accounts.length) { addScanLog('Aucun compte Telegram actif', 'warn'); return; }
-    addScanLog('🔍 Scan v5.0 · ' + instruments.length + ' instruments', 'info');
+    addScanLog('🔍 Scan Top-Down v5.4 · ' + instruments.length + ' instruments · seuil ' + config.minScore, 'info');
     let signalsFound = 0;
     for (const inst of instruments) {
         if (!state.scanning) { addScanLog('⏸ Interrompu', 'warn'); return; }
@@ -2725,9 +2997,8 @@ async function runScan() {
             const analysis = await analyzeInstrumentForScan(inst, config.minScore, config.minRR);
             if (!analysis.ok) { addScanLog('❌ ' + inst + ' : ' + analysis.error, 'error'); continue; }
             if (!analysis.valid) { addScanLog('⏭ ' + inst + ' : ' + analysis.reason, 'info'); continue; }
-            const entryR = analysis.entryR;
             const emoji = analysis.synthesis.signal === 'ACHAT' ? '🟢' : '🔴';
-            let text = '🚨 *SIGNAL v5.0* 🚨\n\n📊 *' + inst + '*\n' + emoji + ' *' + analysis.synthesis.signal + '*\n🎯 Score : *' + analysis.smcScore.total + '/100*\n\n';
+            let text = '🚨 *SIGNAL TOP-DOWN v5.4* 🚨\n\n📊 *' + inst + '*\n' + emoji + ' *' + analysis.synthesis.signal + '*\n🎯 Score : *' + analysis.smcScore.total + '/100*\n🧭 ' + (analysis.synthesis.orientationReason || '') + '\n\n';
             text += '📥 `' + analysis.levels.entry + '`\n🛑 `' + analysis.levels.sl + '`\n🎯 `' + analysis.levels.tp1 + '` / `' + analysis.levels.tp2 + '`\n⚖️ ' + analysis.levels.riskReward;
             const sent = await sendToAllTelegram(text);
             if (sent > 0) {
@@ -2741,6 +3012,7 @@ async function runScan() {
         }
     }
     addScanLog(signalsFound > 0 ? '✅ ' + signalsFound + ' signal(aux)' : '✅ Aucun signal', 'info');
+    renderAutoSendStats();
 }
 function startScanner() {
     if (state.scanning) return;
@@ -2782,40 +3054,40 @@ function stopScanner() {
 async function runAnalysis() {
     const btn = $('analyze-btn');
     btn.disabled = true;
-    btn.textContent = '🧠 Analyse…';
+    btn.textContent = '🧠 Analyse Top-Down D1→M5…';
     setStatus('Vérification de la clé API…');
     try {
         const ok = await connectTwelveData();
         if (!ok) throw new Error('Clé API Twelve Data non configurée');
-        const mode = $('mtf-mode').value;
-        const tfsToFetch = mode === 'h4h1' ? ['H4', 'H1'] : mode === 'h1m15' ? ['H1', 'M15'] : ['H1', 'M15', 'M5'];
+        const TFS_TO_FETCH = ['D1', 'H4', 'H1', 'M15', 'M5'];
         const results = {};
         state.candles = {};
-        for (const tf of tfsToFetch) {
+        for (const tf of TFS_TO_FETCH) {
+            setStatus('Chargement ' + tf + '…');
             const candles = await fetchCandles(state.symbol, tf, 200);
             state.candles[tf] = candles;
             const r = analyzeTimeframe(candles);
             if (r) results[tf] = r;
         }
-        setStatus('Synthèse SMC…');
-        const synthesis = synthesizeSMC(results, mode);
+        setStatus('Analyse Top-Down…');
+        const synthesis = synthesizeTopDown(results);
         if (!synthesis) throw new Error('Impossible de synthétiser');
-        const lastTF = tfsToFetch[tfsToFetch.length - 1];
-        const lastCandle = state.candles[lastTF];
+        const entryTF = 'M5';
+        const lastCandle = state.candles[entryTF];
         const currentPrice = lastCandle[lastCandle.length - 1].close;
-        const entryR = results[lastTF];
+        const entryR = results[entryTF] || results.M15 || results.H1;
         const levels = computeSMCLevels(results, synthesis, currentPrice, entryR);
         const scenarios = buildScenarios(results, synthesis, levels);
         renderReport(results, synthesis, levels, scenarios, currentPrice, state.symbol);
         setStatus(null);
-        toast('Analyse v5.0 complète ✓', 'success');
+        toast('Analyse Top-Down v5.4 complète ✓', 'success');
     } catch (e) {
         log('Erreur : ' + e.message);
         setStatus(null);
         toast('Erreur : ' + e.message, 'error', 4500);
     } finally {
         btn.disabled = false;
-        btn.textContent = '🧠 Lancer l\'analyse SMC';
+        btn.textContent = '🧠 Lancer l\'analyse Top-Down';
     }
 }
 
@@ -2844,7 +3116,7 @@ function initTabs() {
             $('panel-' + tab.dataset.tab).classList.add('active');
             if (tab.dataset.tab === 'journal') renderTrades();
             if (tab.dataset.tab === 'stats') renderStats();
-            if (tab.dataset.tab === 'scanner') { renderScanInstruments(); renderScanLog(); }
+            if (tab.dataset.tab === 'scanner') { renderScanInstruments(); renderScanLog(); renderThresholdsDisplay(); renderAutoSendStats(); }
             if (tab.dataset.tab === 'settings') { renderTelegramAccounts(); updateCacheStats(); }
         });
     });
@@ -2898,7 +3170,7 @@ function initSettings() {
         toast('Ajouté ✓', 'success');
     });
     $('test-all-telegram-btn')?.addEventListener('click', async () => {
-        const sent = await sendToAllTelegram('🧠 *SMC v5.0* — Test');
+        const sent = await sendToAllTelegram('🧠 *SMC Top-Down v5.4* — Test');
         toast(sent > 0 ? 'Envoyé à ' + sent : 'Aucun actif', sent > 0 ? 'success' : 'warn');
     });
     $('enable-push-btn')?.addEventListener('click', async () => {
@@ -2947,7 +3219,7 @@ function initTradeForm() {
         });
     });
     $('save-trade-btn')?.addEventListener('click', () => {
-        const inst = $('trade-instrument').value.trim();
+        const inst = $('trade-instrument').value.trim().toUpperCase();
         const dir = $('trade-direction').value;
         const entry = parseFloat($('trade-entry').value);
         const sl = parseFloat($('trade-sl').value);
@@ -2955,6 +3227,7 @@ function initTradeForm() {
         const capital = parseFloat($('trade-capital').value) || 100;
         const risk = parseFloat($('trade-risk').value) || 1;
         if (!inst || !entry || !sl || !tp) { toast('Remplis tout', 'warn'); return; }
+        if (!ALLOWED_INSTRUMENTS.includes(inst)) { toast('Instrument non autorisé', 'error'); return; }
         const sizeResult = computePositionSizeBrokerGrade(capital, risk, entry, sl, inst);
         addTrade({ instrument: inst, direction: dir, entry, sl, tp, size: sizeResult.size, capital, risk });
         $('trade-instrument').value = '';
@@ -2973,27 +3246,45 @@ function initTradeForm() {
 function initScanner() {
     renderScanInstruments();
     renderScanLog();
+    renderThresholdsDisplay();
+    renderAutoSendStats();
     const config = getScanConfig();
     $('scan-freq').value = config.freqMin;
     $('scan-conf').value = config.minScore;
+    $('scan-conf-label').textContent = config.minScore;
     $('scan-rr').value = config.minRR;
     $('add-instrument-btn')?.addEventListener('click', () => {
         const input = $('new-instrument-input');
         const inst = input.value.trim().toUpperCase();
         if (!inst) return;
+        if (!ALLOWED_INSTRUMENTS.includes(inst)) {
+            toast('Instrument non autorisé. Utilise : EUR/USD, XAU/USD ou BTC/USD', 'error', 3500);
+            return;
+        }
         const list = loadScanInstruments();
         if (list.includes(inst)) { toast('Déjà présent', 'warn'); return; }
-        if (list.length >= 10) { toast('Max 10', 'warn'); return; }
+        if (list.length >= 3) { toast('Maximum 3 instruments', 'warn', 3500); return; }
         list.push(inst);
         saveScanInstruments(list);
         input.value = '';
         renderScanInstruments();
+        toast(inst + ' ajouté ✓', 'success');
     });
     $('scanner-toggle')?.addEventListener('click', () => {
         if (state.scanning) stopScanner(); else startScanner();
     });
-    ['scan-freq', 'scan-conf', 'scan-rr'].forEach(id => {
-        $(id)?.addEventListener('change', saveScanConfig);
+    $('scan-freq')?.addEventListener('change', saveScanConfig);
+    $('scan-rr')?.addEventListener('change', saveScanConfig);
+    $('scan-conf')?.addEventListener('input', (e) => {
+        const label = $('scan-conf-label');
+        if (label) label.textContent = e.target.value;
+    });
+    $('scan-conf')?.addEventListener('change', saveScanConfig);
+    $('reset-auto-send-btn')?.addEventListener('click', () => {
+        lastTelegramSent = {};
+        try { localStorage.setItem(STORAGE.lastTgSent, '{}'); } catch (e) {}
+        renderAutoSendStats();
+        toast('Anti-spam réinitialisé ✓', 'success');
     });
 }
 function initModal() {
@@ -3005,6 +3296,24 @@ function initModal() {
 }
 function initBacktest() {
     $('bt-run-btn')?.addEventListener('click', runBacktest);
+    $('bt-score-min')?.addEventListener('input', (e) => {
+        const label = $('bt-score-label');
+        if (label) label.textContent = e.target.value;
+    });
+    $('bt-audit-btn')?.addEventListener('click', async () => {
+        if (!getDeepSeekKey()) { toast('Configure DeepSeek d\'abord', 'warn'); return; }
+        const btn = $('bt-audit-btn');
+        btn.disabled = true;
+        btn.textContent = '🧠 Analyse IA en cours… (30-45s)';
+        const trades = window._lastBacktestTrades || [];
+        const stats = window._lastBacktestStats || {};
+        const auditText = await auditBacktest(stats, trades, $('bt-instrument').value, 'M5');
+        const el = $('bt-audit-result');
+        el.style.display = 'block';
+        el.innerHTML = '<div class="ai-response">' + esc(auditText) + '</div>';
+        btn.disabled = false;
+        btn.textContent = '🧠 Relancer l\'audit IA';
+    });
 }
 
 async function init() {
@@ -3026,7 +3335,7 @@ async function init() {
     $('send-telegram-btn')?.addEventListener('click', () => {
         if (!state.lastAnalysis) { toast('Aucune analyse', 'warn'); return; }
         const a = state.lastAnalysis;
-        sendToAllTelegram('🧠 *SMC v5.0* — ' + a.symbol + '\n\nSignal : *' + a.signal + '*\nEntrée : ' + a.levels.entry + '\nSL : ' + a.levels.sl + '\nTP1 : ' + a.levels.tp1 + '\nTP2 : ' + a.levels.tp2);
+        sendToAllTelegram('🧠 *SMC v5.4* — ' + a.symbol + '\n\nSignal : *' + a.signal + '* (Score ' + a.smcScore + '/100)\nEntrée : ' + a.levels.entry + '\nSL : ' + a.levels.sl + '\nTP1 : ' + a.levels.tp1 + '\nTP2 : ' + a.levels.tp2);
     });
     await connectTwelveData();
     subscribeTicks(state.symbol);
@@ -3039,7 +3348,7 @@ async function init() {
             notifyButton: { enable: true, position: 'bottom-right', size: 'medium', theme: 'default' }
         });
     });
-    log('SMC Trader Pro v5.0 (Phases 1+2+3) prêt');
+    log('SMC Trader Pro v5.4 Top-Down prêt — D1→H4→H1→M15→M5');
 }
 init();
 </script>
