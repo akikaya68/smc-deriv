@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SMC Trader Pro v5.6</title>
+<title>SMC Trader Pro v5.7</title>
 <meta name="theme-color" content="#16a34a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -322,7 +322,7 @@
 <header>
     <button class="theme-toggle" id="theme-toggle">🌙</button>
     <h1>🧠 SMC Trader Pro</h1>
-    <p class="subtitle">v5.6 · Top-Down H4→M5 · EUR/USD · XAU/USD · BTC/USD</p>
+    <p class="subtitle">v5.7 · Top-Down H4→M5 · EUR/USD · XAU/USD · BTC/USD</p>
     <div class="conn-status" id="conn-status">
         <span class="dot"></span>
         <span id="conn-text">Prêt</span>
@@ -353,7 +353,7 @@
                     <select id="symbol-select"></select>
                 </div>
                 <div style="font-size:0.72rem;color:var(--info);padding:0.5rem;background:var(--panel-2);border-radius:6px;line-height:1.5;">
-                    🎯 <strong>Logique Top-Down v5.6</strong><br>
+                    🎯 <strong>Logique Top-Down v5.7</strong><br>
                     H4 (biais) → H1 (structure) → M15 (analyse) → M5 (entrée)
                 </div>
             </div>
@@ -575,9 +575,9 @@
                     <input type="range" id="bt-score-min" min="60" max="95" step="5" value="80" style="width:100%;">
                 </div>
                 <div style="font-size:0.72rem;color:var(--info);padding:0.5rem;background:var(--panel-2);border-radius:6px;margin-bottom:0.7rem;line-height:1.5;">
-                    🎯 <strong>Logique Top-Down v5.6</strong> : H4 (biais) → H1 (structure) → M15 (analyse) → M5 (entrée)<br>
+                    🎯 <strong>Logique Top-Down v5.7</strong> : H4 (biais) → H1 (structure) → M15 (analyse) → M5 (entrée)<br>
                     ⓘ D1 retiré pour optimiser le quota Twelve Data gratuit.<br>
-                    ⓘ Backtest avec spread, slippage, commission, TP1/TP2 partiels.
+                    ⓘ Backtest avec spread, slippage, commission, TP1/TP2 partiels, <strong>plafond de capital 10× et R/R max 4</strong>.
                 </div>
                 <button class="btn-primary" id="bt-run-btn">▶️ Lancer le backtest Top-Down</button>
                 <div class="bt-progress" id="bt-progress" style="display:none;">
@@ -993,9 +993,13 @@ function getSpecs(symbol) {
     if (INSTRUMENT_SPECS[clean]) return INSTRUMENT_SPECS[clean];
     return INSTRUMENT_SPECS['EUR/USD'];
 }
+
+// ✅ v5.7 — Position sizing avec plafond de lot
 function computePositionSizeBrokerGrade(capital, riskPct, entry, sl, symbol) {
     const specs = getSpecs(symbol);
-    const riskAmount = capital * (riskPct / 100);
+    // ✅ Plafond de risque à 5% max
+    const effectiveRiskPct = Math.min(riskPct, 5);
+    const riskAmount = capital * (effectiveRiskPct / 100);
     const slDistance = Math.abs(entry - sl);
     if (slDistance === 0) return { size: 0, message: 'Distance SL = 0', specs };
     const ticksCount = slDistance / specs.tickSize;
@@ -1003,7 +1007,9 @@ function computePositionSizeBrokerGrade(capital, riskPct, entry, sl, symbol) {
     if (riskPerLot <= 0) return { size: 0, message: 'Calcul impossible', specs };
     const rawLot = riskAmount / riskPerLot;
     const steppedLot = Math.floor(rawLot / specs.lotStep) * specs.lotStep;
-    const finalLot = Math.max(specs.minLot, steppedLot);
+    // ✅ Plafond dur : max 10 lots
+    const MAX_LOT = 10;
+    const finalLot = Math.min(MAX_LOT, Math.max(specs.minLot, steppedLot));
     const pipsDistance = slDistance / specs.pipValue;
     return {
         size: finalLot.toFixed(3), risk: riskAmount.toFixed(2),
@@ -1249,6 +1255,7 @@ function computeATR(candles, period = 14) {
 // ══════════════════════════════════════════════════════════════════
 // ANALYSE SMC
 // ══════════════════════════════════════════════════════════════════
+// ✅ v5.7 — Fix look-ahead : on s'arrête à length - lookback - 1
 function findSwings(candles, lookback = 3) {
     const swings = [];
     const lastConfirmedIdx = candles.length - lookback - 1;
@@ -1452,120 +1459,63 @@ function analyzeTimeframe(candles) {
     return { structure, obs, fvgs, pd, sweeps, hierarchy, atr, direction, strength };
 }
 
-// ✅ v5.6 — TOP-DOWN H4 → H1 → M15 → M5 (sans D1)
+// ✅ v5.7 — TOP-DOWN H4 → H1 → M15 → M5 (sans D1)
 function synthesizeTopDown(results) {
-    const H4 = results.H4;
-    const H1 = results.H1;
-    const M15 = results.M15;
-    const M5 = results.M5;
-
-    // ÉTAPE 1 : Biais H4 (au lieu de D1)
-    let h4Bias = 'range';
-    let h4Strength = 50;
-    if (H4) {
-        h4Bias = H4.direction;
-        h4Strength = H4.strength;
-    }
-
-    // ÉTAPE 2 : Structure H1 confirme le biais H4
-    let h1Confirms = false;
-    let h1Direction = 'range';
+    const H4 = results.H4, H1 = results.H1, M15 = results.M15, M5 = results.M5;
+    let h4Bias = 'range', h4Strength = 50;
+    if (H4) { h4Bias = H4.direction; h4Strength = H4.strength; }
+    let h1Confirms = false, h1Direction = 'range';
     if (H1) {
         h1Direction = H1.direction;
         h1Confirms = (h4Bias === 'bullish' && (H1.direction === 'bullish' || H1.direction === 'range'))
                   || (h4Bias === 'bearish' && (H1.direction === 'bearish' || H1.direction === 'range'));
     }
-
-    // ÉTAPE 3 : Analyse M15 (zone Premium/Discount)
-    let m15Zone = 'unknown';
-    let m15Structure = 'range';
-    if (M15) {
-        m15Zone = M15.pd?.zone || 'unknown';
-        m15Structure = M15.direction;
-    }
-
-    // ÉTAPE 4 : Confirmation M5 (MSS + sweep + trigger)
-    let m5Confirms = false;
-    let m5HasMSS = false;
-    let m5HasSweep = false;
-    let m5Triggers = false;
-
+    let m15Zone = 'unknown', m15Structure = 'range';
+    if (M15) { m15Zone = M15.pd?.zone || 'unknown'; m15Structure = M15.direction; }
+    let m5Confirms = false, m5HasMSS = false, m5HasSweep = false, m5Triggers = false;
     if (M5) {
         const lastEvents = M5.structure.events.slice(-3);
         m5HasMSS = lastEvents.some(e => e.type === 'MSS');
         m5HasSweep = M5.sweeps && M5.sweeps.length > 0;
         m5Confirms = m5HasMSS || m5HasSweep;
-
         const hasDisplacement = M5.obs && M5.obs.some(o => o.displacement);
         m5Triggers = m5HasSweep || hasDisplacement;
     }
-
-    // DÉTERMINATION DU SIGNAL
-    let signal = 'ATTENDRE';
-    let signalClass = 'wait';
-    let confidence = 0;
-    let reason = '';
-
+    let signal = 'ATTENDRE', signalClass = 'wait', confidence = 0, reason = '';
     if (h4Bias === 'bullish' && h1Confirms && M15 && M15.pd) {
         if (m15Zone === 'discount' && m5Confirms && m5Triggers) {
-            signal = 'ACHAT';
-            signalClass = 'buy';
+            signal = 'ACHAT'; signalClass = 'buy';
             confidence = Math.min(95, Math.round((h4Strength + (H1?.strength || 50) + (M5?.strength || 50)) / 3));
             reason = '✅ H4 haussier + H1 confirme + M15 Discount + M5 MSS/sweep + trigger';
-        } else if (m15Zone === 'premium') {
-            reason = '⏸ H4 haussier mais M15 en Premium — attendre retour en Discount';
-        } else if (!m5Confirms) {
-            reason = '⏸ H4 haussier + M15 Discount mais M5 ne confirme pas (MSS/sweep manquant)';
-        } else if (!m5Triggers) {
-            reason = '⏸ H4 haussier + M15 Discount + M5 MSS mais pas de trigger';
-        }
+        } else if (m15Zone === 'premium') reason = '⏸ H4 haussier mais M15 en Premium';
+        else if (!m5Confirms) reason = '⏸ H4 haussier + M15 Discount mais M5 ne confirme pas';
+        else if (!m5Triggers) reason = '⏸ H4 haussier + M15 Discount + M5 MSS mais pas de trigger';
     } else if (h4Bias === 'bearish' && h1Confirms && M15 && M15.pd) {
         if (m15Zone === 'premium' && m5Confirms && m5Triggers) {
-            signal = 'VENTE';
-            signalClass = 'sell';
+            signal = 'VENTE'; signalClass = 'sell';
             confidence = Math.min(95, Math.round((h4Strength + (H1?.strength || 50) + (M5?.strength || 50)) / 3));
             reason = '✅ H4 baissier + H1 confirme + M15 Premium + M5 MSS/sweep + trigger';
-        } else if (m15Zone === 'discount') {
-            reason = '⏸ H4 baissier mais M15 en Discount — attendre retour en Premium';
-        } else if (!m5Confirms) {
-            reason = '⏸ H4 baissier + M15 Premium mais M5 ne confirme pas';
-        } else if (!m5Triggers) {
-            reason = '⏸ H4 baissier + M15 Premium + M5 MSS mais pas de trigger';
-        }
-    } else if (!h1Confirms) {
-        reason = '⏸ H1 ne confirme pas le biais H4';
-    } else {
-        reason = '⏸ Biais H4 indéterminé';
-    }
-
+        } else if (m15Zone === 'discount') reason = '⏸ H4 baissier mais M15 en Discount';
+        else if (!m5Confirms) reason = '⏸ H4 baissier + M15 Premium mais M5 ne confirme pas';
+        else if (!m5Triggers) reason = '⏸ H4 baissier + M15 Premium + M5 MSS mais pas de trigger';
+    } else if (!h1Confirms) reason = '⏸ H1 ne confirme pas le biais H4';
+    else reason = '⏸ Biais H4 indéterminé';
     const zone = M15?.pd?.zone || 'unknown';
-
     return {
         signal, signalClass, confidence,
-        dominantStructure: h4Bias,
-        zone,
+        dominantStructure: h4Bias, zone,
         orientationReason: reason,
         zoneValid: signal !== 'ATTENDRE',
         topDown: {
-            // Nouveau nommage v5.6
-            h4Bias, h4Strength,
-            h1Confirms, h1Direction,
-            m15Zone, m15Structure,
-            m5Confirms, m5HasMSS, m5HasSweep, m5Triggers,
-            // Compatibilité avec le reste du code
-            d1Bias: h4Bias,
-            d1Strength: h4Strength,
-            h4Confirms: h1Confirms,
-            h4Direction: h1Direction,
-            h1Zone: m15Zone,
-            h1Structure: m15Structure,
-            m15Confirms: m5Confirms,
-            m15HasMSS: m5HasMSS,
-            m15HasSweep: m5HasSweep
+            h4Bias, h4Strength, h1Confirms, h1Direction,
+            m15Zone, m15Structure, m5Confirms, m5HasMSS, m5HasSweep, m5Triggers,
+            d1Bias: h4Bias, d1Strength: h4Strength,
+            h4Confirms: h1Confirms, h4Direction: h1Direction,
+            h1Zone: m15Zone, h1Structure: m15Structure,
+            m15Confirms: m5Confirms, m15HasMSS: m5HasMSS, m15HasSweep: m5HasSweep
         }
     };
 }
-
 function synthesizeSMC(results, mode) {
     if (mode === 'topdown') return synthesizeTopDown(results);
     const tfs = Object.keys(results).filter(k => results[k]);
@@ -1597,7 +1547,6 @@ function synthesizeSMC(results, mode) {
         zoneValid: orientation.valid
     };
 }
-
 function orientSignalByZone(structure, zone) {
     if (structure === 'bullish' && zone === 'discount') return { signal: 'ACHAT', valid: true, reason: 'Structure haussière + Discount ✓' };
     if (structure === 'bearish' && zone === 'premium') return { signal: 'VENTE', valid: true, reason: 'Structure baissière + Premium ✓' };
@@ -1606,6 +1555,7 @@ function orientSignalByZone(structure, zone) {
     return { signal: 'ATTENDRE', valid: false, reason: 'Indéterminé' };
 }
 
+// ✅ v5.7 — computeSMCLevels avec R/R maximum
 function computeSMCLevels(results, synthesis, currentPrice, entryR) {
     const r = entryR || results.M5 || results.M15;
     const decimals = getDecimals(currentPrice);
@@ -1616,6 +1566,9 @@ function computeSMCLevels(results, synthesis, currentPrice, entryR) {
     const MIN_SL_PIPS = state.symbol.includes('XAU') ? 30 : state.symbol.includes('BTC') ? 200 : 10;
     const MIN_SL_DISTANCE = MIN_SL_PIPS * specs.pipValue;
     const ATR_BUFFER = atr * 0.5;
+    // ✅ v5.7 — R/R maximum (2 pour TP1, 4 pour TP2)
+    const MAX_RR_TP1 = 2;
+    const MAX_RR_TP2 = 4;
     let entry, sl, tp, tp1, tp2, riskReward;
     const hierarchy = r.hierarchy || {};
     if (synthesis.signal === 'ACHAT') {
@@ -1624,11 +1577,14 @@ function computeSMCLevels(results, synthesis, currentPrice, entryR) {
         if (entryOB) { entry = entryOB.top; sl = entryOB.bottom - ATR_BUFFER; }
         else { entry = currentPrice * 0.998; sl = currentPrice * 0.99; }
         if (Math.abs(entry - sl) < MIN_SL_DISTANCE) sl = entry - MIN_SL_DISTANCE;
+        const risk = entry - sl;
         const swingHigh = r.structure.lastHigh ? r.structure.lastHigh.price : null;
+        const tp1FromSwing = swingHigh && swingHigh > entry ? swingHigh : entry + risk * MAX_RR_TP1;
+        tp1 = Math.min(tp1FromSwing, entry + risk * MAX_RR_TP1);
         const extHigh = r.structure.externalLastHigh ? r.structure.externalLastHigh.price : null;
-        tp1 = swingHigh && swingHigh > entry ? swingHigh : entry + Math.abs(entry - sl) * 2;
         const candidates = [extHigh, hierarchy.pdh, hierarchy.pwh].filter(v => v != null && v > tp1);
-        tp2 = candidates.length ? Math.min(...candidates) : tp1 + Math.abs(entry - sl) * 2;
+        const tp2FromLiq = candidates.length ? Math.min(...candidates) : entry + risk * MAX_RR_TP2;
+        tp2 = Math.min(tp2FromLiq, entry + risk * MAX_RR_TP2);
         tp = tp2;
     } else if (synthesis.signal === 'VENTE') {
         const bearOBs = obs.filter(o => o.type === 'bear' && o.bottom > currentPrice).sort((a, b) => ((b.freshness === 'fresh' ? 2 : 0) + (b.displacement ? 1 : 0)) - ((a.freshness === 'fresh' ? 2 : 0) + (a.displacement ? 1 : 0)));
@@ -1636,11 +1592,14 @@ function computeSMCLevels(results, synthesis, currentPrice, entryR) {
         if (entryOB) { entry = entryOB.bottom; sl = entryOB.top + ATR_BUFFER; }
         else { entry = currentPrice * 1.002; sl = currentPrice * 1.01; }
         if (Math.abs(entry - sl) < MIN_SL_DISTANCE) sl = entry + MIN_SL_DISTANCE;
+        const risk = sl - entry;
         const swingLow = r.structure.lastLow ? r.structure.lastLow.price : null;
+        const tp1FromSwing = swingLow && swingLow < entry ? swingLow : entry - risk * MAX_RR_TP1;
+        tp1 = Math.max(tp1FromSwing, entry - risk * MAX_RR_TP1);
         const extLow = r.structure.externalLastLow ? r.structure.externalLastLow.price : null;
-        tp1 = swingLow && swingLow < entry ? swingLow : entry - Math.abs(sl - entry) * 2;
         const candidates = [extLow, hierarchy.pdl, hierarchy.pwl].filter(v => v != null && v < tp1);
-        tp2 = candidates.length ? Math.max(...candidates) : tp1 - Math.abs(sl - entry) * 2;
+        const tp2FromLiq = candidates.length ? Math.max(...candidates) : entry - risk * MAX_RR_TP2;
+        tp2 = Math.max(tp2FromLiq, entry - risk * MAX_RR_TP2);
         tp = tp2;
     } else {
         entry = currentPrice; sl = currentPrice - MIN_SL_DISTANCE;
@@ -1652,12 +1611,10 @@ function computeSMCLevels(results, synthesis, currentPrice, entryR) {
     return { entry: fmt(entry), sl: fmt(sl), tp: fmt(tp), tp1: fmt(tp1), tp2: fmt(tp2), riskReward,
         entryPrice: entry, slPrice: sl, tpPrice: tp, tp1Price: parseFloat(fmt(tp1)), tp2Price: parseFloat(fmt(tp2)) };
 }
-
 function computeSMCScore(results, synthesis, levels) {
     const entryR = results.M5 || results.M15 || results.H1;
     const scores = { structure: 0, liquidity: 0, displacement: 0, ob_quality: 0, fvg_quality: 0, zone: 0, mtf_alignment: 0, liquidity_hierarchy: 0 };
     if (synthesis.topDown) {
-        // ✅ v5.6 — utilise H4 au lieu de D1
         const h4Str = synthesis.topDown.h4Strength || synthesis.topDown.d1Strength || 50;
         scores.structure = Math.round((h4Str + (results.H1?.strength || 50)) / 2);
         scores.mtf_alignment = (synthesis.topDown.h1Confirms || synthesis.topDown.h4Confirms) ? 90 : 30;
@@ -1692,14 +1649,12 @@ function computeSMCScore(results, synthesis, levels) {
     for (const k in scores) total += scores[k] * weights[k];
     return { total: Math.round(total), details: scores };
 }
-
 function getScoreStatus(score) {
     if (score >= 85) return { level: 'excellent', label: '🟢 EXCELLENT', color: 'var(--success)', emoji: '🔥🔥🔥', action: 'Signal A+ prioritaire' };
     if (score >= 75) return { level: 'acceptable', label: '🟡 ACCEPTABLE', color: 'var(--warn)', emoji: '🔥🔥', action: 'Trade possible, prudence' };
     return { level: 'rejected', label: '❌ REJETÉ', color: 'var(--error)', emoji: '⛔', action: 'Signal ignoré' };
 }
 function isSignalValid(score) { return score >= getScanConfig().minScore; }
-
 function buildScenarios(results, synthesis, levels) {
     const scenarios = [];
     if (synthesis.signal === 'ACHAT') {
@@ -1715,7 +1670,7 @@ function buildScenarios(results, synthesis, levels) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// BACKTEST v5.6 — H4 → H1 → M15 → M5 (sans D1)
+// ✅ BACKTEST v5.7 — Plafonds de capital + R/R max
 // ══════════════════════════════════════════════════════════════════
 async function runBacktest() {
     if (state.backtestRunning) { toast('Backtest déjà en cours', 'warn'); return; }
@@ -1725,16 +1680,13 @@ async function runBacktest() {
     const riskPct = parseFloat($('bt-risk').value) || 1;
     const minRR = parseFloat($('bt-minrr').value) || 2;
     const minScore = parseInt($('bt-score-min').value, 10) || 80;
-
     if (!ALLOWED_INSTRUMENTS.includes(symbol)) { toast('Instrument non autorisé', 'error'); return; }
-
     state.backtestRunning = true;
     $('bt-run-btn').disabled = true;
     $('bt-run-btn').textContent = '⏳ Chargement H4, H1, M15, M5…';
     $('bt-progress').style.display = 'block';
     $('bt-progress-text').style.display = 'block';
     $('bt-progress-fill').style.width = '0%';
-
     try {
         setStatus('Chargement H4, H1, M15, M5…');
         const [h4Data, h1Data, m15Data, m5Data] = await Promise.all([
@@ -1743,78 +1695,61 @@ async function runBacktest() {
             fetchCandles(symbol, 'M15', Math.min(nbBars, 3000), false),
             fetchCandles(symbol, 'M5', Math.min(nbBars, 3000), false)
         ]);
-
         if (m5Data.length < 200) throw new Error('Pas assez de bougies M5 (min 200)');
         if (h4Data.length < 30) throw new Error('Pas assez de bougies H4 (min 30)');
-
-        log('Backtest v5.6 : H4=' + h4Data.length + ' H1=' + h1Data.length + ' M15=' + m15Data.length + ' M5=' + m5Data.length);
-
+        log('Backtest v5.7 : H4=' + h4Data.length + ' H1=' + h1Data.length + ' M15=' + m15Data.length + ' M5=' + m5Data.length);
         const specs = getSpecs(symbol);
         const SPREAD_PIPS = specs.spreadPips || 1.2;
         const COMMISSION_PER_LOT = specs.commissionPerLot || 7;
         const SLIPPAGE_PIPS = 0.3;
-
         const trades = [];
         const MIN_BARS_BEFORE = 200;
         let equity = capitalInit;
+        // ✅ v5.7 — Plafond de capital à 10× le capital initial
+        const MAX_EQUITY = capitalInit * 10;
         const equityCurve = [capitalInit];
-
-        const RATIO_M15 = 3;
-        const RATIO_H1 = 12;
-        const RATIO_H4 = 48;
-
+        const RATIO_M15 = 3, RATIO_H1 = 12, RATIO_H4 = 48;
         for (let i = MIN_BARS_BEFORE; i < m5Data.length - 30; i++) {
             const m5Subset = m5Data.slice(0, i + 1);
             const rM5 = analyzeTimeframe(m5Subset);
             if (!rM5) continue;
-
             const m15Idx = Math.floor(i / RATIO_M15);
             if (m15Idx < 30) continue;
             const rM15 = analyzeTimeframe(m15Data.slice(0, Math.min(m15Idx + 1, m15Data.length)));
-
             const h1Idx = Math.floor(i / RATIO_H1);
             if (h1Idx < 30) continue;
             const rH1 = analyzeTimeframe(h1Data.slice(0, Math.min(h1Idx + 1, h1Data.length)));
-
             const h4Idx = Math.floor(i / RATIO_H4);
             if (h4Idx < 20) continue;
             const rH4 = analyzeTimeframe(h4Data.slice(0, Math.min(h4Idx + 1, h4Data.length)));
-
             const results = { H4: rH4, H1: rH1, M15: rM15, M5: rM5 };
             const synthesis = synthesizeTopDown(results);
             if (!synthesis || synthesis.signal === 'ATTENDRE') continue;
-
             const entryR = rM5;
             if (!(entryR.obs && entryR.obs.some(o => o.displacement))) continue;
-
             const currentPrice = m5Subset[m5Subset.length - 1].close;
             const levels = computeSMCLevels(results, synthesis, currentPrice, entryR);
             const smcScore = computeSMCScore(results, synthesis, levels);
             if (smcScore.total < minScore) continue;
-
             const rrNum = parseFloat(levels.riskReward.replace('1:', ''));
             if (isNaN(rrNum) || rrNum < minRR) continue;
-
             const dir = synthesis.signal === 'ACHAT' ? 1 : -1;
             const entryReal = dir > 0 ? levels.entryPrice + (SPREAD_PIPS / 2 + SLIPPAGE_PIPS) * specs.pipValue
                                        : levels.entryPrice - (SPREAD_PIPS / 2 + SLIPPAGE_PIPS) * specs.pipValue;
-            const slReal = levels.slPrice;
-            const tp1Real = levels.tp1Price;
-            const tp2Real = levels.tp2Price;
-
+            const slReal = levels.slPrice, tp1Real = levels.tp1Price, tp2Real = levels.tp2Price;
             let result = null, exitPrice = null, exitIdx = null, halfClosed = false, pnlDollars = 0;
-            const riskAmount = equity * (riskPct / 100);
-
+            // ✅ v5.7 — Risque plafonné à 5%
+            const effectiveRiskPct = Math.min(riskPct, 5);
+            const riskAmount = equity * (effectiveRiskPct / 100);
             for (let k = i + 1; k < Math.min(i + 200, m5Data.length); k++) {
                 const c = m5Data[k];
                 const hitTP1 = dir > 0 ? c.high >= tp1Real : c.low <= tp1Real;
                 const hitTP2 = dir > 0 ? c.high >= tp2Real : c.low <= tp2Real;
                 const hitSL = dir > 0 ? c.low <= slReal : c.high >= slReal;
-
                 if (hitTP1 && !halfClosed) {
                     const halfRisk = riskAmount * 0.5;
                     const rewardR1 = Math.abs(tp1Real - entryReal) / Math.abs(entryReal - slReal);
-                    pnlDollars += halfRisk * rewardR1;
+                    pnlDollars += halfRisk * Math.min(rewardR1, 2);
                     halfClosed = true;
                 }
                 if (hitSL) {
@@ -1823,22 +1758,19 @@ async function runBacktest() {
                     exitIdx = k; break;
                 }
                 if (hitTP2) {
-                    const rewardR2 = Math.abs(tp2Real - entryReal) / Math.abs(entryReal - slReal);
+                    const rewardR2 = Math.min(Math.abs(tp2Real - entryReal) / Math.abs(entryReal - slReal), 4);
                     if (halfClosed) pnlDollars += riskAmount * 0.5 * rewardR2;
                     else pnlDollars += riskAmount * rewardR2;
                     result = 'tp'; exitPrice = tp2Real; exitIdx = k; break;
                 }
             }
-
             if (result === null) continue;
-
-            const sizeResult = computePositionSizeBrokerGrade(equity, riskPct, entryReal, slReal, symbol);
+            const sizeResult = computePositionSizeBrokerGrade(equity, effectiveRiskPct, entryReal, slReal, symbol);
             const lots = parseFloat(sizeResult.size) || 0.01;
             pnlDollars -= COMMISSION_PER_LOT * lots * 2;
-
-            equity += pnlDollars;
+            // ✅ v5.7 — Plafond de capital
+            equity = Math.min(MAX_EQUITY, equity + pnlDollars);
             equityCurve.push(equity);
-
             trades.push({
                 idx: i, entryIdx: i, exitIdx,
                 direction: synthesis.signal,
@@ -1851,20 +1783,16 @@ async function runBacktest() {
                 lots,
                 topdown: synthesis.topDown
             });
-
             const progress = ((i - MIN_BARS_BEFORE) / (m5Data.length - MIN_BARS_BEFORE - 30)) * 100;
             $('bt-progress-fill').style.width = progress + '%';
             $('bt-progress-text').textContent = 'M5 #' + i + ' / ' + (m5Data.length - 30) + ' · ' + trades.length + ' trades';
-
             if (i % 20 === 0) await sleep(0);
         }
-
         const stats = computeBacktestStats(trades, capitalInit, equity);
         window._lastBacktestTrades = trades;
         window._lastBacktestStats = stats;
         renderBacktestResults(stats, trades, equityCurve);
-
-        toast('Backtest v5.6 (H4→M5) terminé : ' + trades.length + ' trades', 'success', 4000);
+        toast('Backtest v5.7 terminé : ' + trades.length + ' trades', 'success', 4000);
     } catch (e) {
         log('Erreur backtest : ' + e.message);
         toast('Erreur backtest : ' + e.message, 'error', 5000);
@@ -1886,10 +1814,13 @@ function computeBacktestStats(trades, capitalInit, finalEquity) {
     let totalR = 0;
     for (const t of trades) {
         const risk = Math.abs(t.entry - t.sl), reward = Math.abs(t.exitPrice - t.entry);
-        if (t.result === 'tp') totalR += reward / risk; else if (t.result === 'be') totalR += 0; else totalR -= 1;
+        if (t.result === 'tp') totalR += Math.min(reward / risk, 4);
+        else if (t.result === 'be') totalR += 0;
+        else totalR -= 1;
     }
     const avgR = totalR / trades.length;
-    const pnl = finalEquity - capitalInit, pnlPct = (pnl / capitalInit) * 100;
+    const pnl = finalEquity - capitalInit;
+    const pnlPct = (pnl / capitalInit) * 100;
     let peak = capitalInit, maxDD = 0;
     for (const t of trades) { if (t.equity > peak) peak = t.equity; const dd = (peak - t.equity) / peak * 100; if (dd > maxDD) maxDD = dd; }
     const grossWin = trades.filter(t => t.pnlDollars > 0).reduce((s, t) => s + t.pnlDollars, 0);
@@ -2059,7 +1990,7 @@ function saveDeepSeekKey() {
 async function callDeepSeek(prompt, options = {}) {
     const key = getDeepSeekKey();
     if (!key) throw new Error('Clé DeepSeek non configurée');
-    const systemPrompt = options.systemPrompt || `Tu es un analyste trader senior expert en SMC (Smart Money Concepts), 15+ ans d'expérience. Tu analyses en profondeur les setups Top-Down H4→H1→M15→M5. Tu es exigeant, critique et tu proposes des améliorations concrètes. Français professionnel, texte simple SANS markdown.`;
+    const systemPrompt = options.systemPrompt || `Tu es un analyste trader senior expert en SMC, 15+ ans d'expérience. Tu analyses en profondeur les setups Top-Down H4→H1→M15→M5. Tu es exigeant, critique et tu proposes des améliorations concrètes. Français professionnel, texte simple SANS markdown.`;
     const res = await fetch(DEEPSEEK_API, {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
@@ -2075,11 +2006,9 @@ async function auditAnalysis(synthesis, levels, results, symbol) {
     const smcScore = computeSMCScore(results, synthesis, levels);
     const status = getScoreStatus(smcScore.total);
     const summary = { symbol, signal: synthesis.signal, smc_score: smcScore.total, smc_status: status.label, smc_details: smcScore.details, entry: levels.entry, sl: levels.sl, tp1: levels.tp1, tp2: levels.tp2, rr: levels.riskReward, topdown: synthesis.topDown };
-    const prompt = `Analyse STRATÉGIQUE Top-Down d'un setup SMC (H4→H1→M15→M5) :
+    const prompt = `Analyse STRATÉGIQUE Top-Down (H4→H1→M15→M5) :
 
 ${JSON.stringify(summary, null, 2)}
-
-Rappel : H4 (biais) → H1 (structure) → M15 (analyse) → M5 (entrée). ACHAT en Discount de structure haussière, VENTE en Premium de structure baissière.
 
 Réponds en français, format texte SANS markdown, 6 sections numérotées :
 1. LECTURE DE LA CASCADE TOP-DOWN (3-4 phrases)
@@ -2110,7 +2039,7 @@ async function auditBacktest(stats, trades, symbol) {
             low_below75: { count: lowScoreTrades.length, winrate: lowScoreTrades.length ? Math.round(lowScoreTrades.filter(t => t.result === 'tp').length / lowScoreTrades.length * 100) : 0 }
         }
     };
-    const prompt = `Analyse STRATÉGIQUE des résultats d'un backtest SMC Top-Down sur ${symbol} :
+    const prompt = `Analyse STRATÉGIQUE des résultats d'un backtest SMC Top-Down v5.7 (avec plafond de capital 10× et R/R max 4) sur ${symbol} :
 
 ${JSON.stringify(summary, null, 2)}
 
@@ -2176,7 +2105,7 @@ async function runWeeklyAudit() {
 ${JSON.stringify(summary, null, 2)}
 
 CONTEXTE :
-- Top-Down v5.6 : H4 (biais) → H1 (structure) → M15 (analyse) → M5 (entrée)
+- Top-Down v5.7 : H4 (biais) → H1 (structure) → M15 (analyse) → M5 (entrée)
 - ACHAT en Discount de structure haussière, VENTE en Premium de structure baissière
 - Seuil SMC actuel : ${getScanConfig().minScore}/100
 - 3 instruments : EUR/USD, XAU/USD, BTC/USD
@@ -2189,7 +2118,7 @@ Réponds en français, format texte SANS markdown, en 7 sections numérotées :
 3. COMPLIANCE TOP-DOWN (3 puces avec •)
 4. FORCES IDENTIFIÉES (3 puces avec •)
 5. FAIBLESSES IDENTIFIÉES (3 puces avec •)
-6. RECOMMANDATIONS CONCRÈTES (5 puces avec •) : modifier seuil, ajouter/retirer critère, changer TP1/TP2, prioriser instruments, ajuster R/R
+6. RECOMMANDATIONS CONCRÈTES (5 puces avec •)
 7. VERDICT HEBDOMADAIRE (note /100 + 3 actions prioritaires)`;
         const auditText = await callDeepSeek(prompt, { maxTokens: 3000 });
         const weeklyAudits = JSON.parse(localStorage.getItem(STORAGE.weeklyAudits) || '[]');
@@ -2295,7 +2224,7 @@ async function autoSendToTelegram(synthesis, levels, results, symbol) {
     const status = getScoreStatus(smcScore.total);
     const emoji = synthesis.signal === 'ACHAT' ? '🟢' : '🔴';
     const priorityEmoji = smcScore.total >= 85 ? '🔥🔥🔥' : smcScore.total >= 75 ? '🔥🔥' : '🔥';
-    let text = '🚨 *SIGNAL SMC v5.6* 🚨\n\n';
+    let text = '🚨 *SIGNAL SMC v5.7* 🚨\n\n';
     text += '📊 *' + symbol + '*\n';
     text += emoji + ' Signal : *' + synthesis.signal + '*\n';
     text += '🎯 SMC Score : *' + smcScore.total + '/100* ' + status.label + ' ' + priorityEmoji + '\n';
@@ -2327,7 +2256,6 @@ async function autoSendToTelegram(synthesis, levels, results, symbol) {
     }
     await saveAndAuditAnalysis(synthesis, levels, results, symbol, smcScore, sent);
 }
-
 async function saveAndAuditAnalysis(synthesis, levels, results, symbol, smcScore, telegramSent) {
     const entryR = results.M5 || results.M15;
     const analysis = {
@@ -2356,7 +2284,6 @@ async function saveAndAuditAnalysis(synthesis, levels, results, symbol, smcScore
         }).catch(e => log('Erreur audit auto : ' + e.message));
     }
 }
-
 function renderAutoSendStats() {
     const el = $('auto-send-stats');
     if (!el) return;
@@ -2374,7 +2301,6 @@ function renderAutoSendStats() {
             '</div>';
         }).join('');
 }
-
 function proposeAutoTrade(synthesis, levels, results, symbol) {
     const smcScore = computeSMCScore(results, synthesis, levels);
     if (!isSignalValid(smcScore.total)) return;
@@ -2403,7 +2329,6 @@ function proposeAutoTrade(synthesis, levels, results, symbol) {
     window._pendingTrade = { direction, symbol, levels, results, sizeResult, capital, risk, smcScore: smcScore.total };
     modal.classList.add('visible');
 }
-
 function executeAutoTrade() {
     const data = window._pendingTrade;
     if (!data) return;
@@ -2441,9 +2366,7 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
     $('confidence-fill').style.width = smcScore.total + '%';
     $('confidence-fill').style.background = totalColor;
     $('signal-setup').innerHTML = '🧭 ' + (synthesis.orientationReason || 'Analyse Top-Down');
-    const entryTF = 'M5';
-    const entryR = results[entryTF] || results.M15 || results.H1;
-    // ✅ v5.6 — 4 cartes TF
+    const entryR = results.M5 || results.M15 || results.H1;
     const tfRoles = { H4: { icon: '🧭', label: 'Biais' }, H1: { icon: '🏛️', label: 'Structure' }, M15: { icon: '🔍', label: 'Analyse' }, M5: { icon: '🎯', label: 'Entrée' } };
     $('tf-grid').innerHTML = Object.keys(tfRoles).map(tf => {
         const r = results[tf];
@@ -2453,7 +2376,6 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
         const label = r.direction === 'bullish' ? '📈 Bull' : r.direction === 'bearish' ? '📉 Bear' : '↔️ Range';
         return '<div class="tf-card ' + cls + '"><div class="tf-name">' + role.icon + ' ' + tf + '</div><div class="tf-direction">' + label + '</div><div class="tf-detail">' + role.label + '</div></div>';
     }).join('');
-    // ✅ v5.6 — Cascade Top-Down H4→M5
     const td = synthesis.topDown;
     if (td) {
         const tdEl = $('topdown-cascade');
@@ -2771,7 +2693,7 @@ async function runScan() {
     if (!instruments.length) { addScanLog('Aucun instrument', 'warn'); return; }
     const accounts = loadTelegramAccounts().filter(a => a.enabled);
     if (!accounts.length) { addScanLog('Aucun compte Telegram actif', 'warn'); return; }
-    addScanLog('🔍 Scan Top-Down v5.6 · ' + instruments.length + ' instruments · seuil ' + config.minScore, 'info');
+    addScanLog('🔍 Scan Top-Down v5.7 · ' + instruments.length + ' instruments · seuil ' + config.minScore, 'info');
     let signalsFound = 0;
     for (const inst of instruments) {
         if (!state.scanning) { addScanLog('⏸ Interrompu', 'warn'); return; }
@@ -2781,7 +2703,7 @@ async function runScan() {
             if (!analysis.ok) { addScanLog('❌ ' + inst + ' : ' + analysis.error, 'error'); continue; }
             if (!analysis.valid) { addScanLog('⏭ ' + inst + ' : ' + analysis.reason, 'info'); continue; }
             const emoji = analysis.synthesis.signal === 'ACHAT' ? '🟢' : '🔴';
-            let text = '🚨 *SIGNAL TOP-DOWN v5.6* 🚨\n\n📊 *' + inst + '*\n' + emoji + ' *' + analysis.synthesis.signal + '*\n🎯 Score : *' + analysis.smcScore.total + '/100*\n🧭 ' + (analysis.synthesis.orientationReason || '') + '\n\n';
+            let text = '🚨 *SIGNAL TOP-DOWN v5.7* 🚨\n\n📊 *' + inst + '*\n' + emoji + ' *' + analysis.synthesis.signal + '*\n🎯 Score : *' + analysis.smcScore.total + '/100*\n🧭 ' + (analysis.synthesis.orientationReason || '') + '\n\n';
             text += '📥 `' + analysis.levels.entry + '`\n🛑 `' + analysis.levels.sl + '`\n🎯 `' + analysis.levels.tp1 + '` / `' + analysis.levels.tp2 + '`\n⚖️ ' + analysis.levels.riskReward;
             const sent = await sendToAllTelegram(text);
             if (sent > 0) {
@@ -2857,7 +2779,7 @@ async function runAnalysis() {
         const scenarios = buildScenarios(results, synthesis, levels);
         renderReport(results, synthesis, levels, scenarios, currentPrice, state.symbol);
         setStatus(null);
-        toast('Analyse Top-Down v5.6 complète ✓', 'success');
+        toast('Analyse Top-Down v5.7 complète ✓', 'success');
     } catch (e) {
         log('Erreur : ' + e.message);
         setStatus(null);
@@ -2941,7 +2863,7 @@ function initSettings() {
         renderTelegramAccounts();
     });
     $('test-all-telegram-btn')?.addEventListener('click', async () => {
-        const sent = await sendToAllTelegram('🧠 *SMC Top-Down v5.6* — Test');
+        const sent = await sendToAllTelegram('🧠 *SMC Top-Down v5.7* — Test');
         toast(sent > 0 ? 'Envoyé à ' + sent : 'Aucun actif', sent > 0 ? 'success' : 'warn');
     });
     $('enable-push-btn')?.addEventListener('click', async () => {
@@ -3062,7 +2984,6 @@ function initBacktest() {
         btn.textContent = '🧠 Relancer l\'audit IA';
     });
 }
-
 async function init() {
     await registerServiceWorker();
     initTheme();
@@ -3085,7 +3006,7 @@ async function init() {
     $('send-telegram-btn')?.addEventListener('click', () => {
         if (!state.lastAnalysis) { toast('Aucune analyse', 'warn'); return; }
         const a = state.lastAnalysis;
-        sendToAllTelegram('🧠 *SMC v5.6* — ' + a.symbol + '\n\nSignal : *' + a.signal + '* (Score ' + a.smcScore + '/100)\nEntrée : ' + a.levels.entry + '\nSL : ' + a.levels.sl + '\nTP1 : ' + a.levels.tp1 + '\nTP2 : ' + a.levels.tp2);
+        sendToAllTelegram('🧠 *SMC v5.7* — ' + a.symbol + '\n\nSignal : *' + a.signal + '* (Score ' + a.smcScore + '/100)\nEntrée : ' + a.levels.entry + '\nSL : ' + a.levels.sl + '\nTP1 : ' + a.levels.tp1 + '\nTP2 : ' + a.levels.tp2);
     });
     await connectTwelveData();
     subscribeTicks(state.symbol);
@@ -3098,7 +3019,7 @@ async function init() {
             notifyButton: { enable: true, position: 'bottom-right', size: 'medium', theme: 'default' }
         });
     });
-    log('SMC Trader Pro v5.6 prêt — Top-Down H4→M5');
+    log('SMC Trader Pro v5.7 prêt — Top-Down H4→M5 avec plafonds');
 }
 init();
 </script>
