@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SMC Trader Pro v5.7</title>
+<title>SMC Trader Pro v5.8</title>
 <meta name="theme-color" content="#16a34a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -322,7 +322,7 @@
 <header>
     <button class="theme-toggle" id="theme-toggle">🌙</button>
     <h1>🧠 SMC Trader Pro</h1>
-    <p class="subtitle">v5.7 · Top-Down H4→M5 · EUR/USD · XAU/USD · BTC/USD</p>
+    <p class="subtitle">v5.8 · Top-Down H4→M5 · EUR/USD · XAU/USD · BTC/USD</p>
     <div class="conn-status" id="conn-status">
         <span class="dot"></span>
         <span id="conn-text">Prêt</span>
@@ -353,7 +353,7 @@
                     <select id="symbol-select"></select>
                 </div>
                 <div style="font-size:0.72rem;color:var(--info);padding:0.5rem;background:var(--panel-2);border-radius:6px;line-height:1.5;">
-                    🎯 <strong>Logique Top-Down v5.7</strong><br>
+                    🎯 <strong>Logique Top-Down v5.8</strong><br>
                     H4 (biais) → H1 (structure) → M15 (analyse) → M5 (entrée)
                 </div>
             </div>
@@ -575,9 +575,8 @@
                     <input type="range" id="bt-score-min" min="60" max="95" step="5" value="80" style="width:100%;">
                 </div>
                 <div style="font-size:0.72rem;color:var(--info);padding:0.5rem;background:var(--panel-2);border-radius:6px;margin-bottom:0.7rem;line-height:1.5;">
-                    🎯 <strong>Logique Top-Down v5.7</strong> : H4 (biais) → H1 (structure) → M15 (analyse) → M5 (entrée)<br>
-                    ⓘ D1 retiré pour optimiser le quota Twelve Data gratuit.<br>
-                    ⓘ Backtest avec spread, slippage, commission, TP1/TP2 partiels, <strong>plafond de capital 10× et R/R max 4</strong>.
+                    🎯 <strong>Logique Top-Down v5.8</strong> : H4 (biais) → H1 (structure) → M15 (analyse) → M5 (entrée)<br>
+                    ⓘ D1 retiré · Entrée au prix de marché réel · Priorité SL sur bougies ambiguës · Plafonds capital 10× et R/R max 4.
                 </div>
                 <button class="btn-primary" id="bt-run-btn">▶️ Lancer le backtest Top-Down</button>
                 <div class="bt-progress" id="bt-progress" style="display:none;">
@@ -625,7 +624,6 @@
             </div>
         </div>
     </div>
-
     <div class="section open">
         <div class="section-header" data-toggle="sec-weekly-audit">
             <span class="section-title">🧠 Audit hebdomadaire IA</span>
@@ -634,35 +632,29 @@
         <div class="section-body" id="sec-weekly-audit">
             <div class="section-content">
                 <div style="font-size:0.75rem;color:var(--ink-dim);line-height:1.5;margin-bottom:0.6rem;">
-                    ⓘ Lance un audit IA sur les analyses des 7 derniers jours. L'IA analyse les performances, identifie les forces/faiblesses et propose des ajustements concrets.
+                    ⓘ Lance un audit IA sur les analyses des 7 derniers jours.
                 </div>
                 <button class="btn-primary" id="weekly-audit-btn">🧠 Lancer l'audit hebdomadaire IA</button>
                 <div id="weekly-audit-result" style="display:none;"></div>
             </div>
         </div>
     </div>
-
     <div class="section open">
         <div class="section-header" data-toggle="sec-weekly-history">
             <span class="section-title">📚 Historique des audits hebdo</span>
             <span class="chevron">▼</span>
         </div>
         <div class="section-body" id="sec-weekly-history">
-            <div class="section-content">
-                <div id="weekly-audits-history"></div>
-            </div>
+            <div class="section-content"><div id="weekly-audits-history"></div></div>
         </div>
     </div>
-
     <div class="section open">
         <div class="section-header" data-toggle="sec-box-list">
             <span class="section-title">📋 Analyses sauvegardées</span>
             <span class="chevron">▼</span>
         </div>
         <div class="section-body" id="sec-box-list">
-            <div class="section-content">
-                <div id="analysis-box-list" style="max-height:500px;overflow-y:auto;"></div>
-            </div>
+            <div class="section-content"><div id="analysis-box-list" style="max-height:500px;overflow-y:auto;"></div></div>
         </div>
     </div>
 </div>
@@ -782,9 +774,6 @@
                 </div>
                 <button class="btn-secondary" id="save-deepseek">Enregistrer</button>
                 <button class="btn-secondary" id="test-deepseek">🧪 Tester</button>
-                <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;line-height:1.5;">
-                    Modèle : <strong>deepseek-reasoner</strong> · Audit analyse + audit hebdo
-                </div>
             </div>
         </div>
     </div>
@@ -916,8 +905,7 @@ const STORAGE = {
     deepseek: 'smc_deepseek_key_v5',
     apiCache: 'smc_api_cache_v5',
     analysisBox: 'smc_analysis_box_v5',
-    weeklyAudits: 'smc_weekly_audits_v5',
-    iaRecommendations: 'smc_ia_recs_v5'
+    weeklyAudits: 'smc_weekly_audits_v5'
 };
 
 const SYMBOLS = { 'Disponibles': ['EUR/USD', 'XAU/USD', 'BTC/USD'] };
@@ -928,7 +916,6 @@ const state = {
     tickInterval: null, scanning: false, countdownTimer: null,
     nextScanTime: null, backtestRunning: false
 };
-
 let lastTelegramSent = {};
 
 // ══════════════════════════════════════════════════════════════════
@@ -938,7 +925,6 @@ function $(id) { return document.getElementById(id); }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function log(m) { console.log('[SMC]', m); }
-
 let toastTimer;
 function toast(msg, type = 'success', dur = 2500) {
     const t = $('toast'), txt = $('toast-text');
@@ -993,11 +979,8 @@ function getSpecs(symbol) {
     if (INSTRUMENT_SPECS[clean]) return INSTRUMENT_SPECS[clean];
     return INSTRUMENT_SPECS['EUR/USD'];
 }
-
-// ✅ v5.7 — Position sizing avec plafond de lot
 function computePositionSizeBrokerGrade(capital, riskPct, entry, sl, symbol) {
     const specs = getSpecs(symbol);
-    // ✅ Plafond de risque à 5% max
     const effectiveRiskPct = Math.min(riskPct, 5);
     const riskAmount = capital * (effectiveRiskPct / 100);
     const slDistance = Math.abs(entry - sl);
@@ -1007,7 +990,6 @@ function computePositionSizeBrokerGrade(capital, riskPct, entry, sl, symbol) {
     if (riskPerLot <= 0) return { size: 0, message: 'Calcul impossible', specs };
     const rawLot = riskAmount / riskPerLot;
     const steppedLot = Math.floor(rawLot / specs.lotStep) * specs.lotStep;
-    // ✅ Plafond dur : max 10 lots
     const MAX_LOT = 10;
     const finalLot = Math.min(MAX_LOT, Math.max(specs.minLot, steppedLot));
     const pipsDistance = slDistance / specs.pipValue;
@@ -1064,10 +1046,7 @@ function clearApiCache() {
 // ══════════════════════════════════════════════════════════════════
 function loadAnalysisBox() { try { return JSON.parse(localStorage.getItem(STORAGE.analysisBox) || '[]'); } catch (e) { return []; } }
 function saveAnalysisBox(box) {
-    try {
-        if (box.length > 500) box = box.slice(0, 500);
-        localStorage.setItem(STORAGE.analysisBox, JSON.stringify(box));
-    } catch (e) {}
+    try { if (box.length > 500) box = box.slice(0, 500); localStorage.setItem(STORAGE.analysisBox, JSON.stringify(box)); } catch (e) {}
 }
 function addToAnalysisBox(analysis) {
     const box = loadAnalysisBox();
@@ -1091,9 +1070,8 @@ function getAnalysisBoxStats() {
     const now = Date.now();
     const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
     const thisWeek = box.filter(a => a.savedAt >= oneWeekAgo);
-    const lastWeek = box.filter(a => a.savedAt >= oneWeekAgo * 2 && a.savedAt < oneWeekAgo);
     return {
-        total: box.length, thisWeek: thisWeek.length, lastWeek: lastWeek.length,
+        total: box.length, thisWeek: thisWeek.length, lastWeek: 0,
         audited: box.filter(a => a.audited).length,
         pending: box.filter(a => !a.audited).length
     };
@@ -1102,8 +1080,7 @@ function clearAnalysisBox() {
     if (!confirm('Effacer toutes les analyses sauvegardées ?')) return;
     try { localStorage.removeItem(STORAGE.analysisBox); } catch (e) {}
     toast('Boîte d\'analyses vidée', 'success');
-    renderAnalysisBoxStats();
-    renderAnalysisBoxList();
+    renderAnalysisBoxStats(); renderAnalysisBoxList();
 }
 function renderAnalysisBoxStats() {
     const el = $('analysis-box-stats');
@@ -1116,9 +1093,7 @@ function renderAnalysisBoxStats() {
             '<div class="stat-card"><div class="st-label">Auditées IA</div><div class="st-value win">' + s.audited + '</div></div>' +
             '<div class="stat-card"><div class="st-label">En attente</div><div class="st-value ' + (s.pending > 0 ? 'loss' : 'neutral') + '">' + s.pending + '</div></div>' +
         '</div>' +
-        '<div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;line-height:1.5;">' +
-            'ⓘ Les analyses validées (score ≥ seuil) sont automatiquement sauvegardées et auditées par l\'IA.' +
-        '</div>';
+        '<div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;line-height:1.5;">ⓘ Les analyses validées sont automatiquement sauvegardées et auditées par l\'IA.</div>';
 }
 function renderAnalysisBoxList() {
     const el = $('analysis-box-list');
@@ -1137,7 +1112,6 @@ function renderAnalysisBoxList() {
             '</div>' +
             '<div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.2rem;">' + date + '</div>' +
             '<div style="font-size:0.72rem;margin-top:0.3rem;">🧭 ' + esc(a.orientationReason || '—') + '</div>' +
-            (a.outcome ? '<div style="font-size:0.7rem;margin-top:0.2rem;">Résultat : <strong>' + a.outcome.toUpperCase() + '</strong></div>' : '') +
             (a.auditIA ? '<button class="btn-secondary" style="margin-top:0.3rem;font-size:0.65rem;" onclick="showAnalysisAudit(' + a.id + ')">🤖 Voir audit IA</button>' : '') +
         '</div>';
     }).join('');
@@ -1146,11 +1120,9 @@ window.showAnalysisAudit = function(id) {
     const box = loadAnalysisBox();
     const a = box.find(x => x.id === id);
     if (!a || !a.auditIA) return;
-    const modal = $('auto-trade-modal');
-    const details = $('auto-trade-details');
+    const modal = $('auto-trade-modal'), details = $('auto-trade-details');
     if (!modal || !details) return;
-    details.innerHTML =
-        '<div style="font-size:0.8rem;font-weight:700;margin-bottom:0.5rem;">' + esc(a.symbol) + ' — ' + a.signal + ' (' + a.smcScore + '/100)</div>' +
+    details.innerHTML = '<div style="font-size:0.8rem;font-weight:700;margin-bottom:0.5rem;">' + esc(a.symbol) + ' — ' + a.signal + ' (' + a.smcScore + '/100)</div>' +
         '<div style="font-size:0.78rem;line-height:1.6;white-space:pre-wrap;max-height:60vh;overflow-y:auto;">' + esc(a.auditIA) + '</div>';
     modal.classList.add('visible');
 };
@@ -1216,7 +1188,6 @@ async function fetchCurrentPrice(symbol) {
         return null;
     } catch (e) { return null; }
 }
-
 let lastPrice = null;
 function updatePriceTicker(price) {
     const el = $('pt-value'), changeEl = $('pt-change');
@@ -1255,7 +1226,6 @@ function computeATR(candles, period = 14) {
 // ══════════════════════════════════════════════════════════════════
 // ANALYSE SMC
 // ══════════════════════════════════════════════════════════════════
-// ✅ v5.7 — Fix look-ahead : on s'arrête à length - lookback - 1
 function findSwings(candles, lookback = 3) {
     const swings = [];
     const lastConfirmedIdx = candles.length - lookback - 1;
@@ -1459,7 +1429,6 @@ function analyzeTimeframe(candles) {
     return { structure, obs, fvgs, pd, sweeps, hierarchy, atr, direction, strength };
 }
 
-// ✅ v5.7 — TOP-DOWN H4 → H1 → M15 → M5 (sans D1)
 function synthesizeTopDown(results) {
     const H4 = results.H4, H1 = results.H1, M15 = results.M15, M5 = results.M5;
     let h4Bias = 'range', h4Strength = 50;
@@ -1516,46 +1485,13 @@ function synthesizeTopDown(results) {
         }
     };
 }
-function synthesizeSMC(results, mode) {
-    if (mode === 'topdown') return synthesizeTopDown(results);
-    const tfs = Object.keys(results).filter(k => results[k]);
-    if (!tfs.length) return null;
-    let weights = { H4: 0.65, H1: 0.35 };
-    let bullScore = 0, bearScore = 0, totalWeight = 0;
-    for (const tf of tfs) {
-        const w = weights[tf] || 0.33;
-        const r = results[tf];
-        if (r.direction === 'bullish') bullScore += w * (r.strength / 100);
-        else if (r.direction === 'bearish') bearScore += w * (r.strength / 100);
-        totalWeight += w;
-    }
-    const bullNorm = totalWeight > 0 ? bullScore / totalWeight : 0;
-    const bearNorm = totalWeight > 0 ? bearScore / totalWeight : 0;
-    let dominantStructure = 'range', confidence = 0;
-    if (bullNorm > bearNorm * 1.4 && bullNorm > 0.4) { dominantStructure = 'bullish'; confidence = Math.min(95, Math.round(bullNorm * 100)); }
-    else if (bearNorm > bullNorm * 1.4 && bearNorm > 0.4) { dominantStructure = 'bearish'; confidence = Math.min(95, Math.round(bearNorm * 100)); }
-    else confidence = Math.round(Math.max(bullNorm, bearNorm) * 60);
-    const entryTF = tfs[tfs.length - 1];
-    const entryR = results[entryTF];
-    const zone = entryR?.pd?.zone || 'unknown';
-    const orientation = orientSignalByZone(dominantStructure, zone);
-    return {
-        signal: orientation.signal,
-        signalClass: orientation.signal === 'ACHAT' ? 'buy' : orientation.signal === 'VENTE' ? 'sell' : 'wait',
-        confidence, dominantStructure, zone,
-        orientationReason: orientation.reason,
-        zoneValid: orientation.valid
-    };
-}
+function synthesizeSMC(results, mode) { if (mode === 'topdown') return synthesizeTopDown(results); return null; }
 function orientSignalByZone(structure, zone) {
     if (structure === 'bullish' && zone === 'discount') return { signal: 'ACHAT', valid: true, reason: 'Structure haussière + Discount ✓' };
     if (structure === 'bearish' && zone === 'premium') return { signal: 'VENTE', valid: true, reason: 'Structure baissière + Premium ✓' };
-    if (structure === 'bullish' && zone === 'premium') return { signal: 'ATTENDRE', valid: false, reason: 'Attendre retour en Discount' };
-    if (structure === 'bearish' && zone === 'discount') return { signal: 'ATTENDRE', valid: false, reason: 'Attendre retour en Premium' };
     return { signal: 'ATTENDRE', valid: false, reason: 'Indéterminé' };
 }
 
-// ✅ v5.7 — computeSMCLevels avec R/R maximum
 function computeSMCLevels(results, synthesis, currentPrice, entryR) {
     const r = entryR || results.M5 || results.M15;
     const decimals = getDecimals(currentPrice);
@@ -1566,7 +1502,6 @@ function computeSMCLevels(results, synthesis, currentPrice, entryR) {
     const MIN_SL_PIPS = state.symbol.includes('XAU') ? 30 : state.symbol.includes('BTC') ? 200 : 10;
     const MIN_SL_DISTANCE = MIN_SL_PIPS * specs.pipValue;
     const ATR_BUFFER = atr * 0.5;
-    // ✅ v5.7 — R/R maximum (2 pour TP1, 4 pour TP2)
     const MAX_RR_TP1 = 2;
     const MAX_RR_TP2 = 4;
     let entry, sl, tp, tp1, tp2, riskReward;
@@ -1615,17 +1550,13 @@ function computeSMCScore(results, synthesis, levels) {
     const entryR = results.M5 || results.M15 || results.H1;
     const scores = { structure: 0, liquidity: 0, displacement: 0, ob_quality: 0, fvg_quality: 0, zone: 0, mtf_alignment: 0, liquidity_hierarchy: 0 };
     if (synthesis.topDown) {
-        const h4Str = synthesis.topDown.h4Strength || synthesis.topDown.d1Strength || 50;
+        const h4Str = synthesis.topDown.h4Strength || 50;
         scores.structure = Math.round((h4Str + (results.H1?.strength || 50)) / 2);
-        scores.mtf_alignment = (synthesis.topDown.h1Confirms || synthesis.topDown.h4Confirms) ? 90 : 30;
-        const zone = synthesis.topDown.m15Zone || synthesis.topDown.h1Zone;
-        const bias = synthesis.topDown.h4Bias || synthesis.topDown.d1Bias;
+        scores.mtf_alignment = synthesis.topDown.h1Confirms ? 90 : 30;
+        const zone = synthesis.topDown.m15Zone;
+        const bias = synthesis.topDown.h4Bias;
         scores.zone = (zone === 'discount' && bias === 'bullish') ? 90
                     : (zone === 'premium' && bias === 'bearish') ? 90 : 40;
-    } else {
-        scores.structure = Math.min(100, (entryR.strength || 50) + 10);
-        scores.mtf_alignment = 50;
-        scores.zone = 50;
     }
     const sweepCount = entryR.sweeps?.length || 0;
     scores.liquidity = Math.min(100, sweepCount * 25 + 40);
@@ -1664,13 +1595,13 @@ function buildScenarios(results, synthesis, levels) {
         scenarios.push({ type: 'bear', title: '🔴 Scénario principal — Vente', prob: 'Score : ' + synthesis.confidence + '/100', text: 'Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP1 : ' + levels.tp1 + ' · TP2 : ' + levels.tp2 });
         scenarios.push({ type: 'bull', title: '🟢 Invalidation', prob: 'À surveiller', text: 'Si clôture au-dessus de ' + levels.sl + ', biais baissier invalidé.' });
     } else {
-        scenarios.push({ type: 'range', title: '⚪ Attente', prob: synthesis.orientationReason || 'Indéterminé', text: 'Tous les TF ne sont pas alignés. Attendre la confirmation complète H4→H1→M15→M5.' });
+        scenarios.push({ type: 'range', title: '⚪ Attente', prob: synthesis.orientationReason || 'Indéterminé', text: 'Attendre confirmation H4→H1→M15→M5.' });
     }
     return scenarios;
 }
 
 // ══════════════════════════════════════════════════════════════════
-// ✅ BACKTEST v5.7 — Plafonds de capital + R/R max
+// ✅ BACKTEST v5.8 — Entrée marché + priorité SL
 // ══════════════════════════════════════════════════════════════════
 async function runBacktest() {
     if (state.backtestRunning) { toast('Backtest déjà en cours', 'warn'); return; }
@@ -1697,7 +1628,7 @@ async function runBacktest() {
         ]);
         if (m5Data.length < 200) throw new Error('Pas assez de bougies M5 (min 200)');
         if (h4Data.length < 30) throw new Error('Pas assez de bougies H4 (min 30)');
-        log('Backtest v5.7 : H4=' + h4Data.length + ' H1=' + h1Data.length + ' M15=' + m15Data.length + ' M5=' + m5Data.length);
+        log('Backtest v5.8 : H4=' + h4Data.length + ' H1=' + h1Data.length + ' M15=' + m15Data.length + ' M5=' + m5Data.length);
         const specs = getSpecs(symbol);
         const SPREAD_PIPS = specs.spreadPips || 1.2;
         const COMMISSION_PER_LOT = specs.commissionPerLot || 7;
@@ -1705,7 +1636,6 @@ async function runBacktest() {
         const trades = [];
         const MIN_BARS_BEFORE = 200;
         let equity = capitalInit;
-        // ✅ v5.7 — Plafond de capital à 10× le capital initial
         const MAX_EQUITY = capitalInit * 10;
         const equityCurve = [capitalInit];
         const RATIO_M15 = 3, RATIO_H1 = 12, RATIO_H4 = 48;
@@ -1734,11 +1664,21 @@ async function runBacktest() {
             const rrNum = parseFloat(levels.riskReward.replace('1:', ''));
             if (isNaN(rrNum) || rrNum < minRR) continue;
             const dir = synthesis.signal === 'ACHAT' ? 1 : -1;
-            const entryReal = dir > 0 ? levels.entryPrice + (SPREAD_PIPS / 2 + SLIPPAGE_PIPS) * specs.pipValue
-                                       : levels.entryPrice - (SPREAD_PIPS / 2 + SLIPPAGE_PIPS) * specs.pipValue;
-            const slReal = levels.slPrice, tp1Real = levels.tp1Price, tp2Real = levels.tp2Price;
+
+            // ✅ v5.8 — Entrée au prix de MARCHÉ réel
+            const entryReal = dir > 0
+                ? currentPrice + (SPREAD_PIPS / 2 + SLIPPAGE_PIPS) * specs.pipValue
+                : currentPrice - (SPREAD_PIPS / 2 + SLIPPAGE_PIPS) * specs.pipValue;
+
+            // Recalculer SL/TP depuis l'entrée marché en préservant les distances
+            const riskDist = Math.abs(levels.slPrice - levels.entryPrice);
+            const rewardDistTP1 = Math.abs(levels.tp1Price - levels.entryPrice);
+            const rewardDistTP2 = Math.abs(levels.tp2Price - levels.entryPrice);
+            const slReal = dir > 0 ? entryReal - riskDist : entryReal + riskDist;
+            const tp1Real = dir > 0 ? entryReal + rewardDistTP1 : entryReal - rewardDistTP1;
+            const tp2Real = dir > 0 ? entryReal + rewardDistTP2 : entryReal - rewardDistTP2;
+
             let result = null, exitPrice = null, exitIdx = null, halfClosed = false, pnlDollars = 0;
-            // ✅ v5.7 — Risque plafonné à 5%
             const effectiveRiskPct = Math.min(riskPct, 5);
             const riskAmount = equity * (effectiveRiskPct / 100);
             for (let k = i + 1; k < Math.min(i + 200, m5Data.length); k++) {
@@ -1746,12 +1686,14 @@ async function runBacktest() {
                 const hitTP1 = dir > 0 ? c.high >= tp1Real : c.low <= tp1Real;
                 const hitTP2 = dir > 0 ? c.high >= tp2Real : c.low <= tp2Real;
                 const hitSL = dir > 0 ? c.low <= slReal : c.high >= slReal;
+
                 if (hitTP1 && !halfClosed) {
                     const halfRisk = riskAmount * 0.5;
-                    const rewardR1 = Math.abs(tp1Real - entryReal) / Math.abs(entryReal - slReal);
-                    pnlDollars += halfRisk * Math.min(rewardR1, 2);
+                    const rewardR1 = Math.min(Math.abs(tp1Real - entryReal) / Math.abs(entryReal - slReal), 2);
+                    pnlDollars += halfRisk * rewardR1;
                     halfClosed = true;
                 }
+                // ✅ v5.8 — PRIORITÉ SL sur bougies ambiguës
                 if (hitSL) {
                     if (halfClosed) { result = 'be'; exitPrice = entryReal; }
                     else { pnlDollars += -riskAmount; result = 'sl'; exitPrice = slReal; }
@@ -1768,7 +1710,6 @@ async function runBacktest() {
             const sizeResult = computePositionSizeBrokerGrade(equity, effectiveRiskPct, entryReal, slReal, symbol);
             const lots = parseFloat(sizeResult.size) || 0.01;
             pnlDollars -= COMMISSION_PER_LOT * lots * 2;
-            // ✅ v5.7 — Plafond de capital
             equity = Math.min(MAX_EQUITY, equity + pnlDollars);
             equityCurve.push(equity);
             trades.push({
@@ -1778,10 +1719,7 @@ async function runBacktest() {
                 result,
                 pnlDollars: parseFloat(pnlDollars.toFixed(2)),
                 equity: parseFloat(equity.toFixed(2)),
-                smcScore: smcScore.total,
-                rrTarget: rrNum,
-                lots,
-                topdown: synthesis.topDown
+                smcScore: smcScore.total, rrTarget: rrNum, lots
             });
             const progress = ((i - MIN_BARS_BEFORE) / (m5Data.length - MIN_BARS_BEFORE - 30)) * 100;
             $('bt-progress-fill').style.width = progress + '%';
@@ -1792,7 +1730,7 @@ async function runBacktest() {
         window._lastBacktestTrades = trades;
         window._lastBacktestStats = stats;
         renderBacktestResults(stats, trades, equityCurve);
-        toast('Backtest v5.7 terminé : ' + trades.length + ' trades', 'success', 4000);
+        toast('Backtest v5.8 terminé : ' + trades.length + ' trades', 'success', 4000);
     } catch (e) {
         log('Erreur backtest : ' + e.message);
         toast('Erreur backtest : ' + e.message, 'error', 5000);
@@ -1825,14 +1763,22 @@ function computeBacktestStats(trades, capitalInit, finalEquity) {
     for (const t of trades) { if (t.equity > peak) peak = t.equity; const dd = (peak - t.equity) / peak * 100; if (dd > maxDD) maxDD = dd; }
     const grossWin = trades.filter(t => t.pnlDollars > 0).reduce((s, t) => s + t.pnlDollars, 0);
     const grossLoss = Math.abs(trades.filter(t => t.pnlDollars < 0).reduce((s, t) => s + t.pnlDollars, 0));
-    const profitFactor = grossLoss > 0 ? (grossWin / grossLoss) : (grossWin > 0 ? 999 : 0);
+    const profitFactor = grossLoss > 0 ? (grossWin / grossLoss) : (grossWin > 0 ? 99 : 0);
     const returns = trades.map(t => t.pnlDollars / capitalInit);
     const avgReturn = returns.reduce((s, v) => s + v, 0) / returns.length;
     const variance = returns.reduce((s, v) => s + Math.pow(v - avgReturn, 2), 0) / returns.length;
     const stdDev = Math.sqrt(variance);
     const sharpe = stdDev > 0 ? (avgReturn / stdDev) * Math.sqrt(trades.length) : 0;
     const avgScore = trades.reduce((s, t) => s + (t.smcScore || 0), 0) / trades.length;
-    return { total: trades.length, wins, losses, be, winrate, totalR: parseFloat(totalR.toFixed(2)), avgR: parseFloat(avgR.toFixed(2)), pnl: parseFloat(pnl.toFixed(2)), pnlPct: parseFloat(pnlPct.toFixed(2)), maxDD: parseFloat(maxDD.toFixed(2)), profitFactor: parseFloat(profitFactor.toFixed(2)), sharpe: parseFloat(sharpe.toFixed(2)), capitalInit, finalEquity: parseFloat(finalEquity.toFixed(2)), avgScore: parseFloat(avgScore.toFixed(1)) };
+    // ✅ v5.8 — Plafonner PF et Sharpe
+    const cappedPF = Math.min(profitFactor, 99);
+    const cappedSharpe = Math.max(-10, Math.min(10, sharpe));
+    return { total: trades.length, wins, losses, be, winrate,
+        totalR: parseFloat(totalR.toFixed(2)), avgR: parseFloat(avgR.toFixed(2)),
+        pnl: parseFloat(pnl.toFixed(2)), pnlPct: parseFloat(pnlPct.toFixed(2)),
+        maxDD: parseFloat(maxDD.toFixed(2)), profitFactor: parseFloat(cappedPF.toFixed(2)),
+        sharpe: parseFloat(cappedSharpe.toFixed(2)), capitalInit,
+        finalEquity: parseFloat(finalEquity.toFixed(2)), avgScore: parseFloat(avgScore.toFixed(1)) };
 }
 function renderBacktestResults(stats, trades, equityCurve) {
     $('bt-results-section').style.display = 'block';
@@ -1848,6 +1794,7 @@ function renderBacktestResults(stats, trades, equityCurve) {
         '<div class="stat-card"><div class="st-label">P&L %</div><div class="st-value ' + (stats.pnlPct >= 0 ? 'win' : 'loss') + '">' + (stats.pnlPct > 0 ? '+' : '') + stats.pnlPct + '%</div></div>' +
         '<div class="stat-card"><div class="st-label">Max DD</div><div class="st-value loss">-' + stats.maxDD + '%</div></div>' +
         '<div class="stat-card"><div class="st-label">Profit factor</div><div class="st-value ' + (stats.profitFactor >= 1.5 ? 'win' : stats.profitFactor >= 1 ? 'neutral' : 'loss') + '">' + stats.profitFactor + '</div></div>' +
+        '<div class="stat-card"><div class="st-label">Sharpe</div><div class="st-value ' + (stats.sharpe >= 1 ? 'win' : stats.sharpe >= 0 ? 'neutral' : 'loss') + '">' + stats.sharpe + '</div></div>' +
         '<div class="stat-card"><div class="st-label">Score moy.</div><div class="st-value neutral">' + stats.avgScore + '</div></div>';
     drawEquityCurve($('bt-equity-chart'), equityCurve);
     const list = $('bt-trades-list');
@@ -1948,16 +1895,6 @@ function drawCandlesChart(candles, analysis, tfLabel) {
         ctx.fillStyle = color;
         ctx.fillRect(x - bodyWidth / 2, Math.min(openY, closeY), bodyWidth, Math.max(1, Math.abs(closeY - openY)));
     });
-    if (analysis && analysis.sweeps) {
-        for (const sweep of analysis.sweeps) {
-            if (sweep.index < visibleStartIdx) continue;
-            const xPos = xScale(sweep.index - visibleStartIdx), yPos = yScale(sweep.level);
-            ctx.strokeStyle = sweep.tier === 'weekly' ? '#7c3aed' : '#f59e0b'; ctx.lineWidth = 2;
-            ctx.setLineDash([5, 3]);
-            ctx.beginPath(); ctx.moveTo(xPos - candleWidth * 4, yPos); ctx.lineTo(xPos + candleWidth * 6, yPos); ctx.stroke();
-            ctx.setLineDash([]);
-        }
-    }
     if (analysis && analysis.levels) {
         const drawLevel = (price, color, label, dash) => {
             const y = yScale(price);
@@ -2028,7 +1965,7 @@ async function auditBacktest(stats, trades, symbol) {
     const midScoreTrades = trades.filter(t => t.smcScore >= 75 && t.smcScore < 85);
     const lowScoreTrades = trades.filter(t => t.smcScore < 75);
     const summary = {
-        symbol, strategy: 'Top-Down H4→H1→M15→M5',
+        symbol, strategy: 'Top-Down H4→H1→M15→M5 v5.8',
         total_trades: stats.total, wins: stats.wins, losses: stats.losses, be: stats.be,
         winrate: stats.winrate, totalR: stats.totalR, avgR: stats.avgR, pnlPct: stats.pnlPct,
         maxDD: stats.maxDD, profitFactor: stats.profitFactor, sharpe: stats.sharpe,
@@ -2039,9 +1976,11 @@ async function auditBacktest(stats, trades, symbol) {
             low_below75: { count: lowScoreTrades.length, winrate: lowScoreTrades.length ? Math.round(lowScoreTrades.filter(t => t.result === 'tp').length / lowScoreTrades.length * 100) : 0 }
         }
     };
-    const prompt = `Analyse STRATÉGIQUE des résultats d'un backtest SMC Top-Down v5.7 (avec plafond de capital 10× et R/R max 4) sur ${symbol} :
+    const prompt = `Analyse STRATÉGIQUE d'un backtest SMC Top-Down v5.8 sur ${symbol} :
 
 ${JSON.stringify(summary, null, 2)}
+
+Note : ce backtest a été audité pour éviter le look-ahead bias, priorité SL sur bougies ambiguës, entrée au prix de marché réel, plafonds capital 10× et R/R max 4.
 
 Réponds en français, format texte SANS markdown, 7 sections numérotées :
 1. LECTURE GLOBALE (3-4 phrases)
@@ -2085,32 +2024,28 @@ async function runWeeklyAudit() {
             totalConf += a.confidence || 0;
             totalRR += parseFloat((a.levels?.rr || '').replace('1:', '')) || 0;
             if (a.topDown) {
-                if (a.topDown.d1Bias !== 'range' || a.topDown.h4Bias !== 'range') summary.top_down_compliance.h4_defined++;
-                if (a.topDown.h4Confirms || a.topDown.h1Confirms) summary.top_down_compliance.h1_confirms++;
-                if (a.topDown.h1Zone === 'discount' || a.topDown.h1Zone === 'premium' || a.topDown.m15Zone === 'discount' || a.topDown.m15Zone === 'premium') summary.top_down_compliance.m15_zone_ok++;
-                if (a.topDown.m15Confirms || a.topDown.m5Confirms) summary.top_down_compliance.m5_confirms++;
+                if (a.topDown.h4Bias !== 'range') summary.top_down_compliance.h4_defined++;
+                if (a.topDown.h1Confirms) summary.top_down_compliance.h1_confirms++;
+                if (a.topDown.m15Zone === 'discount' || a.topDown.m15Zone === 'premium') summary.top_down_compliance.m15_zone_ok++;
+                if (a.topDown.m5Confirms) summary.top_down_compliance.m5_confirms++;
                 if (a.topDown.m5Triggers) summary.top_down_compliance.m5_triggers++;
             }
-            if (a.outcome === 'tp') summary.outcomes.tp++; else if (a.outcome === 'sl') summary.outcomes.sl++; else if (a.outcome === 'be') summary.outcomes.be++; else summary.outcomes.pending++;
             if (a.smcScore >= 85) summary.best_setups.push({ symbol: a.symbol, signal: a.signal, score: a.smcScore, reason: a.orientationReason });
-            if (a.smcScore < 80 && a.outcome === 'sl') summary.worst_setups.push({ symbol: a.symbol, signal: a.signal, score: a.smcScore, reason: a.orientationReason });
         }
         summary.avg_score = parseFloat((totalScore / thisWeek.length).toFixed(1));
         summary.avg_confidence = parseFloat((totalConf / thisWeek.length).toFixed(1));
         summary.avg_rr = parseFloat((totalRR / thisWeek.length).toFixed(2));
         summary.best_setups = summary.best_setups.slice(0, 5);
-        summary.worst_setups = summary.worst_setups.slice(0, 5);
-        const prompt = `Tu es un analyste trader senior expert en SMC. Voici le résumé de la semaine de trading d'un utilisateur :
+        const prompt = `Tu es un analyste trader senior expert en SMC. Voici le résumé de la semaine :
 
 ${JSON.stringify(summary, null, 2)}
 
 CONTEXTE :
-- Top-Down v5.7 : H4 (biais) → H1 (structure) → M15 (analyse) → M5 (entrée)
+- Top-Down v5.8 : H4 (biais) → H1 (structure) → M15 (analyse) → M5 (entrée)
 - ACHAT en Discount de structure haussière, VENTE en Premium de structure baissière
 - Seuil SMC actuel : ${getScanConfig().minScore}/100
-- 3 instruments : EUR/USD, XAU/USD, BTC/USD
 
-MISSION : AUDIT HEBDOMADAIRE STRATÉGIQUE + RECOMMANDATIONS CONCRÈTES.
+MISSION : AUDIT HEBDOMADAIRE + RECOMMANDATIONS CONCRÈTES.
 
 Réponds en français, format texte SANS markdown, en 7 sections numérotées :
 1. SYNTHÈSE DE LA SEMAINE (3-4 phrases)
@@ -2147,44 +2082,8 @@ function renderWeeklyAudit(auditText, summary) {
                 '<div class="stat-card"><div class="st-label">R/R moy.</div><div class="st-value neutral">' + summary.avg_rr + '</div></div>' +
             '</div>' +
         '</div>' +
-        '<div class="ai-response">' + esc(auditText) + '</div>' +
-        '<button class="btn-secondary" id="extract-recommendations-btn" style="width:100%;margin-top:0.6rem;">📋 Extraire les recommandations à appliquer</button>' +
-        '<div id="recommendations-panel" style="display:none;margin-top:0.6rem;"></div>';
-    setTimeout(() => { $('extract-recommendations-btn')?.addEventListener('click', () => extractRecommendations(auditText)); }, 100);
+        '<div class="ai-response">' + esc(auditText) + '</div>';
 }
-function extractRecommendations(auditText) {
-    const panel = $('recommendations-panel');
-    if (!panel) return;
-    panel.style.display = 'block';
-    panel.innerHTML =
-        '<div style="padding:0.6rem;background:var(--panel-2);border-radius:8px;">' +
-            '<div style="font-weight:700;margin-bottom:0.5rem;">⚙️ Recommandations applicables :</div>' +
-            '<div style="display:grid;gap:0.4rem;">' +
-                '<button class="btn-secondary" onclick="applyRecommendation(\'seuil-85\')">📈 Passer le seuil à 85</button>' +
-                '<button class="btn-secondary" onclick="applyRecommendation(\'seuil-75\')">📉 Baisser le seuil à 75</button>' +
-                '<button class="btn-secondary" onclick="applyRecommendation(\'rr-2.5\')">⚖️ R/R minimum à 1:2.5</button>' +
-                '<button class="btn-secondary btn-success" onclick="showIATextRecommendations()">🧠 Voir les recommandations IA brutes</button>' +
-            '</div>' +
-        '</div>';
-}
-window.applyRecommendation = function(type) {
-    const config = getScanConfig();
-    switch (type) {
-        case 'seuil-85': config.minScore = 85; $('scan-conf').value = 85; $('scan-conf-label').textContent = 85; toast('Seuil passé à 85 ✓', 'success'); break;
-        case 'seuil-75': config.minScore = 75; $('scan-conf').value = 75; $('scan-conf-label').textContent = 75; toast('Seuil passé à 75 ✓', 'success'); break;
-        case 'rr-2.5': config.minRR = 2.5; $('scan-rr').value = 2.5; toast('R/R minimum à 1:2.5 ✓', 'success'); break;
-    }
-    try { localStorage.setItem(STORAGE.scanConfig, JSON.stringify(config)); } catch (e) {}
-    renderThresholdsDisplay();
-};
-window.showIATextRecommendations = function() {
-    const audits = JSON.parse(localStorage.getItem(STORAGE.weeklyAudits) || '[]');
-    if (!audits.length) { toast('Aucun audit disponible', 'warn'); return; }
-    const modal = $('auto-trade-modal'), details = $('auto-trade-details');
-    if (!modal || !details) return;
-    details.innerHTML = '<div style="font-size:0.78rem;line-height:1.6;white-space:pre-wrap;max-height:60vh;overflow-y:auto;">' + esc(audits[0].audit) + '</div>';
-    modal.classList.add('visible');
-};
 function renderWeeklyAuditsHistory() {
     const el = $('weekly-audits-history');
     if (!el) return;
@@ -2194,7 +2093,7 @@ function renderWeeklyAuditsHistory() {
         '<div style="padding:0.5rem;background:var(--panel-2);border-radius:6px;margin-bottom:0.4rem;border-left:3px solid var(--info);">' +
             '<div style="font-weight:700;font-size:0.8rem;">' + esc(a.period) + '</div>' +
             '<div style="font-size:0.7rem;color:var(--ink-dim);">' + a.totalAnalyses + ' analyses · Score moy. ' + a.avgScore + '</div>' +
-            '<button class="btn-secondary" style="margin-top:0.3rem;font-size:0.65rem;" onclick="showSpecificAudit(' + i + ')">📄 Voir l\'audit</button>' +
+            '<button class="btn-secondary" style="margin-top:0.3rem;font-size:0.65rem;" onclick="showSpecificAudit(' + i + ')">📄 Voir</button>' +
         '</div>').join('');
 }
 window.showSpecificAudit = function(idx) {
@@ -2208,7 +2107,7 @@ window.showSpecificAudit = function(idx) {
 };
 
 // ══════════════════════════════════════════════════════════════════
-// TELEGRAM AUTOMATIQUE + SAUVEGARDE + AUDIT IA
+// TELEGRAM
 // ══════════════════════════════════════════════════════════════════
 async function autoSendToTelegram(synthesis, levels, results, symbol) {
     if (synthesis.signal === 'ATTENDRE') return;
@@ -2223,34 +2122,26 @@ async function autoSendToTelegram(synthesis, levels, results, symbol) {
     if (lastTelegramSent[key] && (now - lastTelegramSent[key]) < ANTI_SPAM_MS) return;
     const status = getScoreStatus(smcScore.total);
     const emoji = synthesis.signal === 'ACHAT' ? '🟢' : '🔴';
-    const priorityEmoji = smcScore.total >= 85 ? '🔥🔥🔥' : smcScore.total >= 75 ? '🔥🔥' : '🔥';
-    let text = '🚨 *SIGNAL SMC v5.7* 🚨\n\n';
+    let text = '🚨 *SIGNAL SMC v5.8* 🚨\n\n';
     text += '📊 *' + symbol + '*\n';
     text += emoji + ' Signal : *' + synthesis.signal + '*\n';
-    text += '🎯 SMC Score : *' + smcScore.total + '/100* ' + status.label + ' ' + priorityEmoji + '\n';
+    text += '🎯 SMC Score : *' + smcScore.total + '/100* ' + status.label + '\n';
     text += '🧭 ' + (synthesis.orientationReason || '') + '\n\n';
-    text += '━━━━━━━━━━━━━━\n';
-    text += '🎯 *CASCADE TOP-DOWN H4→M5*\n';
     if (synthesis.topDown) {
         const td = synthesis.topDown;
-        text += '🧭 H4 : ' + (td.h4Bias === 'bullish' ? '📈' : td.h4Bias === 'bearish' ? '📉' : '↔️') + ' ' + td.h4Bias + '\n';
-        text += '🏛️ H1 : ' + (td.h1Confirms ? '✅' : '❌') + ' ' + td.h1Direction + '\n';
-        text += '🔍 M15 : ' + (td.m15Zone === 'discount' ? '💎 Discount' : '🔺 Premium') + '\n';
-        text += '🎯 M5 : ' + (td.m5Triggers ? '✅ Trigger' : '❌ Pas de trigger') + (td.m5HasMSS ? ' MSS' : '') + (td.m5HasSweep ? ' Sweep' : '') + '\n';
+        text += '🧭 H4 : ' + td.h4Bias + ' | 🏛️ H1 : ' + (td.h1Confirms ? '✅' : '❌') + ' | 🔍 M15 : ' + td.m15Zone + ' | 🎯 M5 : ' + (td.m5Triggers ? '✅' : '❌') + '\n\n';
     }
-    text += '━━━━━━━━━━━━━━\n\n';
     text += '📥 Entrée : `' + levels.entry + '`\n';
     text += '🛑 SL : `' + levels.sl + '`\n';
     text += '🎯 TP1 : `' + levels.tp1 + '`\n';
     text += '🎯 TP2 : `' + levels.tp2 + '`\n';
-    text += '⚖️ R/R : *' + levels.riskReward + '*\n\n';
-    text += '🕐 ' + new Date().toLocaleString('fr-FR');
+    text += '⚖️ R/R : *' + levels.riskReward + '*' + '\n\n🕐 ' + new Date().toLocaleString('fr-FR');
     const sent = await sendToAllTelegram(text);
     if (sent > 0) {
         lastTelegramSent[key] = now;
         try { localStorage.setItem(STORAGE.lastTgSent, JSON.stringify(lastTelegramSent)); } catch (e) {}
         sendNotification('🚨 Signal ' + synthesis.signal, symbol + ' — Score ' + smcScore.total + '/100');
-        addScanLog('✅ Telegram envoyé : ' + synthesis.signal + ' ' + symbol + ' (score ' + smcScore.total + ', ' + sent + ' compte(s))', 'success');
+        addScanLog('✅ Telegram envoyé : ' + synthesis.signal + ' ' + symbol + ' (score ' + smcScore.total + ')', 'success');
         renderAutoSendStats();
         proposeAutoTrade(synthesis, levels, results, symbol);
     }
@@ -2295,10 +2186,8 @@ function renderAutoSendStats() {
             const parts = k.split('_'), symbol = parts[0], direction = parts[1];
             const elapsed = Math.round((Date.now() - sent[k]) / 60000);
             const remaining = Math.max(0, 30 - elapsed);
-            return '<div style="padding:0.3rem;background:var(--panel-2);border-radius:4px;margin-bottom:0.2rem;">' +
-                '📤 <strong>' + symbol + '</strong> ' + direction + ' · ' + elapsed + ' min' +
-                (remaining > 0 ? ' · <span style="color:var(--warn);">bloqué ' + remaining + ' min</span>' : ' · <span style="color:var(--success);">prêt</span>') +
-            '</div>';
+            return '<div style="padding:0.3rem;background:var(--panel-2);border-radius:4px;margin-bottom:0.2rem;">📤 <strong>' + symbol + '</strong> ' + direction + ' · ' + elapsed + ' min' +
+                (remaining > 0 ? ' · <span style="color:var(--warn);">bloqué ' + remaining + ' min</span>' : ' · <span style="color:var(--success);">prêt</span>') + '</div>';
         }).join('');
 }
 function proposeAutoTrade(synthesis, levels, results, symbol) {
@@ -2312,12 +2201,9 @@ function proposeAutoTrade(synthesis, levels, results, symbol) {
     const risk = parseFloat(localStorage.getItem('smc_risk') || '1');
     const sizeResult = computePositionSizeBrokerGrade(capital, risk, levels.entryPrice, levels.slPrice, symbol);
     details.innerHTML =
-        '<div class="m-signal ' + (direction === 'buy' ? 'buy' : 'sell') + '">' +
-            (direction === 'buy' ? '🟢 ACHAT' : '🔴 VENTE') + ' — ' + esc(symbol) +
-        '</div>' +
+        '<div class="m-signal ' + (direction === 'buy' ? 'buy' : 'sell') + '">' + (direction === 'buy' ? '🟢 ACHAT' : '🔴 VENTE') + ' — ' + esc(symbol) + '</div>' +
         '<div class="m-row"><span class="m-label">SMC Score</span><span class="m-value">' + smcScore.total + '/100 ' + status.label + '</span></div>' +
         '<div class="m-row"><span class="m-label">🧭 Raison</span><span class="m-value" style="font-size:0.72rem;">' + esc(synthesis.orientationReason || '') + '</span></div>' +
-        (synthesis.topDown ? '<div class="m-row"><span class="m-label">🧭 H4</span><span class="m-value">' + synthesis.topDown.h4Bias + '</span></div>' : '') +
         '<div class="m-row"><span class="m-label">📥 Entrée</span><span class="m-value entry">' + levels.entry + '</span></div>' +
         '<div class="m-row"><span class="m-label">🛑 Stop Loss</span><span class="m-value sl">' + levels.sl + '</span></div>' +
         '<div class="m-row"><span class="m-label">🎯 TP1</span><span class="m-value tp">' + levels.tp1 + '</span></div>' +
@@ -2369,8 +2255,7 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
     const entryR = results.M5 || results.M15 || results.H1;
     const tfRoles = { H4: { icon: '🧭', label: 'Biais' }, H1: { icon: '🏛️', label: 'Structure' }, M15: { icon: '🔍', label: 'Analyse' }, M5: { icon: '🎯', label: 'Entrée' } };
     $('tf-grid').innerHTML = Object.keys(tfRoles).map(tf => {
-        const r = results[tf];
-        const role = tfRoles[tf];
+        const r = results[tf], role = tfRoles[tf];
         if (!r) return '<div class="tf-card range" style="opacity:0.4;"><div class="tf-name">' + role.icon + ' ' + tf + '</div><div class="tf-direction">—</div><div class="tf-detail">N/A</div></div>';
         const cls = r.direction === 'bullish' ? 'bull' : r.direction === 'bearish' ? 'bear' : 'range';
         const label = r.direction === 'bullish' ? '📈 Bull' : r.direction === 'bearish' ? '📉 Bear' : '↔️ Range';
@@ -2396,7 +2281,7 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
     $('level-tp1').textContent = levels.tp1;
     $('level-tp2').textContent = levels.tp2;
     $('level-rr').textContent = levels.riskReward;
-    $('smc-structure').innerHTML = '<p><strong>TF entrée :</strong> M5 · ATR : ' + (entryR.atr ? formatPrice(entryR.atr) : '—') + '</p><p><strong>Structure M5 :</strong> ' + entryR.structure.trend + ' · <strong>externe :</strong> ' + entryR.structure.externalTrend + '</p><p><strong>Biais H4 :</strong> ' + (synthesis.dominantStructure || 'range') + '</p>';
+    $('smc-structure').innerHTML = '<p><strong>TF entrée :</strong> M5 · ATR : ' + (entryR.atr ? formatPrice(entryR.atr) : '—') + '</p><p><strong>Structure M5 :</strong> ' + entryR.structure.trend + '</p><p><strong>Biais H4 :</strong> ' + (synthesis.dominantStructure || 'range') + '</p>';
     const h = entryR.hierarchy || {};
     $('liquidity-container').innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.3rem;font-size:0.75rem;">' +
         '<div><strong>PDH :</strong> ' + (h.pdh ? formatPrice(h.pdh) : '—') + '</div>' +
@@ -2693,7 +2578,7 @@ async function runScan() {
     if (!instruments.length) { addScanLog('Aucun instrument', 'warn'); return; }
     const accounts = loadTelegramAccounts().filter(a => a.enabled);
     if (!accounts.length) { addScanLog('Aucun compte Telegram actif', 'warn'); return; }
-    addScanLog('🔍 Scan Top-Down v5.7 · ' + instruments.length + ' instruments · seuil ' + config.minScore, 'info');
+    addScanLog('🔍 Scan Top-Down v5.8 · ' + instruments.length + ' instruments · seuil ' + config.minScore, 'info');
     let signalsFound = 0;
     for (const inst of instruments) {
         if (!state.scanning) { addScanLog('⏸ Interrompu', 'warn'); return; }
@@ -2703,7 +2588,7 @@ async function runScan() {
             if (!analysis.ok) { addScanLog('❌ ' + inst + ' : ' + analysis.error, 'error'); continue; }
             if (!analysis.valid) { addScanLog('⏭ ' + inst + ' : ' + analysis.reason, 'info'); continue; }
             const emoji = analysis.synthesis.signal === 'ACHAT' ? '🟢' : '🔴';
-            let text = '🚨 *SIGNAL TOP-DOWN v5.7* 🚨\n\n📊 *' + inst + '*\n' + emoji + ' *' + analysis.synthesis.signal + '*\n🎯 Score : *' + analysis.smcScore.total + '/100*\n🧭 ' + (analysis.synthesis.orientationReason || '') + '\n\n';
+            let text = '🚨 *SIGNAL TOP-DOWN v5.8* 🚨\n\n📊 *' + inst + '*\n' + emoji + ' *' + analysis.synthesis.signal + '*\n🎯 Score : *' + analysis.smcScore.total + '/100*\n\n';
             text += '📥 `' + analysis.levels.entry + '`\n🛑 `' + analysis.levels.sl + '`\n🎯 `' + analysis.levels.tp1 + '` / `' + analysis.levels.tp2 + '`\n⚖️ ' + analysis.levels.riskReward;
             const sent = await sendToAllTelegram(text);
             if (sent > 0) {
@@ -2779,7 +2664,7 @@ async function runAnalysis() {
         const scenarios = buildScenarios(results, synthesis, levels);
         renderReport(results, synthesis, levels, scenarios, currentPrice, state.symbol);
         setStatus(null);
-        toast('Analyse Top-Down v5.7 complète ✓', 'success');
+        toast('Analyse Top-Down v5.8 complète ✓', 'success');
     } catch (e) {
         log('Erreur : ' + e.message);
         setStatus(null);
@@ -2852,18 +2737,14 @@ function initSettings() {
     $('add-telegram-btn')?.addEventListener('click', () => {
         const accounts = loadTelegramAccounts();
         if (accounts.length >= 5) { toast('Max 5 comptes', 'warn'); return; }
-        const name = prompt('Nom du compte');
-        if (!name) return;
-        const token = prompt('Bot Token');
-        if (!token) return;
-        const chatId = prompt('Chat ID');
-        if (!chatId) return;
+        const name = prompt('Nom du compte'); if (!name) return;
+        const token = prompt('Bot Token'); if (!token) return;
+        const chatId = prompt('Chat ID'); if (!chatId) return;
         accounts.push({ name, token, chatId, enabled: true });
-        saveTelegramAccounts(accounts);
-        renderTelegramAccounts();
+        saveTelegramAccounts(accounts); renderTelegramAccounts();
     });
     $('test-all-telegram-btn')?.addEventListener('click', async () => {
-        const sent = await sendToAllTelegram('🧠 *SMC Top-Down v5.7* — Test');
+        const sent = await sendToAllTelegram('🧠 *SMC Top-Down v5.8* — Test');
         toast(sent > 0 ? 'Envoyé à ' + sent : 'Aucun actif', sent > 0 ? 'success' : 'warn');
     });
     $('enable-push-btn')?.addEventListener('click', async () => {
@@ -2941,7 +2822,7 @@ function initScanner() {
         const input = $('new-instrument-input');
         const inst = input.value.trim().toUpperCase();
         if (!inst) return;
-        if (!ALLOWED_INSTRUMENTS.includes(inst)) { toast('Instrument non autorisé. Utilise : EUR/USD, XAU/USD ou BTC/USD', 'error', 3500); return; }
+        if (!ALLOWED_INSTRUMENTS.includes(inst)) { toast('Instrument non autorisé', 'error', 3500); return; }
         const list = loadScanInstruments();
         if (list.includes(inst)) { toast('Déjà présent', 'warn'); return; }
         if (list.length >= 3) { toast('Maximum 3 instruments', 'warn', 3500); return; }
@@ -2986,27 +2867,16 @@ function initBacktest() {
 }
 async function init() {
     await registerServiceWorker();
-    initTheme();
-    initTabs();
-    initSections();
-    initSymbols();
-    initSettings();
-    initTradeForm();
-    initScanner();
-    initModal();
-    initBacktest();
-    renderTrades();
-    renderStats();
-    renderTelegramAccounts();
-    renderAnalysisBoxStats();
-    renderAnalysisBoxList();
-    renderWeeklyAuditsHistory();
+    initTheme(); initTabs(); initSections(); initSymbols(); initSettings();
+    initTradeForm(); initScanner(); initModal(); initBacktest();
+    renderTrades(); renderStats(); renderTelegramAccounts();
+    renderAnalysisBoxStats(); renderAnalysisBoxList(); renderWeeklyAuditsHistory();
     $('theme-toggle').addEventListener('click', toggleTheme);
     $('analyze-btn').addEventListener('click', runAnalysis);
     $('send-telegram-btn')?.addEventListener('click', () => {
         if (!state.lastAnalysis) { toast('Aucune analyse', 'warn'); return; }
         const a = state.lastAnalysis;
-        sendToAllTelegram('🧠 *SMC v5.7* — ' + a.symbol + '\n\nSignal : *' + a.signal + '* (Score ' + a.smcScore + '/100)\nEntrée : ' + a.levels.entry + '\nSL : ' + a.levels.sl + '\nTP1 : ' + a.levels.tp1 + '\nTP2 : ' + a.levels.tp2);
+        sendToAllTelegram('🧠 *SMC v5.8* — ' + a.symbol + '\n\nSignal : *' + a.signal + '* (Score ' + a.smcScore + '/100)\nEntrée : ' + a.levels.entry + '\nSL : ' + a.levels.sl + '\nTP1 : ' + a.levels.tp1 + '\nTP2 : ' + a.levels.tp2);
     });
     await connectTwelveData();
     subscribeTicks(state.symbol);
@@ -3019,7 +2889,7 @@ async function init() {
             notifyButton: { enable: true, position: 'bottom-right', size: 'medium', theme: 'default' }
         });
     });
-    log('SMC Trader Pro v5.7 prêt — Top-Down H4→M5 avec plafonds');
+    log('SMC Trader Pro v5.8 prêt');
 }
 init();
 </script>
