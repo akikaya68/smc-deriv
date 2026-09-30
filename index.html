@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SMC Trader Pro v5.4 — Top-Down</title>
+<title>SMC Trader Pro v5.5</title>
 <meta name="theme-color" content="#16a34a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -47,7 +47,6 @@
     .conn-status.connecting .dot { background: var(--warn); animation: pulse-dot 1s infinite; }
     .conn-status.error .dot { background: var(--error); }
     @keyframes pulse-dot { 50% { opacity: 0.4; } }
-
     .toast {
         position: fixed; top: 1rem; left: 50%;
         transform: translateX(-50%) translateY(-100px);
@@ -62,7 +61,6 @@
     .toast.success { background: var(--success); color: #fff; }
     .toast.error { background: var(--error); color: #fff; }
     .toast.warn { background: var(--warn); color: #fff; }
-
     .tabs {
         display: flex; gap: 0.2rem; margin-bottom: 1rem;
         background: var(--panel); border-radius: 10px; padding: 0.25rem;
@@ -76,7 +74,6 @@
     .tab.active { background: var(--ink); color: var(--bg); }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
-
     .section {
         background: var(--panel); border: 1px solid var(--border);
         border-radius: var(--radius); margin-bottom: 0.7rem;
@@ -95,7 +92,6 @@
     .section-body { max-height: 0; overflow: hidden; transition: max-height 0.35s; }
     .section.open .section-body { max-height: 8000px; }
     .section-content { padding: 0 0.9rem 0.9rem; }
-
     label { display: block; font-size: 0.68rem; color: var(--ink-dim); margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
     select, input { width: 100%; padding: 0.65rem 0.8rem; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2); color: var(--ink); font-family: inherit; font-size: 0.85rem; -webkit-appearance: none; }
     select:focus, input:focus { outline: none; border-color: var(--ink); }
@@ -103,13 +99,11 @@
     .control-row { margin-bottom: 0.7rem; }
     .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
     .control-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem; }
-
     .btn-primary { width: 100%; padding: 0.95rem; border-radius: var(--radius); border: none; background: var(--ink); color: var(--bg); font-size: 0.92rem; font-weight: 700; font-family: inherit; cursor: pointer; margin-bottom: 0.8rem; }
     .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
     .btn-secondary { padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2); color: var(--ink); font-size: 0.76rem; font-weight: 600; font-family: inherit; cursor: pointer; margin-right: 0.3rem; margin-bottom: 0.3rem; }
     .btn-danger { background: var(--error); color: #fff; border-color: var(--error); }
     .btn-success { background: var(--success); color: #fff; border-color: var(--success); }
-
     .signal-banner { padding: 1rem; border-radius: 10px; text-align: center; margin-bottom: 0.9rem; font-weight: 700; }
     .signal-banner.buy { background: #dcfce7; color: #15803d; border: 2px solid #86efac; }
     .signal-banner.sell { background: #fee2e2; color: #b91c1c; border: 2px solid #fca5a5; }
@@ -123,7 +117,6 @@
     .signal-banner .signal-conf { font-size: 0.78rem; font-weight: 500; opacity: 0.85; margin-top: 0.3rem; }
     .confidence-bar { height: 6px; background: rgba(0,0,0,0.08); border-radius: 3px; overflow: hidden; margin-top: 0.5rem; }
     .confidence-fill { height: 100%; background: var(--success); transition: width 0.6s; }
-
     .tf-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.3rem; margin-bottom: 0.8rem; }
     .tf-card { padding: 0.5rem 0.3rem; border-radius: 8px; background: var(--panel-2); text-align: center; border: 2px solid transparent; }
     .tf-card.bull { border-color: var(--bull); }
@@ -135,7 +128,6 @@
     .tf-card.bear .tf-direction { color: var(--bear); }
     .tf-card.range .tf-direction { color: var(--neutral); }
     .tf-card .tf-detail { font-size: 0.58rem; color: var(--ink-dim); }
-
     .levels-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-bottom: 0.6rem; }
     .level-card { padding: 0.65rem 0.4rem; border-radius: 8px; text-align: center; border: 1px solid var(--border); background: var(--panel-2); }
     .level-card .lv-label { font-size: 0.62rem; text-transform: uppercase; color: var(--ink-dim); font-weight: 700; margin-bottom: 0.2rem; }
@@ -143,11 +135,9 @@
     .level-card.entry .lv-value { color: var(--info); }
     .level-card.sl .lv-value { color: var(--error); }
     .level-card.tp .lv-value { color: var(--success); }
-
     .report-block { margin-bottom: 0.8rem; padding: 0.75rem; background: var(--panel-2); border-radius: 8px; font-size: 0.82rem; line-height: 1.55; }
     .report-block h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); margin-bottom: 0.45rem; font-weight: 700; }
     .report-block p { margin-bottom: 0.35rem; }
-
     .smc-tag { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.68rem; font-weight: 700; margin-right: 0.3rem; margin-bottom: 0.25rem; }
     .smc-tag.bull { background: #dcfce7; color: #15803d; }
     .smc-tag.bear { background: #fee2e2; color: #b91c1c; }
@@ -159,7 +149,6 @@
     body.dark .smc-tag.neutral { background: #1f2937; color: #9ca3af; }
     body.dark .smc-tag.info { background: #1e3a8a; color: #93c5fd; }
     body.dark .smc-tag.warn { background: #451a03; color: #fde68a; }
-
     .scenario { padding: 0.6rem 0.75rem; border-radius: 8px; margin-bottom: 0.35rem; font-size: 0.8rem; border-left: 3px solid; }
     .scenario.bull { background: #f0fdf4; border-color: var(--bull); }
     .scenario.bear { background: #fef2f2; border-color: var(--bear); }
@@ -167,7 +156,6 @@
     body.dark .scenario.bull { background: #052e1633; }
     body.dark .scenario.bear { background: #450a0a33; }
     body.dark .scenario.range { background: var(--panel); }
-
     .status-bar {
         position: fixed; bottom: 0; left: 0; right: 0;
         background: var(--ink); color: var(--bg); padding: 0.6rem 1rem;
@@ -177,9 +165,7 @@
     .status-bar.visible { transform: translateY(0); }
     .spinner { width: 12px; height: 12px; border: 2px solid rgba(128,128,128,0.3); border-top-color: currentColor; border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
     .empty-state { text-align: center; padding: 1.8rem 1rem; color: var(--ink-faint); font-size: 0.8rem; }
-
     .trade-item {
         padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border);
         margin-bottom: 0.5rem; background: var(--panel-2); position: relative;
@@ -205,7 +191,6 @@
     .trade-item .t-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.68rem; color: var(--ink-faint); }
     .trade-item .t-actions { display: flex; gap: 0.3rem; margin-top: 0.5rem; flex-wrap: wrap; }
     .trade-item .t-pnl { font-size: 0.78rem; font-weight: 700; }
-
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 0.4rem; margin-bottom: 0.8rem; }
     .stat-card { padding: 0.6rem 0.5rem; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--border); text-align: center; }
     .stat-card .st-label { font-size: 0.6rem; text-transform: uppercase; color: var(--ink-dim); font-weight: 700; margin-bottom: 0.2rem; }
@@ -213,17 +198,14 @@
     .stat-card .st-value.win { color: var(--success); }
     .stat-card .st-value.loss { color: var(--error); }
     .stat-card .st-value.neutral { color: var(--ink); }
-
     .price-ticker { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 0.8rem; background: var(--panel-2); border-radius: 8px; margin-bottom: 0.7rem; font-family: ui-monospace, monospace; font-size: 0.85rem; }
     .price-ticker .pt-label { color: var(--ink-dim); font-size: 0.72rem; font-family: -apple-system, sans-serif; }
     .price-ticker .pt-value { font-weight: 700; }
     .price-ticker .pt-change { font-size: 0.75rem; }
     .price-ticker .pt-change.up { color: var(--success); }
     .price-ticker .pt-change.down { color: var(--error); }
-
     .chart-container { background: var(--panel-2); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; height: 220px; position: relative; }
     .chart-container canvas { width: 100%; height: 100%; }
-
     .candles-container {
         background: var(--panel-2); border-radius: 10px;
         padding: 0.5rem; margin-bottom: 0.7rem;
@@ -236,7 +218,6 @@
     }
     .chart-legend .legend-item { display: flex; align-items: center; gap: 0.25rem; }
     .chart-legend .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
-
     .tg-account {
         padding: 0.7rem; border-radius: 8px;
         border: 1px solid var(--border); background: var(--panel-2);
@@ -257,7 +238,6 @@
         background: transparent; border: none; color: var(--error);
         cursor: pointer; font-size: 1rem; padding: 0 0.3rem;
     }
-
     .scan-instrument {
         display: flex; justify-content: space-between; align-items: center;
         padding: 0.5rem 0.7rem; border-radius: 6px;
@@ -274,7 +254,6 @@
     }
     .add-instrument-row input { flex: 1; }
     .add-instrument-row button { padding: 0.5rem 0.8rem; }
-
     .modal-overlay {
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
         background: rgba(0, 0, 0, 0.7); z-index: 2000;
@@ -322,9 +301,7 @@
         display: flex; gap: 0.5rem; justify-content: flex-end;
     }
     .modal-actions button { margin: 0; }
-
     .disclaimer { font-size: 0.68rem; color: var(--ink-dim); text-align: center; padding: 0.7rem; border-top: 1px solid var(--border); margin-top: 0.8rem; }
-
     .smc-score-container {
         margin-top: 0.6rem; padding: 0.7rem;
         background: rgba(255,255,255,0.4); border-radius: 8px;
@@ -343,7 +320,6 @@
         text-align: center; margin-top: 0.4rem;
         font-style: italic; font-family: -apple-system, sans-serif;
     }
-
     .bt-progress {
         height: 8px; background: var(--panel-2); border-radius: 4px;
         overflow: hidden; margin: 0.6rem 0;
@@ -366,7 +342,6 @@
     .bt-trade-row.loss { background: #fef2f288; }
     body.dark .bt-trade-row.win { background: #052e1644; }
     body.dark .bt-trade-row.loss { background: #450a0a44; }
-
     .ai-response {
         font-size: 0.78rem; line-height: 1.6;
         white-space: pre-wrap;
@@ -380,7 +355,7 @@
 <header>
     <button class="theme-toggle" id="theme-toggle">🌙</button>
     <h1>🧠 SMC Trader Pro</h1>
-    <p class="subtitle">SMC Top-Down v5.4 · D1→H4→H1→M15→M5 · EUR/USD · XAU/USD · BTC/USD</p>
+    <p class="subtitle">v5.5 · Top-Down D1→M5 · Boîte + Audit IA hebdo · EUR/USD · XAU/USD · BTC/USD</p>
     <div class="conn-status" id="conn-status">
         <span class="dot"></span>
         <span id="conn-text">Prêt</span>
@@ -392,6 +367,7 @@
     <div class="tab" data-tab="journal">📓 Journal</div>
     <div class="tab" data-tab="stats">📊 Stats</div>
     <div class="tab" data-tab="backtest">🧪 Backtest</div>
+    <div class="tab" data-tab="box">📦 Boîte</div>
     <div class="tab" data-tab="scanner">🤖 Scanner</div>
     <div class="tab" data-tab="settings">⚙️ Réglages</div>
 </div>
@@ -430,14 +406,11 @@
             <div class="signal-conf" id="signal-conf">—</div>
             <div class="confidence-bar"><div class="confidence-fill" id="confidence-fill" style="width:0%"></div></div>
         </div>
-
         <div class="tf-grid" id="tf-grid"></div>
-
         <div class="report-block" id="topdown-container">
             <h3>🎯 Cascade Top-Down D1 → M5</h3>
             <div id="topdown-cascade"></div>
         </div>
-
         <div class="report-block">
             <h3>📈 Graphique SMC (M5 entrée)</h3>
             <div class="chart-legend">
@@ -455,7 +428,6 @@
                 Timeframe : <strong id="chart-tf">M5</strong>
             </div>
         </div>
-
         <div class="report-block">
             <h3>🎯 Niveaux clés</h3>
             <div class="levels-grid">
@@ -479,7 +451,7 @@
         <div style="margin-top:0.5rem;">
             <button class="btn-secondary" id="send-telegram-btn">📤 Envoyer manuellement</button>
             <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.4rem;line-height:1.5;">
-                ⓘ <strong>Envoi automatique activé</strong> : chaque signal validé (score ≥ <span id="auto-threshold-display">80</span>/100) est envoyé automatiquement sur Telegram.
+                ⓘ <strong>Envoi automatique + sauvegarde + audit IA</strong> activés pour chaque signal validé (score ≥ <span id="auto-threshold-display">80</span>/100).
             </div>
         </div>
     </div>
@@ -635,8 +607,7 @@
                     <input type="range" id="bt-score-min" min="60" max="95" step="5" value="80" style="width:100%;">
                 </div>
                 <div style="font-size:0.72rem;color:var(--info);padding:0.5rem;background:var(--panel-2);border-radius:6px;margin-bottom:0.7rem;line-height:1.5;">
-                    🎯 <strong>Logique Top-Down active</strong> : D1 (biais) → H4 (structure) → H1 (analyse) → M15 (confirmation) → M5 (entrée)<br>
-                    ⓘ Backtest non-repaint avec spread, slippage, commission, TP1/TP2.
+                    🎯 <strong>Logique Top-Down active</strong> : D1 → H4 → H1 → M15 → M5
                 </div>
                 <button class="btn-primary" id="bt-run-btn">▶️ Lancer le backtest Top-Down</button>
                 <div class="bt-progress" id="bt-progress" style="display:none;">
@@ -670,6 +641,62 @@
     </div>
 </div>
 
+<!-- 📦 BOÎTE D'ANALYSES -->
+<div class="tab-panel" id="panel-box">
+    <div class="section open">
+        <div class="section-header" data-toggle="sec-box-stats">
+            <span class="section-title">📦 Boîte d'analyses (mémoire persistante)</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="sec-box-stats">
+            <div class="section-content">
+                <div id="analysis-box-stats"></div>
+                <button class="btn-secondary" id="clear-box-btn" style="margin-top:0.5rem;">🗑️ Vider la boîte</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="section open">
+        <div class="section-header" data-toggle="sec-weekly-audit">
+            <span class="section-title">🧠 Audit hebdomadaire IA</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="sec-weekly-audit">
+            <div class="section-content">
+                <div style="font-size:0.75rem;color:var(--ink-dim);line-height:1.5;margin-bottom:0.6rem;">
+                    ⓘ Lance un audit IA sur les analyses des 7 derniers jours. L'IA analyse les performances, identifie les forces/faiblesses et propose des ajustements concrets.
+                </div>
+                <button class="btn-primary" id="weekly-audit-btn">🧠 Lancer l'audit hebdomadaire IA</button>
+                <div id="weekly-audit-result" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section open">
+        <div class="section-header" data-toggle="sec-weekly-history">
+            <span class="section-title">📚 Historique des audits hebdo</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="sec-weekly-history">
+            <div class="section-content">
+                <div id="weekly-audits-history"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section open">
+        <div class="section-header" data-toggle="sec-box-list">
+            <span class="section-title">📋 Analyses sauvegardées</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="section-body" id="sec-box-list">
+            <div class="section-content">
+                <div id="analysis-box-list" style="max-height:500px;overflow-y:auto;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- SCANNER -->
 <div class="tab-panel" id="panel-scanner">
     <div class="section open">
@@ -685,7 +712,7 @@
                     <button class="btn-secondary btn-success" id="add-instrument-btn">➕</button>
                 </div>
                 <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;">
-                    ⓘ Uniquement 3 instruments disponibles : <strong>EUR/USD</strong>, <strong>XAU/USD</strong>, <strong>BTC/USD</strong>
+                    ⓘ Uniquement 3 instruments : <strong>EUR/USD</strong>, <strong>XAU/USD</strong>, <strong>BTC/USD</strong>
                 </div>
             </div>
         </div>
@@ -708,11 +735,6 @@
                 <div class="control-row">
                     <label>Score SMC minimum : <span id="scan-conf-label" style="color:var(--info);font-weight:700;">80</span>/100</label>
                     <input type="range" id="scan-conf" min="60" max="95" step="5" value="80" style="width:100%;">
-                    <div style="display:flex;justify-content:space-between;font-size:0.62rem;color:var(--ink-dim);margin-top:0.2rem;">
-                        <span>60 (permissif)</span>
-                        <span>80 (défaut)</span>
-                        <span>95 (strict)</span>
-                    </div>
                 </div>
                 <div class="control-row">
                     <label>R/R minimum</label>
@@ -774,13 +796,9 @@
             <div class="section-content">
                 <div class="control-row"><label>Clé API</label><input type="password" id="twelvedata-key" placeholder="Colle ta clé"></div>
                 <button class="btn-secondary" id="save-twelvedata">Enregistrer</button>
-                <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;line-height:1.5;">
-                    ⓘ Cache API activé : les bougies sont mises en cache 5 min.
-                </div>
             </div>
         </div>
     </div>
-
     <div class="section open">
         <div class="section-header" data-toggle="sec-deepseek">
             <span class="section-title">🤖 Audit IA DeepSeek</span>
@@ -795,12 +813,11 @@
                 <button class="btn-secondary" id="save-deepseek">Enregistrer</button>
                 <button class="btn-secondary" id="test-deepseek">🧪 Tester</button>
                 <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;line-height:1.5;">
-                    Modèle : <strong>deepseek-reasoner</strong> · Analyse profonde Top-Down
+                    Modèle : <strong>deepseek-reasoner</strong> · Audit analyse + audit hebdo
                 </div>
             </div>
         </div>
     </div>
-
     <div class="section open">
         <div class="section-header" data-toggle="sec-multitelegram">
             <span class="section-title">📤 Multi-Telegram</span>
@@ -816,7 +833,6 @@
             </div>
         </div>
     </div>
-
     <div class="section open">
         <div class="section-header" data-toggle="sec-notif">
             <span class="section-title">🔔 Notifications</span>
@@ -830,7 +846,6 @@
             </div>
         </div>
     </div>
-
     <div class="section open">
         <div class="section-header" data-toggle="sec-cache">
             <span class="section-title">🗄️ Cache API</span>
@@ -843,7 +858,6 @@
             </div>
         </div>
     </div>
-
     <div class="section open">
         <div class="section-header" data-toggle="sec-danger">
             <span class="section-title">⚠️ Zone sensible</span>
@@ -873,8 +887,7 @@
             <button class="btn-secondary btn-success" id="auto-trade-yes">Oui, enregistrer</button>
         </div>
     </div>
-</div>
-<script>
+</div><script>
 // ══════════════════════════════════════════════════════════════════
 // SERVICE WORKER
 // ══════════════════════════════════════════════════════════════════
@@ -919,7 +932,6 @@ async function registerServiceWorker() {
 // ══════════════════════════════════════════════════════════════════
 const TWELVEDATA_API = 'https://api.twelvedata.com';
 const DEEPSEEK_API = 'https://api.deepseek.com/v1/chat/completions';
-
 const ALLOWED_INSTRUMENTS = ['EUR/USD', 'XAU/USD', 'BTC/USD'];
 
 const STORAGE = {
@@ -932,25 +944,19 @@ const STORAGE = {
     scanConfig: 'smc_scan_config_v5',
     lastTgSent: 'smc_last_tg_sent_v5',
     deepseek: 'smc_deepseek_key_v5',
-    apiCache: 'smc_api_cache_v5'
+    apiCache: 'smc_api_cache_v5',
+    analysisBox: 'smc_analysis_box_v5',
+    weeklyAudits: 'smc_weekly_audits_v5',
+    iaRecommendations: 'smc_ia_recs_v5'
 };
 
-const SYMBOLS = {
-    'Disponibles': ['EUR/USD', 'XAU/USD', 'BTC/USD']
-};
-
+const SYMBOLS = { 'Disponibles': ['EUR/USD', 'XAU/USD', 'BTC/USD'] };
 const DEFAULT_SCAN_INSTRUMENTS = ['EUR/USD', 'XAU/USD', 'BTC/USD'];
 
 const state = {
-    ready: false,
-    symbol: 'EUR/USD',
-    candles: {},
-    lastAnalysis: null,
-    tickInterval: null,
-    scanning: false,
-    countdownTimer: null,
-    nextScanTime: null,
-    backtestRunning: false
+    ready: false, symbol: 'EUR/USD', candles: {}, lastAnalysis: null,
+    tickInterval: null, scanning: false, countdownTimer: null,
+    nextScanTime: null, backtestRunning: false
 };
 
 let lastTelegramSent = {};
@@ -1012,13 +1018,11 @@ const INSTRUMENT_SPECS = {
     'XAU/USD': { tickSize: 0.01, tickValue: 1, contractSize: 100, minLot: 0.01, lotStep: 0.01, pipValue: 0.1, pipValuePerLot: 10, spreadPips: 20, commissionPerLot: 7 },
     'BTC/USD': { tickSize: 0.01, tickValue: 0.01, contractSize: 1, minLot: 0.001, lotStep: 0.001, pipValue: 1, pipValuePerLot: 1, spreadPips: 500, commissionPerLot: 0 }
 };
-
 function getSpecs(symbol) {
     const clean = String(symbol || '').trim().toUpperCase();
     if (INSTRUMENT_SPECS[clean]) return INSTRUMENT_SPECS[clean];
     return INSTRUMENT_SPECS['EUR/USD'];
 }
-
 function computePositionSizeBrokerGrade(capital, riskPct, entry, sl, symbol) {
     const specs = getSpecs(symbol);
     const riskAmount = capital * (riskPct / 100);
@@ -1032,12 +1036,9 @@ function computePositionSizeBrokerGrade(capital, riskPct, entry, sl, symbol) {
     const finalLot = Math.max(specs.minLot, steppedLot);
     const pipsDistance = slDistance / specs.pipValue;
     return {
-        size: finalLot.toFixed(3),
-        risk: riskAmount.toFixed(2),
-        pipsDistance: pipsDistance.toFixed(1),
-        riskPerLot: riskPerLot.toFixed(2),
-        rawLot: rawLot.toFixed(3),
-        specs,
+        size: finalLot.toFixed(3), risk: riskAmount.toFixed(2),
+        pipsDistance: pipsDistance.toFixed(1), riskPerLot: riskPerLot.toFixed(2),
+        rawLot: rawLot.toFixed(3), specs,
         message: 'Risque ' + riskAmount.toFixed(2) + '€ · ' + pipsDistance.toFixed(1) + ' pips · Taille ' + finalLot.toFixed(3) + ' lots'
     };
 }
@@ -1046,10 +1047,7 @@ function computePositionSizeBrokerGrade(capital, riskPct, entry, sl, symbol) {
 // CACHE API
 // ══════════════════════════════════════════════════════════════════
 const CACHE_TTL_MS = 5 * 60 * 1000;
-
-function getApiCache() {
-    try { return JSON.parse(localStorage.getItem(STORAGE.apiCache) || '{}'); } catch (e) { return {}; }
-}
+function getApiCache() { try { return JSON.parse(localStorage.getItem(STORAGE.apiCache) || '{}'); } catch (e) { return {}; } }
 function saveApiCache(cache) {
     try {
         const keys = Object.keys(cache);
@@ -1086,6 +1084,102 @@ function clearApiCache() {
 }
 
 // ══════════════════════════════════════════════════════════════════
+// ✅ PHASE 6 — BOÎTE D'ANALYSES
+// ══════════════════════════════════════════════════════════════════
+function loadAnalysisBox() { try { return JSON.parse(localStorage.getItem(STORAGE.analysisBox) || '[]'); } catch (e) { return []; } }
+function saveAnalysisBox(box) {
+    try {
+        if (box.length > 500) box = box.slice(0, 500);
+        localStorage.setItem(STORAGE.analysisBox, JSON.stringify(box));
+    } catch (e) {}
+}
+function addToAnalysisBox(analysis) {
+    const box = loadAnalysisBox();
+    analysis.id = Date.now() + Math.random();
+    analysis.savedAt = Date.now();
+    analysis.audited = false;
+    box.unshift(analysis);
+    saveAnalysisBox(box);
+    log('📦 Analyse sauvegardée (' + box.length + ' total)');
+    return analysis;
+}
+function updateAnalysisBoxEntry(id, updates) {
+    const box = loadAnalysisBox();
+    const idx = box.findIndex(a => a.id === id);
+    if (idx < 0) return;
+    box[idx] = { ...box[idx], ...updates };
+    saveAnalysisBox(box);
+}
+function getAnalysisBoxStats() {
+    const box = loadAnalysisBox();
+    const now = Date.now();
+    const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+    const thisWeek = box.filter(a => a.savedAt >= oneWeekAgo);
+    const lastWeek = box.filter(a => a.savedAt >= oneWeekAgo * 2 && a.savedAt < oneWeekAgo);
+    return {
+        total: box.length, thisWeek: thisWeek.length, lastWeek: lastWeek.length,
+        audited: box.filter(a => a.audited).length,
+        pending: box.filter(a => !a.audited).length
+    };
+}
+function clearAnalysisBox() {
+    if (!confirm('Effacer toutes les analyses sauvegardées ?')) return;
+    try { localStorage.removeItem(STORAGE.analysisBox); } catch (e) {}
+    toast('Boîte d\'analyses vidée', 'success');
+    renderAnalysisBoxStats();
+    renderAnalysisBoxList();
+}
+function renderAnalysisBoxStats() {
+    const el = $('analysis-box-stats');
+    if (!el) return;
+    const s = getAnalysisBoxStats();
+    el.innerHTML =
+        '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.4rem;">' +
+            '<div class="stat-card"><div class="st-label">Total</div><div class="st-value neutral">' + s.total + '</div></div>' +
+            '<div class="stat-card"><div class="st-label">Cette semaine</div><div class="st-value neutral">' + s.thisWeek + '</div></div>' +
+            '<div class="stat-card"><div class="st-label">Auditées IA</div><div class="st-value win">' + s.audited + '</div></div>' +
+            '<div class="stat-card"><div class="st-label">En attente</div><div class="st-value ' + (s.pending > 0 ? 'loss' : 'neutral') + '">' + s.pending + '</div></div>' +
+        '</div>' +
+        '<div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;line-height:1.5;">' +
+            'ⓘ Les analyses validées (score ≥ seuil) sont automatiquement sauvegardées et auditées par l\'IA.' +
+        '</div>';
+}
+function renderAnalysisBoxList() {
+    const el = $('analysis-box-list');
+    if (!el) return;
+    const box = loadAnalysisBox();
+    if (!box.length) { el.innerHTML = '<div class="empty-state">Aucune analyse sauvegardée</div>'; return; }
+    el.innerHTML = box.slice(0, 30).map(a => {
+        const date = new Date(a.savedAt).toLocaleString('fr-FR');
+        const emoji = a.signal === 'ACHAT' ? '🟢' : a.signal === 'VENTE' ? '🔴' : '⚪';
+        const status = a.smcScore >= 85 ? '🟢' : a.smcScore >= 75 ? '🟡' : '🔴';
+        const audited = a.audited ? '🤖' : '⏳';
+        return '<div style="padding:0.5rem;background:var(--panel-2);border-radius:6px;margin-bottom:0.4rem;border-left:3px solid ' + (a.signal === 'ACHAT' ? 'var(--success)' : a.signal === 'VENTE' ? 'var(--error)' : 'var(--neutral)') + ';">' +
+            '<div style="display:flex;justify-content:space-between;font-size:0.75rem;font-weight:700;">' +
+                '<span>' + emoji + ' ' + esc(a.symbol) + ' ' + a.signal + '</span>' +
+                '<span>' + status + ' ' + a.smcScore + '/100 ' + audited + '</span>' +
+            '</div>' +
+            '<div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.2rem;">' + date + '</div>' +
+            '<div style="font-size:0.72rem;margin-top:0.3rem;">🧭 ' + esc(a.orientationReason || '—') + '</div>' +
+            (a.outcome ? '<div style="font-size:0.7rem;margin-top:0.2rem;">Résultat : <strong>' + a.outcome.toUpperCase() + '</strong></div>' : '') +
+            (a.auditIA ? '<button class="btn-secondary" style="margin-top:0.3rem;font-size:0.65rem;" onclick="showAnalysisAudit(' + a.id + ')">🤖 Voir audit IA</button>' : '') +
+        '</div>';
+    }).join('');
+}
+window.showAnalysisAudit = function(id) {
+    const box = loadAnalysisBox();
+    const a = box.find(x => x.id === id);
+    if (!a || !a.auditIA) return;
+    const modal = $('auto-trade-modal');
+    const details = $('auto-trade-details');
+    if (!modal || !details) return;
+    details.innerHTML =
+        '<div style="font-size:0.8rem;font-weight:700;margin-bottom:0.5rem;">' + esc(a.symbol) + ' — ' + a.signal + ' (' + a.smcScore + '/100)</div>' +
+        '<div style="font-size:0.78rem;line-height:1.6;white-space:pre-wrap;max-height:60vh;overflow-y:auto;">' + esc(a.auditIA) + '</div>';
+    modal.classList.add('visible');
+};
+
+// ══════════════════════════════════════════════════════════════════
 // CONNEXION TWELVE DATA
 // ══════════════════════════════════════════════════════════════════
 function getTwelveKey() { try { return (localStorage.getItem(STORAGE.twelvedata) || '').trim(); } catch (e) { return ''; } }
@@ -1113,15 +1207,11 @@ async function connectTwelveData() {
 // BOUGIES
 // ══════════════════════════════════════════════════════════════════
 const TF_MAP = { D1: '1day', H4: '4h', H1: '1h', M15: '15min', M5: '5min' };
-
 async function fetchCandles(symbol, tf, count = 200, useCache = true) {
     const key = getTwelveKey();
     if (!key) throw new Error('Clé API manquante');
     const cacheKey = 'candles_' + symbol + '_' + tf + '_' + count;
-    if (useCache) {
-        const cached = getCached(cacheKey);
-        if (cached) return cached;
-    }
+    if (useCache) { const cached = getCached(cacheKey); if (cached) return cached; }
     setStatus('Chargement ' + symbol + ' ' + tf + '…');
     const url = TWELVEDATA_API + '/time_series?symbol=' + encodeURIComponent(symbol) + '&interval=' + TF_MAP[tf] + '&outputsize=' + count + '&apikey=' + encodeURIComponent(key);
     const res = await fetch(url);
@@ -1136,7 +1226,6 @@ async function fetchCandles(symbol, tf, count = 200, useCache = true) {
     if (useCache) setCache(cacheKey, candles);
     return candles;
 }
-
 async function fetchCurrentPrice(symbol) {
     try {
         const key = getTwelveKey();
@@ -1147,11 +1236,7 @@ async function fetchCurrentPrice(symbol) {
         const url = TWELVEDATA_API + '/price?symbol=' + encodeURIComponent(symbol) + '&apikey=' + encodeURIComponent(key);
         const res = await fetch(url);
         const data = await res.json();
-        if (data.price) {
-            const p = parseFloat(data.price);
-            setCache(cacheKey, p);
-            return p;
-        }
+        if (data.price) { const p = parseFloat(data.price); setCache(cacheKey, p); return p; }
         return null;
     } catch (e) { return null; }
 }
@@ -1208,7 +1293,6 @@ function findSwings(candles, lookback = 3) {
     }
     return swings.sort((a, b) => a.index - b.index);
 }
-
 function findExternalSwings(candles, lookback = 5) {
     const swings = [];
     const lastConfirmedIdx = candles.length - lookback - 1;
@@ -1223,57 +1307,34 @@ function findExternalSwings(candles, lookback = 5) {
     }
     return swings.sort((a, b) => a.index - b.index);
 }
-
 function detectStructure(candles) {
     const internalSwings = findSwings(candles, 3);
     const externalSwings = findExternalSwings(candles, 5);
     if (internalSwings.length < 4) return { trend: 'range', events: [], swings: internalSwings, externalSwings, lastHigh: null, lastLow: null, externalTrend: 'range', externalEvents: [], externalLastHigh: null, externalLastLow: null };
-
     const events = [];
-    let trend = 'range';
-    let lastHigh = null, lastLow = null;
+    let trend = 'range', lastHigh = null, lastLow = null;
     for (const s of internalSwings) {
         if (s.type === 'high') {
-            if (lastHigh && s.price > lastHigh.price) {
-                events.push({ type: trend === 'bearish' ? 'MSS' : 'BOS_int', direction: 'bull', price: s.price, index: s.index, level: 'internal' });
-                trend = 'bullish';
-            }
+            if (lastHigh && s.price > lastHigh.price) { events.push({ type: trend === 'bearish' ? 'MSS' : 'BOS_int', direction: 'bull', price: s.price, index: s.index, level: 'internal' }); trend = 'bullish'; }
             lastHigh = s;
         } else {
-            if (lastLow && s.price < lastLow.price) {
-                events.push({ type: trend === 'bullish' ? 'MSS' : 'BOS_int', direction: 'bear', price: s.price, index: s.index, level: 'internal' });
-                trend = 'bearish';
-            }
+            if (lastLow && s.price < lastLow.price) { events.push({ type: trend === 'bullish' ? 'MSS' : 'BOS_int', direction: 'bear', price: s.price, index: s.index, level: 'internal' }); trend = 'bearish'; }
             lastLow = s;
         }
     }
-
     const extEvents = [];
-    let extTrend = 'range';
-    let extLastHigh = null, extLastLow = null;
+    let extTrend = 'range', extLastHigh = null, extLastLow = null;
     for (const s of externalSwings) {
         if (s.type === 'high') {
-            if (extLastHigh && s.price > extLastHigh.price) {
-                extEvents.push({ type: extTrend === 'bearish' ? 'CHoCH' : 'BOS', direction: 'bull', price: s.price, index: s.index, level: 'external' });
-                extTrend = 'bullish';
-            }
+            if (extLastHigh && s.price > extLastHigh.price) { extEvents.push({ type: extTrend === 'bearish' ? 'CHoCH' : 'BOS', direction: 'bull', price: s.price, index: s.index, level: 'external' }); extTrend = 'bullish'; }
             extLastHigh = s;
         } else {
-            if (extLastLow && s.price < extLastLow.price) {
-                extEvents.push({ type: extTrend === 'bullish' ? 'CHoCH' : 'BOS', direction: 'bear', price: s.price, index: s.index, level: 'external' });
-                extTrend = 'bearish';
-            }
+            if (extLastLow && s.price < extLastLow.price) { extEvents.push({ type: extTrend === 'bullish' ? 'CHoCH' : 'BOS', direction: 'bear', price: s.price, index: s.index, level: 'external' }); extTrend = 'bearish'; }
             extLastLow = s;
         }
     }
-
-    return {
-        trend, events, swings: internalSwings, lastHigh, lastLow,
-        externalTrend: extTrend, externalEvents: extEvents,
-        externalSwings, externalLastHigh: extLastHigh, externalLastLow: extLastLow
-    };
+    return { trend, events, swings: internalSwings, lastHigh, lastLow, externalTrend: extTrend, externalEvents: extEvents, externalSwings, externalLastHigh: extLastHigh, externalLastLow: extLastLow };
 }
-
 function detectOrderBlocks(candles, structure) {
     const obs = [];
     const allEvents = [...(structure.events || []), ...(structure.externalEvents || [])];
@@ -1284,15 +1345,12 @@ function detectOrderBlocks(candles, structure) {
                 if (candles[i].close < candles[i].open) {
                     const top = Math.max(candles[i].open, candles[i].close);
                     const bottom = candles[i].low;
-                    const obSize = top - bottom;
                     const avgBody = candles.slice(Math.max(0, i - 20), i).reduce((s, c) => s + Math.abs(c.close - c.open), 0) / Math.max(1, Math.min(20, i));
                     const breakBody = Math.abs(candles[evIdx].close - candles[evIdx].open);
                     const displacement = breakBody > avgBody * 1.5;
                     let mitigated = false;
-                    for (let k = evIdx + 1; k < candles.length; k++) {
-                        if (candles[k].low <= top && candles[k].low >= bottom) { mitigated = true; break; }
-                    }
-                    obs.push({ type: 'bull', top, bottom, index: i, size: obSize, displacement, mitigated, freshness: mitigated ? 'mitigated' : 'fresh', level: ev.level || 'internal' });
+                    for (let k = evIdx + 1; k < candles.length; k++) { if (candles[k].low <= top && candles[k].low >= bottom) { mitigated = true; break; } }
+                    obs.push({ type: 'bull', top, bottom, index: i, displacement, mitigated, freshness: mitigated ? 'mitigated' : 'fresh', level: ev.level || 'internal' });
                     break;
                 }
             }
@@ -1301,33 +1359,21 @@ function detectOrderBlocks(candles, structure) {
                 if (candles[i].close > candles[i].open) {
                     const top = candles[i].high;
                     const bottom = Math.min(candles[i].open, candles[i].close);
-                    const obSize = top - bottom;
                     const avgBody = candles.slice(Math.max(0, i - 20), i).reduce((s, c) => s + Math.abs(c.close - c.open), 0) / Math.max(1, Math.min(20, i));
                     const breakBody = Math.abs(candles[evIdx].close - candles[evIdx].open);
                     const displacement = breakBody > avgBody * 1.5;
                     let mitigated = false;
-                    for (let k = evIdx + 1; k < candles.length; k++) {
-                        if (candles[k].high >= bottom && candles[k].high <= top) { mitigated = true; break; }
-                    }
-                    obs.push({ type: 'bear', top, bottom, index: i, size: obSize, displacement, mitigated, freshness: mitigated ? 'mitigated' : 'fresh', level: ev.level || 'internal' });
+                    for (let k = evIdx + 1; k < candles.length; k++) { if (candles[k].high >= bottom && candles[k].high <= top) { mitigated = true; break; } }
+                    obs.push({ type: 'bear', top, bottom, index: i, displacement, mitigated, freshness: mitigated ? 'mitigated' : 'fresh', level: ev.level || 'internal' });
                     break;
                 }
             }
         }
     }
-    const bulls = obs.filter(o => o.type === 'bull').sort((a, b) => {
-        const sa = (a.freshness === 'fresh' ? 2 : 0) + (a.displacement ? 1 : 0);
-        const sb = (b.freshness === 'fresh' ? 2 : 0) + (b.displacement ? 1 : 0);
-        return sb - sa;
-    }).slice(0, 3);
-    const bears = obs.filter(o => o.type === 'bear').sort((a, b) => {
-        const sa = (a.freshness === 'fresh' ? 2 : 0) + (a.displacement ? 1 : 0);
-        const sb = (b.freshness === 'fresh' ? 2 : 0) + (b.displacement ? 1 : 0);
-        return sb - sa;
-    }).slice(0, 3);
+    const bulls = obs.filter(o => o.type === 'bull').sort((a, b) => ((b.freshness === 'fresh' ? 2 : 0) + (b.displacement ? 1 : 0)) - ((a.freshness === 'fresh' ? 2 : 0) + (a.displacement ? 1 : 0))).slice(0, 3);
+    const bears = obs.filter(o => o.type === 'bear').sort((a, b) => ((b.freshness === 'fresh' ? 2 : 0) + (b.displacement ? 1 : 0)) - ((a.freshness === 'fresh' ? 2 : 0) + (a.displacement ? 1 : 0))).slice(0, 3);
     return [...bulls, ...bears].sort((a, b) => b.index - a.index);
 }
-
 function detectFVG(candles) {
     const fvgs = [];
     const avgRange = candles.slice(-50).reduce((s, c) => s + (c.high - c.low), 0) / Math.min(50, candles.length);
@@ -1340,10 +1386,7 @@ function detectFVG(candles) {
             let fillPct = 0;
             for (let k = i + 1; k < candles.length; k++) {
                 if (candles[k].low <= c1.high) { fillPct = 100; break; }
-                if (candles[k].low < c3.low) {
-                    const filled = (c3.low - candles[k].low) / gapSize * 100;
-                    fillPct = Math.max(fillPct, Math.min(100, filled));
-                }
+                if (candles[k].low < c3.low) { fillPct = Math.max(fillPct, Math.min(100, (c3.low - candles[k].low) / gapSize * 100)); }
             }
             fvgs.push({ type: 'bull', top: c3.low, bottom: c1.high, index: i - 1, size: gapSize, fillPct: Math.round(fillPct) });
         }
@@ -1353,22 +1396,14 @@ function detectFVG(candles) {
             let fillPct = 0;
             for (let k = i + 1; k < candles.length; k++) {
                 if (candles[k].high >= c1.low) { fillPct = 100; break; }
-                if (candles[k].high > c3.high) {
-                    const filled = (candles[k].high - c3.high) / gapSize * 100;
-                    fillPct = Math.max(fillPct, Math.min(100, filled));
-                }
+                if (candles[k].high > c3.high) { fillPct = Math.max(fillPct, Math.min(100, (candles[k].high - c3.high) / gapSize * 100)); }
             }
             fvgs.push({ type: 'bear', top: c1.low, bottom: c3.high, index: i - 1, size: gapSize, fillPct: Math.round(fillPct) });
         }
     }
     const lastClose = candles[candles.length - 1].close;
-    return fvgs.filter(f => {
-        if (f.fillPct >= 100) return false;
-        if (f.type === 'bull') return f.bottom > lastClose;
-        return f.top < lastClose;
-    }).slice(-5);
+    return fvgs.filter(f => f.fillPct < 100 && (f.type === 'bull' ? f.bottom > lastClose : f.top < lastClose)).slice(-5);
 }
-
 function computePremiumDiscount(candles) {
     const recent = candles.slice(-50);
     const high = Math.max(...recent.map(c => c.high));
@@ -1380,7 +1415,6 @@ function computePremiumDiscount(candles) {
     const position = range > 0 ? ((current - low) / range) * 100 : 50;
     return { high, low, equilibrium, current, zone, position: position.toFixed(1) };
 }
-
 function detectLiquidityHierarchy(candles) {
     const levels = { pdh: null, pdl: null, pwh: null, pwl: null, equalHighs: [], equalLows: [] };
     if (candles.length < 100) return levels;
@@ -1393,21 +1427,14 @@ function detectLiquidityHierarchy(candles) {
     const swings = findSwings(candles, 3);
     const highs = swings.filter(s => s.type === 'high').slice(-10);
     const lows = swings.filter(s => s.type === 'low').slice(-10);
-    for (let i = 0; i < highs.length; i++) {
-        for (let j = i + 1; j < highs.length; j++) {
-            const diff = Math.abs(highs[i].price - highs[j].price) / highs[i].price;
-            if (diff < 0.0005) levels.equalHighs.push({ price1: highs[i].price, price2: highs[j].price, avg: (highs[i].price + highs[j].price) / 2 });
-        }
+    for (let i = 0; i < highs.length; i++) for (let j = i + 1; j < highs.length; j++) {
+        if (Math.abs(highs[i].price - highs[j].price) / highs[i].price < 0.0005) levels.equalHighs.push({ avg: (highs[i].price + highs[j].price) / 2 });
     }
-    for (let i = 0; i < lows.length; i++) {
-        for (let j = i + 1; j < lows.length; j++) {
-            const diff = Math.abs(lows[i].price - lows[j].price) / lows[i].price;
-            if (diff < 0.0005) levels.equalLows.push({ price1: lows[i].price, price2: lows[j].price, avg: (lows[i].price + lows[j].price) / 2 });
-        }
+    for (let i = 0; i < lows.length; i++) for (let j = i + 1; j < lows.length; j++) {
+        if (Math.abs(lows[i].price - lows[j].price) / lows[i].price < 0.0005) levels.equalLows.push({ avg: (lows[i].price + lows[j].price) / 2 });
     }
     return levels;
 }
-
 function detectLiquiditySweeps(candles, structure, hierarchy) {
     const sweeps = [];
     const recent = candles.slice(-30);
@@ -1419,7 +1446,6 @@ function detectLiquiditySweeps(candles, structure, hierarchy) {
     ];
     if (hierarchy.pdh) allHighs.push({ price: hierarchy.pdh, label: 'PDH', level: 'daily' });
     if (hierarchy.pwh) allHighs.push({ price: hierarchy.pwh, label: 'PWH', level: 'weekly' });
-
     const allLows = [
         ...structure.swings.filter(s => s.type === 'low').slice(-5).map(s => ({ price: s.price, label: 'Swing Low', level: 'internal' })),
         ...(structure.externalSwings || []).filter(s => s.type === 'low').slice(-3).map(s => ({ price: s.price, label: 'External Low', level: 'external' })),
@@ -1427,18 +1453,10 @@ function detectLiquiditySweeps(candles, structure, hierarchy) {
     ];
     if (hierarchy.pdl) allLows.push({ price: hierarchy.pdl, label: 'PDL', level: 'daily' });
     if (hierarchy.pwl) allLows.push({ price: hierarchy.pwl, label: 'PWL', level: 'weekly' });
-
-    for (const sh of allHighs) {
-        const swept = recent.some(c => c.high > sh.price && c.close < sh.price);
-        if (swept && lastClose < sh.price) sweeps.push({ type: 'bear', level: sh.price, label: sh.label, tier: sh.level });
-    }
-    for (const sl of allLows) {
-        const swept = recent.some(c => c.low < sl.price && c.close > sl.price);
-        if (swept && lastClose > sl.price) sweeps.push({ type: 'bull', level: sl.price, label: sl.label, tier: sl.level });
-    }
+    for (const sh of allHighs) { if (recent.some(c => c.high > sh.price && c.close < sh.price) && lastClose < sh.price) sweeps.push({ type: 'bear', level: sh.price, label: sh.label, tier: sh.level }); }
+    for (const sl of allLows) { if (recent.some(c => c.low < sl.price && c.close > sl.price) && lastClose > sl.price) sweeps.push({ type: 'bull', level: sl.price, label: sl.label, tier: sl.level }); }
     return sweeps.slice(-3);
 }
-
 function analyzeTimeframe(candles) {
     if (!candles || candles.length < 30) return null;
     const structure = detectStructure(candles);
@@ -1448,19 +1466,13 @@ function analyzeTimeframe(candles) {
     const hierarchy = detectLiquidityHierarchy(candles);
     const sweeps = detectLiquiditySweeps(candles, structure, hierarchy);
     const atr = computeATR(candles, 14);
-
     let bullPoints = 0, bearPoints = 0;
-    if (structure.trend === 'bullish') bullPoints += 3;
-    else if (structure.trend === 'bearish') bearPoints += 3;
-    if (structure.externalTrend === 'bullish') bullPoints += 2;
-    else if (structure.externalTrend === 'bearish') bearPoints += 2;
+    if (structure.trend === 'bullish') bullPoints += 3; else if (structure.trend === 'bearish') bearPoints += 3;
+    if (structure.externalTrend === 'bullish') bullPoints += 2; else if (structure.externalTrend === 'bearish') bearPoints += 2;
     const allEvents = [...(structure.events || []), ...(structure.externalEvents || [])];
     const lastEv = allEvents[allEvents.length - 1];
     if (lastEv) { if (lastEv.direction === 'bull') bullPoints += 1; else bearPoints += 1; }
-    for (const s of sweeps) {
-        const weight = s.tier === 'weekly' ? 3 : s.tier === 'daily' ? 2.5 : s.tier === 'external' ? 2 : 1.5;
-        if (s.type === 'bull') bullPoints += weight; else bearPoints += weight;
-    }
+    for (const s of sweeps) { const w = s.tier === 'weekly' ? 3 : s.tier === 'daily' ? 2.5 : s.tier === 'external' ? 2 : 1.5; if (s.type === 'bull') bullPoints += w; else bearPoints += w; }
     const total = bullPoints + bearPoints;
     let direction = 'range', strength = 50;
     if (total > 0) {
@@ -1470,148 +1482,54 @@ function analyzeTimeframe(candles) {
     return { structure, obs, fvgs, pd, sweeps, hierarchy, atr, direction, strength };
 }
 
-// ✅ SYNTHÈSE TOP-DOWN D1 → H4 → H1 → M15 → M5
+// ✅ TOP-DOWN SYNTHESIS
 function synthesizeTopDown(results) {
-    const D1 = results.D1;
-    const H4 = results.H4;
-    const H1 = results.H1;
-    const M15 = results.M15;
-    const M5 = results.M5;
-
-    let d1Bias = 'range';
-    let d1Strength = 50;
-    if (D1) {
-        d1Bias = D1.direction;
-        d1Strength = D1.strength;
-    }
-
-    let h4Confirms = false;
-    let h4Direction = 'range';
+    const D1 = results.D1, H4 = results.H4, H1 = results.H1, M15 = results.M15, M5 = results.M5;
+    let d1Bias = 'range', d1Strength = 50;
+    if (D1) { d1Bias = D1.direction; d1Strength = D1.strength; }
+    let h4Confirms = false, h4Direction = 'range';
     if (H4) {
         h4Direction = H4.direction;
-        h4Confirms = (d1Bias === 'bullish' && (H4.direction === 'bullish' || H4.direction === 'range'))
-                  || (d1Bias === 'bearish' && (H4.direction === 'bearish' || H4.direction === 'range'));
+        h4Confirms = (d1Bias === 'bullish' && (H4.direction === 'bullish' || H4.direction === 'range')) || (d1Bias === 'bearish' && (H4.direction === 'bearish' || H4.direction === 'range'));
     }
-
-    let h1Zone = 'unknown';
-    let h1Structure = 'range';
-    if (H1) {
-        h1Zone = H1.pd?.zone || 'unknown';
-        h1Structure = H1.direction;
-    }
-
-    let m15Confirms = false;
-    let m15HasMSS = false;
-    let m15HasSweep = false;
+    let h1Zone = 'unknown', h1Structure = 'range';
+    if (H1) { h1Zone = H1.pd?.zone || 'unknown'; h1Structure = H1.direction; }
+    let m15Confirms = false, m15HasMSS = false, m15HasSweep = false;
     if (M15) {
         const lastEvents = M15.structure.events.slice(-3);
         m15HasMSS = lastEvents.some(e => e.type === 'MSS');
         m15HasSweep = M15.sweeps && M15.sweeps.length > 0;
         m15Confirms = m15HasMSS || m15HasSweep;
     }
-
     let m5Triggers = false;
     if (M5) {
         const hasDisplacement = M5.obs && M5.obs.some(o => o.displacement);
         const hasSweep = M5.sweeps && M5.sweeps.length > 0;
         m5Triggers = hasDisplacement || hasSweep;
     }
-
-    let signal = 'ATTENDRE';
-    let signalClass = 'wait';
-    let confidence = 0;
-    let reason = '';
-
+    let signal = 'ATTENDRE', signalClass = 'wait', confidence = 0, reason = '';
     if (d1Bias === 'bullish' && h4Confirms && H1 && H1.pd) {
         if (H1.pd.zone === 'discount' && m15Confirms && m5Triggers) {
-            signal = 'ACHAT';
-            signalClass = 'buy';
+            signal = 'ACHAT'; signalClass = 'buy';
             confidence = Math.min(95, Math.round((d1Strength + (H4?.strength || 50) + (M15?.strength || 50)) / 3));
             reason = '✅ D1 haussier + H4 confirme + H1 Discount + M15 MSS/sweep + M5 trigger';
-        } else if (H1.pd.zone === 'premium') {
-            reason = '⏸ D1 haussier mais H1 en Premium — attendre retour en Discount';
-        } else if (!m15Confirms) {
-            reason = '⏸ D1 haussier + H1 Discount mais M15 ne confirme pas (attendre MSS/sweep)';
-        } else if (!m5Triggers) {
-            reason = '⏸ D1 haussier + H1 Discount + M15 OK mais M5 n\'a pas déclenché';
-        }
+        } else if (H1.pd.zone === 'premium') reason = '⏸ D1 haussier mais H1 en Premium';
+        else if (!m15Confirms) reason = '⏸ D1 haussier + H1 Discount mais M15 ne confirme pas';
+        else if (!m5Triggers) reason = '⏸ D1 haussier + H1 Discount + M15 OK mais M5 n\'a pas déclenché';
     } else if (d1Bias === 'bearish' && h4Confirms && H1 && H1.pd) {
         if (H1.pd.zone === 'premium' && m15Confirms && m5Triggers) {
-            signal = 'VENTE';
-            signalClass = 'sell';
+            signal = 'VENTE'; signalClass = 'sell';
             confidence = Math.min(95, Math.round((d1Strength + (H4?.strength || 50) + (M15?.strength || 50)) / 3));
             reason = '✅ D1 baissier + H4 confirme + H1 Premium + M15 MSS/sweep + M5 trigger';
-        } else if (H1.pd.zone === 'discount') {
-            reason = '⏸ D1 baissier mais H1 en Discount — attendre retour en Premium';
-        } else if (!m15Confirms) {
-            reason = '⏸ D1 baissier + H1 Premium mais M15 ne confirme pas';
-        } else if (!m5Triggers) {
-            reason = '⏸ D1 baissier + H1 Premium + M15 OK mais M5 n\'a pas déclenché';
-        }
-    } else if (!h4Confirms) {
-        reason = '⏸ H4 ne confirme pas le biais D1 (' + d1Bias + ' vs ' + h4Direction + ')';
-    } else {
-        reason = '⏸ Biais D1 indéterminé (' + d1Bias + ')';
-    }
-
+        } else if (H1.pd.zone === 'discount') reason = '⏸ D1 baissier mais H1 en Discount';
+        else if (!m15Confirms) reason = '⏸ D1 baissier + H1 Premium mais M15 ne confirme pas';
+        else if (!m5Triggers) reason = '⏸ D1 baissier + H1 Premium + M15 OK mais M5 n\'a pas déclenché';
+    } else if (!h4Confirms) reason = '⏸ H4 ne confirme pas le biais D1';
+    else reason = '⏸ Biais D1 indéterminé';
     const zone = H1?.pd?.zone || M15?.pd?.zone || 'unknown';
-
-    return {
-        signal, signalClass, confidence,
-        dominantStructure: d1Bias,
-        zone,
-        orientationReason: reason,
-        zoneValid: signal !== 'ATTENDRE',
-        topDown: {
-            d1Bias, d1Strength,
-            h4Confirms, h4Direction,
-            h1Zone, h1Structure,
-            m15Confirms, m15HasMSS, m15HasSweep,
-            m5Triggers
-        }
+    return { signal, signalClass, confidence, dominantStructure: d1Bias, zone, orientationReason: reason, zoneValid: signal !== 'ATTENDRE',
+        topDown: { d1Bias, d1Strength, h4Confirms, h4Direction, h1Zone, h1Structure, m15Confirms, m15HasMSS, m15HasSweep, m5Triggers }
     };
-}
-
-function synthesizeSMC(results, mode) {
-    if (mode === 'topdown') return synthesizeTopDown(results);
-    // Fallback ancien mode
-    const tfs = Object.keys(results).filter(k => results[k]);
-    if (!tfs.length) return null;
-    let weights = { H4: 0.65, H1: 0.35 };
-    let bullScore = 0, bearScore = 0, totalWeight = 0;
-    for (const tf of tfs) {
-        const w = weights[tf] || 0.33;
-        const r = results[tf];
-        if (r.direction === 'bullish') bullScore += w * (r.strength / 100);
-        else if (r.direction === 'bearish') bearScore += w * (r.strength / 100);
-        totalWeight += w;
-    }
-    const bullNorm = totalWeight > 0 ? bullScore / totalWeight : 0;
-    const bearNorm = totalWeight > 0 ? bearScore / totalWeight : 0;
-    let dominantStructure = 'range';
-    let confidence = 0;
-    if (bullNorm > bearNorm * 1.4 && bullNorm > 0.4) { dominantStructure = 'bullish'; confidence = Math.min(95, Math.round(bullNorm * 100)); }
-    else if (bearNorm > bullNorm * 1.4 && bearNorm > 0.4) { dominantStructure = 'bearish'; confidence = Math.min(95, Math.round(bearNorm * 100)); }
-    else confidence = Math.round(Math.max(bullNorm, bearNorm) * 60);
-    const entryTF = tfs[tfs.length - 1];
-    const entryR = results[entryTF];
-    const zone = entryR?.pd?.zone || 'unknown';
-    const orientation = orientSignalByZone(dominantStructure, zone);
-    return {
-        signal: orientation.signal,
-        signalClass: orientation.signal === 'ACHAT' ? 'buy' : orientation.signal === 'VENTE' ? 'sell' : 'wait',
-        confidence, dominantStructure, zone,
-        orientationReason: orientation.reason,
-        zoneValid: orientation.valid
-    };
-}
-
-function orientSignalByZone(structure, zone) {
-    if (structure === 'bullish' && zone === 'discount') return { signal: 'ACHAT', valid: true, reason: 'Structure haussière + Discount ✓' };
-    if (structure === 'bearish' && zone === 'premium') return { signal: 'VENTE', valid: true, reason: 'Structure baissière + Premium ✓' };
-    if (structure === 'bullish' && zone === 'premium') return { signal: 'ATTENDRE', valid: false, reason: 'Attendre retour en Discount' };
-    if (structure === 'bearish' && zone === 'discount') return { signal: 'ATTENDRE', valid: false, reason: 'Attendre retour en Premium' };
-    return { signal: 'ATTENDRE', valid: false, reason: 'Indéterminé' };
 }
 
 function computeSMCLevels(results, synthesis, currentPrice, entryR) {
@@ -1620,21 +1538,14 @@ function computeSMCLevels(results, synthesis, currentPrice, entryR) {
     const fmt = p => p != null && !isNaN(p) ? Number(p).toFixed(decimals) : '—';
     const obs = r.obs || [];
     const atr = r.atr || (currentPrice * 0.005);
-
     const specs = getSpecs(state.symbol);
     const MIN_SL_PIPS = state.symbol.includes('XAU') ? 30 : state.symbol.includes('BTC') ? 200 : 10;
     const MIN_SL_DISTANCE = MIN_SL_PIPS * specs.pipValue;
     const ATR_BUFFER = atr * 0.5;
-
     let entry, sl, tp, tp1, tp2, riskReward;
     const hierarchy = r.hierarchy || {};
-
     if (synthesis.signal === 'ACHAT') {
-        const bullOBs = obs.filter(o => o.type === 'bull' && o.top < currentPrice).sort((a, b) => {
-            const sa = (a.freshness === 'fresh' ? 2 : 0) + (a.displacement ? 1 : 0);
-            const sb = (b.freshness === 'fresh' ? 2 : 0) + (b.displacement ? 1 : 0);
-            return sb - sa;
-        });
+        const bullOBs = obs.filter(o => o.type === 'bull' && o.top < currentPrice).sort((a, b) => ((b.freshness === 'fresh' ? 2 : 0) + (b.displacement ? 1 : 0)) - ((a.freshness === 'fresh' ? 2 : 0) + (a.displacement ? 1 : 0)));
         const entryOB = bullOBs[0];
         if (entryOB) { entry = entryOB.top; sl = entryOB.bottom - ATR_BUFFER; }
         else { entry = currentPrice * 0.998; sl = currentPrice * 0.99; }
@@ -1646,11 +1557,7 @@ function computeSMCLevels(results, synthesis, currentPrice, entryR) {
         tp2 = candidates.length ? Math.min(...candidates) : tp1 + Math.abs(entry - sl) * 2;
         tp = tp2;
     } else if (synthesis.signal === 'VENTE') {
-        const bearOBs = obs.filter(o => o.type === 'bear' && o.bottom > currentPrice).sort((a, b) => {
-            const sa = (a.freshness === 'fresh' ? 2 : 0) + (a.displacement ? 1 : 0);
-            const sb = (b.freshness === 'fresh' ? 2 : 0) + (b.displacement ? 1 : 0);
-            return sb - sa;
-        });
+        const bearOBs = obs.filter(o => o.type === 'bear' && o.bottom > currentPrice).sort((a, b) => ((b.freshness === 'fresh' ? 2 : 0) + (b.displacement ? 1 : 0)) - ((a.freshness === 'fresh' ? 2 : 0) + (a.displacement ? 1 : 0)));
         const entryOB = bearOBs[0];
         if (entryOB) { entry = entryOB.bottom; sl = entryOB.top + ATR_BUFFER; }
         else { entry = currentPrice * 1.002; sl = currentPrice * 1.01; }
@@ -1662,51 +1569,29 @@ function computeSMCLevels(results, synthesis, currentPrice, entryR) {
         tp2 = candidates.length ? Math.max(...candidates) : tp1 - Math.abs(sl - entry) * 2;
         tp = tp2;
     } else {
-        entry = currentPrice;
-        sl = currentPrice - MIN_SL_DISTANCE;
-        tp1 = currentPrice + MIN_SL_DISTANCE * 2;
-        tp2 = currentPrice + MIN_SL_DISTANCE * 4;
-        tp = tp2;
+        entry = currentPrice; sl = currentPrice - MIN_SL_DISTANCE;
+        tp1 = currentPrice + MIN_SL_DISTANCE * 2; tp2 = currentPrice + MIN_SL_DISTANCE * 4; tp = tp2;
     }
-
     const risk = Math.abs(entry - sl);
     const reward = Math.abs(tp - entry);
     riskReward = risk > 0 ? '1:' + (reward / risk).toFixed(2) : '—';
-
-    return {
-        entry: fmt(entry), sl: fmt(sl), tp: fmt(tp),
-        tp1: fmt(tp1), tp2: fmt(tp2),
-        riskReward,
-        entryPrice: entry, slPrice: sl, tpPrice: tp,
-        tp1Price: parseFloat(fmt(tp1)), tp2Price: parseFloat(fmt(tp2))
-    };
+    return { entry: fmt(entry), sl: fmt(sl), tp: fmt(tp), tp1: fmt(tp1), tp2: fmt(tp2), riskReward,
+        entryPrice: entry, slPrice: sl, tpPrice: tp, tp1Price: parseFloat(fmt(tp1)), tp2Price: parseFloat(fmt(tp2)) };
 }
 
 function computeSMCScore(results, synthesis, levels) {
     const entryR = results.M5 || results.M15 || results.H1;
-    const scores = {
-        structure: 0, liquidity: 0, displacement: 0, ob_quality: 0,
-        fvg_quality: 0, zone: 0, mtf_alignment: 0, liquidity_hierarchy: 0
-    };
-
+    const scores = { structure: 0, liquidity: 0, displacement: 0, ob_quality: 0, fvg_quality: 0, zone: 0, mtf_alignment: 0, liquidity_hierarchy: 0 };
     if (synthesis.topDown) {
         scores.structure = Math.round((synthesis.topDown.d1Strength + (results.H4?.strength || 50)) / 2);
         scores.mtf_alignment = synthesis.topDown.h4Confirms ? 90 : 30;
         scores.zone = (synthesis.topDown.h1Zone === 'discount' && synthesis.topDown.d1Bias === 'bullish') ? 90
-                    : (synthesis.topDown.h1Zone === 'premium' && synthesis.topDown.d1Bias === 'bearish') ? 90
-                    : 40;
+                    : (synthesis.topDown.h1Zone === 'premium' && synthesis.topDown.d1Bias === 'bearish') ? 90 : 40;
     } else {
         scores.structure = Math.min(100, (entryR.strength || 50) + 10);
-        const directions = ['H1', 'M15', 'M5'].map(tf => results[tf]?.direction).filter(Boolean);
-        const sameDir = directions.filter(d => d === directions[0]).length;
-        scores.mtf_alignment = directions.length ? Math.round((sameDir / directions.length) * 100) : 50;
-        const zone = entryR.pd?.zone;
-        const signal = synthesis.signal;
-        if ((signal === 'ACHAT' && zone === 'discount') || (signal === 'VENTE' && zone === 'premium')) scores.zone = 90;
-        else if (signal === 'ATTENDRE') scores.zone = 50;
-        else scores.zone = 20;
+        scores.mtf_alignment = 50;
+        scores.zone = 50;
     }
-
     const sweepCount = entryR.sweeps?.length || 0;
     scores.liquidity = Math.min(100, sweepCount * 25 + 40);
     const displacedOBs = (entryR.obs || []).filter(o => o.displacement);
@@ -1724,11 +1609,7 @@ function computeSMCScore(results, synthesis, levels) {
     if (h.equalHighs?.length) hierarchyScore += 25;
     if (h.equalLows?.length) hierarchyScore += 25;
     scores.liquidity_hierarchy = hierarchyScore;
-
-    const weights = {
-        structure: 0.20, liquidity: 0.10, displacement: 0.12, ob_quality: 0.12,
-        fvg_quality: 0.10, zone: 0.12, mtf_alignment: 0.12, liquidity_hierarchy: 0.12
-    };
+    const weights = { structure: 0.20, liquidity: 0.10, displacement: 0.12, ob_quality: 0.12, fvg_quality: 0.10, zone: 0.12, mtf_alignment: 0.12, liquidity_hierarchy: 0.12 };
     let total = 0;
     for (const k in scores) total += scores[k] * weights[k];
     return { total: Math.round(total), details: scores };
@@ -1739,21 +1620,16 @@ function getScoreStatus(score) {
     if (score >= 75) return { level: 'acceptable', label: '🟡 ACCEPTABLE', color: 'var(--warn)', emoji: '🔥🔥', action: 'Trade possible, prudence' };
     return { level: 'rejected', label: '❌ REJETÉ', color: 'var(--error)', emoji: '⛔', action: 'Signal ignoré' };
 }
-
-function isSignalValid(score) {
-    return score >= getScanConfig().minScore;
-}
+function isSignalValid(score) { return score >= getScanConfig().minScore; }
 
 function buildScenarios(results, synthesis, levels) {
     const scenarios = [];
     if (synthesis.signal === 'ACHAT') {
         scenarios.push({ type: 'bull', title: '🟢 Scénario principal — Achat', prob: 'Score : ' + synthesis.confidence + '/100', text: 'Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP1 : ' + levels.tp1 + ' · TP2 : ' + levels.tp2 });
         scenarios.push({ type: 'bear', title: '🔴 Invalidation', prob: 'À surveiller', text: 'Si clôture sous ' + levels.sl + ', biais haussier invalidé.' });
-        scenarios.push({ type: 'range', title: '⚪ Range', prob: 'Faible', text: 'Si prix bloqué entre ' + levels.entry + ' et ' + levels.tp1 + ', attendre cassure.' });
     } else if (synthesis.signal === 'VENTE') {
         scenarios.push({ type: 'bear', title: '🔴 Scénario principal — Vente', prob: 'Score : ' + synthesis.confidence + '/100', text: 'Entrée : ' + levels.entry + ' · SL : ' + levels.sl + ' · TP1 : ' + levels.tp1 + ' · TP2 : ' + levels.tp2 });
         scenarios.push({ type: 'bull', title: '🟢 Invalidation', prob: 'À surveiller', text: 'Si clôture au-dessus de ' + levels.sl + ', biais baissier invalidé.' });
-        scenarios.push({ type: 'range', title: '⚪ Range', prob: 'Faible', text: 'Si prix bloqué entre ' + levels.tp1 + ' et ' + levels.entry + ', attendre cassure.' });
     } else {
         scenarios.push({ type: 'range', title: '⚪ Attente', prob: synthesis.orientationReason || 'Indéterminé', text: 'Tous les TF ne sont pas alignés. Attendre la confirmation complète D1→H4→H1→M15→M5.' });
     }
@@ -1771,19 +1647,14 @@ async function runBacktest() {
     const riskPct = parseFloat($('bt-risk').value) || 1;
     const minRR = parseFloat($('bt-minrr').value) || 2;
     const minScore = parseInt($('bt-score-min').value, 10) || 80;
-
     if (!ALLOWED_INSTRUMENTS.includes(symbol)) { toast('Instrument non autorisé', 'error'); return; }
-    if (nbBars > 2000) { toast('Maximum 2000 bougies', 'warn'); return; }
-
     state.backtestRunning = true;
     $('bt-run-btn').disabled = true;
-    $('bt-run-btn').textContent = '⏳ Chargement D1, H4, H1, M15, M5…';
+    $('bt-run-btn').textContent = '⏳ Chargement…';
     $('bt-progress').style.display = 'block';
     $('bt-progress-text').style.display = 'block';
     $('bt-progress-fill').style.width = '0%';
-
     try {
-        // Charger D1, H4, H1, M15 en séquentiel (M5 en priorité)
         const [m5Data, m15Data, h1Data, h4Data, d1Data] = await Promise.all([
             fetchCandles(symbol, 'M5', nbBars, false),
             fetchCandles(symbol, 'M15', Math.min(nbBars, 2000), false),
@@ -1791,131 +1662,80 @@ async function runBacktest() {
             fetchCandles(symbol, 'H4', Math.min(nbBars, 2000), false),
             fetchCandles(symbol, 'D1', Math.min(nbBars, 2000), false)
         ]);
-
-        if (m5Data.length < 200) throw new Error('Pas assez de bougies M5 (min 200)');
-
+        if (m5Data.length < 200) throw new Error('Pas assez de bougies M5');
         const specs = getSpecs(symbol);
         const SPREAD_PIPS = specs.spreadPips || 1.2;
         const COMMISSION_PER_LOT = specs.commissionPerLot || 7;
         const SLIPPAGE_PIPS = 0.3;
-
         const trades = [];
         const MIN_BARS_BEFORE = 200;
         let equity = capitalInit;
         const equityCurve = [capitalInit];
-
-        // Ratios : 1 M15 = 3 M5, 1 H1 = 12 M5, 1 H4 = 48 M5, 1 D1 = 288 M5
-        const RATIO_M15 = 3;
-        const RATIO_H1 = 12;
-        const RATIO_H4 = 48;
-        const RATIO_D1 = 288;
-
         for (let i = MIN_BARS_BEFORE; i < m5Data.length - 30; i++) {
             const m5Subset = m5Data.slice(0, i + 1);
             const rM5 = analyzeTimeframe(m5Subset);
             if (!rM5) continue;
-
-            const m15Idx = Math.floor(i / RATIO_M15);
+            const m15Idx = Math.floor(i / 3);
             if (m15Idx < 30) continue;
             const rM15 = analyzeTimeframe(m15Data.slice(0, Math.min(m15Idx + 1, m15Data.length)));
-
-            const h1Idx = Math.floor(i / RATIO_H1);
+            const h1Idx = Math.floor(i / 12);
             if (h1Idx < 30) continue;
             const rH1 = analyzeTimeframe(h1Data.slice(0, Math.min(h1Idx + 1, h1Data.length)));
-
-            const h4Idx = Math.floor(i / RATIO_H4);
+            const h4Idx = Math.floor(i / 48);
             if (h4Idx < 20) continue;
             const rH4 = analyzeTimeframe(h4Data.slice(0, Math.min(h4Idx + 1, h4Data.length)));
-
-            const d1Idx = Math.floor(i / RATIO_D1);
+            const d1Idx = Math.floor(i / 288);
             if (d1Idx < 15) continue;
             const rD1 = analyzeTimeframe(d1Data.slice(0, Math.min(d1Idx + 1, d1Data.length)));
-
             const results = { D1: rD1, H4: rH4, H1: rH1, M15: rM15, M5: rM5 };
             const synthesis = synthesizeTopDown(results);
             if (!synthesis || synthesis.signal === 'ATTENDRE') continue;
-
             const entryR = rM5;
             if (!(entryR.obs && entryR.obs.some(o => o.displacement))) continue;
-
             const currentPrice = m5Subset[m5Subset.length - 1].close;
             const levels = computeSMCLevels(results, synthesis, currentPrice, entryR);
             const smcScore = computeSMCScore(results, synthesis, levels);
             if (smcScore.total < minScore) continue;
-
             const rrNum = parseFloat(levels.riskReward.replace('1:', ''));
             if (isNaN(rrNum) || rrNum < minRR) continue;
-
             const dir = synthesis.signal === 'ACHAT' ? 1 : -1;
-            const entryReal = dir > 0 ? levels.entryPrice + (SPREAD_PIPS / 2 + SLIPPAGE_PIPS) * specs.pipValue
-                                       : levels.entryPrice - (SPREAD_PIPS / 2 + SLIPPAGE_PIPS) * specs.pipValue;
-            const slReal = levels.slPrice;
-            const tp1Real = levels.tp1Price;
-            const tp2Real = levels.tp2Price;
-
-            let result = null, exitPrice = null, exitIdx = null;
-            let halfClosed = false;
-            let pnlDollars = 0;
+            const entryReal = dir > 0 ? levels.entryPrice + (SPREAD_PIPS / 2 + SLIPPAGE_PIPS) * specs.pipValue : levels.entryPrice - (SPREAD_PIPS / 2 + SLIPPAGE_PIPS) * specs.pipValue;
+            const slReal = levels.slPrice, tp1Real = levels.tp1Price, tp2Real = levels.tp2Price;
+            let result = null, exitPrice = null, exitIdx = null, halfClosed = false, pnlDollars = 0;
             const riskAmount = equity * (riskPct / 100);
-
             for (let k = i + 1; k < Math.min(i + 200, m5Data.length); k++) {
                 const c = m5Data[k];
                 const hitTP1 = dir > 0 ? c.high >= tp1Real : c.low <= tp1Real;
                 const hitTP2 = dir > 0 ? c.high >= tp2Real : c.low <= tp2Real;
                 const hitSL = dir > 0 ? c.low <= slReal : c.high >= slReal;
-
                 if (hitTP1 && !halfClosed) {
                     const halfRisk = riskAmount * 0.5;
                     const rewardR1 = Math.abs(tp1Real - entryReal) / Math.abs(entryReal - slReal);
-                    pnlDollars += halfRisk * rewardR1;
-                    halfClosed = true;
+                    pnlDollars += halfRisk * rewardR1; halfClosed = true;
                 }
-                if (hitSL) {
-                    if (halfClosed) { result = 'be'; exitPrice = entryReal; }
-                    else { pnlDollars += -riskAmount; result = 'sl'; exitPrice = slReal; }
-                    exitIdx = k; break;
-                }
+                if (hitSL) { if (halfClosed) { result = 'be'; exitPrice = entryReal; } else { pnlDollars += -riskAmount; result = 'sl'; exitPrice = slReal; } exitIdx = k; break; }
                 if (hitTP2) {
                     const rewardR2 = Math.abs(tp2Real - entryReal) / Math.abs(entryReal - slReal);
-                    if (halfClosed) pnlDollars += riskAmount * 0.5 * rewardR2;
-                    else pnlDollars += riskAmount * rewardR2;
+                    if (halfClosed) pnlDollars += riskAmount * 0.5 * rewardR2; else pnlDollars += riskAmount * rewardR2;
                     result = 'tp'; exitPrice = tp2Real; exitIdx = k; break;
                 }
             }
-
             if (result === null) continue;
-
             const sizeResult = computePositionSizeBrokerGrade(equity, riskPct, entryReal, slReal, symbol);
             const lots = parseFloat(sizeResult.size) || 0.01;
-            const commission = COMMISSION_PER_LOT * lots * 2;
-            pnlDollars -= commission;
-
+            pnlDollars -= COMMISSION_PER_LOT * lots * 2;
             equity += pnlDollars;
             equityCurve.push(equity);
-
-            trades.push({
-                idx: i, entryIdx: i, exitIdx: exitIdx,
-                direction: synthesis.signal,
-                entry: entryReal, sl: slReal, tp: tp2Real, exitPrice: exitPrice,
-                result: result,
-                pnlDollars: parseFloat(pnlDollars.toFixed(2)),
-                equity: parseFloat(equity.toFixed(2)),
-                smcScore: smcScore.total,
-                rrTarget: rrNum, lots
-            });
-
+            trades.push({ idx: i, entryIdx: i, exitIdx, direction: synthesis.signal, entry: entryReal, sl: slReal, tp: tp2Real, exitPrice, result, pnlDollars: parseFloat(pnlDollars.toFixed(2)), equity: parseFloat(equity.toFixed(2)), smcScore: smcScore.total, rrTarget: rrNum, lots });
             const progress = ((i - MIN_BARS_BEFORE) / (m5Data.length - MIN_BARS_BEFORE - 30)) * 100;
             $('bt-progress-fill').style.width = progress + '%';
             $('bt-progress-text').textContent = 'M5 #' + i + ' / ' + (m5Data.length - 30) + ' · ' + trades.length + ' trades';
-
             if (i % 20 === 0) await sleep(0);
         }
-
         const stats = computeBacktestStats(trades, capitalInit, equity);
         window._lastBacktestTrades = trades;
         window._lastBacktestStats = stats;
         renderBacktestResults(stats, trades, equityCurve);
-
         toast('Backtest Top-Down terminé : ' + trades.length + ' trades', 'success', 4000);
     } catch (e) {
         log('Erreur backtest : ' + e.message);
@@ -1928,7 +1748,6 @@ async function runBacktest() {
         $('bt-progress-text').style.display = 'none';
     }
 }
-
 function computeBacktestStats(trades, capitalInit, finalEquity) {
     if (!trades.length) return { total: 0, wins: 0, losses: 0, be: 0, winrate: 0, totalR: 0, avgR: 0, pnl: 0, pnlPct: 0, maxDD: 0, profitFactor: 0, sharpe: 0, capitalInit, finalEquity, avgScore: 0 };
     const wins = trades.filter(t => t.result === 'tp').length;
@@ -1938,21 +1757,13 @@ function computeBacktestStats(trades, capitalInit, finalEquity) {
     const winrate = decided > 0 ? Math.round(wins / decided * 100) : 0;
     let totalR = 0;
     for (const t of trades) {
-        const risk = Math.abs(t.entry - t.sl);
-        const reward = Math.abs(t.exitPrice - t.entry);
-        if (t.result === 'tp') totalR += reward / risk;
-        else if (t.result === 'be') totalR += 0;
-        else totalR -= 1;
+        const risk = Math.abs(t.entry - t.sl), reward = Math.abs(t.exitPrice - t.entry);
+        if (t.result === 'tp') totalR += reward / risk; else if (t.result === 'be') totalR += 0; else totalR -= 1;
     }
     const avgR = totalR / trades.length;
-    const pnl = finalEquity - capitalInit;
-    const pnlPct = (pnl / capitalInit) * 100;
+    const pnl = finalEquity - capitalInit, pnlPct = (pnl / capitalInit) * 100;
     let peak = capitalInit, maxDD = 0;
-    for (const t of trades) {
-        if (t.equity > peak) peak = t.equity;
-        const dd = (peak - t.equity) / peak * 100;
-        if (dd > maxDD) maxDD = dd;
-    }
+    for (const t of trades) { if (t.equity > peak) peak = t.equity; const dd = (peak - t.equity) / peak * 100; if (dd > maxDD) maxDD = dd; }
     const grossWin = trades.filter(t => t.pnlDollars > 0).reduce((s, t) => s + t.pnlDollars, 0);
     const grossLoss = Math.abs(trades.filter(t => t.pnlDollars < 0).reduce((s, t) => s + t.pnlDollars, 0));
     const profitFactor = grossLoss > 0 ? (grossWin / grossLoss) : (grossWin > 0 ? 999 : 0);
@@ -1962,20 +1773,8 @@ function computeBacktestStats(trades, capitalInit, finalEquity) {
     const stdDev = Math.sqrt(variance);
     const sharpe = stdDev > 0 ? (avgReturn / stdDev) * Math.sqrt(trades.length) : 0;
     const avgScore = trades.reduce((s, t) => s + (t.smcScore || 0), 0) / trades.length;
-    return {
-        total: trades.length, wins, losses, be, winrate,
-        totalR: parseFloat(totalR.toFixed(2)),
-        avgR: parseFloat(avgR.toFixed(2)),
-        pnl: parseFloat(pnl.toFixed(2)),
-        pnlPct: parseFloat(pnlPct.toFixed(2)),
-        maxDD: parseFloat(maxDD.toFixed(2)),
-        profitFactor: parseFloat(profitFactor.toFixed(2)),
-        sharpe: parseFloat(sharpe.toFixed(2)),
-        capitalInit, finalEquity: parseFloat(finalEquity.toFixed(2)),
-        avgScore: parseFloat(avgScore.toFixed(1))
-    };
+    return { total: trades.length, wins, losses, be, winrate, totalR: parseFloat(totalR.toFixed(2)), avgR: parseFloat(avgR.toFixed(2)), pnl: parseFloat(pnl.toFixed(2)), pnlPct: parseFloat(pnlPct.toFixed(2)), maxDD: parseFloat(maxDD.toFixed(2)), profitFactor: parseFloat(profitFactor.toFixed(2)), sharpe: parseFloat(sharpe.toFixed(2)), capitalInit, finalEquity: parseFloat(finalEquity.toFixed(2)), avgScore: parseFloat(avgScore.toFixed(1)) };
 }
-
 function renderBacktestResults(stats, trades, equityCurve) {
     $('bt-results-section').style.display = 'block';
     $('bt-stats').innerHTML =
@@ -2000,73 +1799,39 @@ function renderBacktestResults(stats, trades, equityCurve) {
             '<span>' + t.direction + ' @ ' + formatPrice(t.entry) + ' → ' + formatPrice(t.exitPrice) + '</span>' +
             '<span>' + (t.result === 'tp' ? '✅ TP' : t.result === 'be' ? '⚖️ BE' : '❌ SL') + '</span>' +
             '<span style="text-align:right;color:' + (t.pnlDollars >= 0 ? 'var(--success)' : 'var(--error)') + ';">' + (t.pnlDollars > 0 ? '+' : '') + t.pnlDollars + '€</span>' +
-        '</div>'
-    ).join('');
+        '</div>').join('');
 }
-
 function drawEquityCurve(canvas, equityCurve) {
     if (!canvas) return;
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
+    canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
     const ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr);
     const W = rect.width, H = rect.height;
     const isDark = document.body.classList.contains('dark');
     ctx.clearRect(0, 0, W, H);
-    if (equityCurve.length < 2) {
-        ctx.fillStyle = isDark ? '#6b7280' : '#9ca3af';
-        ctx.font = '13px -apple-system, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Pas assez de données', W/2, H/2);
-        return;
-    }
+    if (equityCurve.length < 2) { ctx.fillStyle = isDark ? '#6b7280' : '#9ca3af'; ctx.font = '13px -apple-system, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Pas assez de données', W/2, H/2); return; }
     const margin = { top: 20, right: 20, bottom: 30, left: 50 };
-    const plotW = W - margin.left - margin.right;
-    const plotH = H - margin.top - margin.bottom;
-    const minV = Math.min(...equityCurve);
-    const maxV = Math.max(...equityCurve);
+    const plotW = W - margin.left - margin.right, plotH = H - margin.top - margin.bottom;
+    const minV = Math.min(...equityCurve), maxV = Math.max(...equityCurve);
     const xScale = i => margin.left + (i / (equityCurve.length - 1)) * plotW;
     const yScale = v => margin.top + plotH - ((v - minV) / Math.max(1, maxV - minV)) * plotH;
-    ctx.strokeStyle = isDark ? '#2d3744' : '#e5e7eb';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = isDark ? '#2d3744' : '#e5e7eb'; ctx.lineWidth = 1;
     ctx.beginPath();
-    for (let i = 0; i <= 4; i++) {
-        const y = margin.top + i * plotH / 4;
-        ctx.moveTo(margin.left, y); ctx.lineTo(margin.left + plotW, y);
-    }
+    for (let i = 0; i <= 4; i++) { const y = margin.top + i * plotH / 4; ctx.moveTo(margin.left, y); ctx.lineTo(margin.left + plotW, y); }
     ctx.stroke();
-    ctx.fillStyle = isDark ? '#9ca3af' : '#6b7280';
-    ctx.font = '10px -apple-system, sans-serif';
-    ctx.textAlign = 'right';
-    for (let i = 0; i <= 4; i++) {
-        const val = maxV - (i * (maxV - minV) / 4);
-        const y = margin.top + i * plotH / 4;
-        ctx.fillText(val.toFixed(0) + '€', margin.left - 6, y + 3);
-    }
-    const finalV = equityCurve[equityCurve.length - 1];
-    const startV = equityCurve[0];
-    ctx.beginPath();
-    ctx.moveTo(xScale(0), yScale(startV));
+    ctx.fillStyle = isDark ? '#9ca3af' : '#6b7280'; ctx.font = '10px -apple-system, sans-serif'; ctx.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) { const val = maxV - (i * (maxV - minV) / 4); ctx.fillText(val.toFixed(0) + '€', margin.left - 6, margin.top + i * plotH / 4 + 3); }
+    const finalV = equityCurve[equityCurve.length - 1], startV = equityCurve[0];
+    ctx.beginPath(); ctx.moveTo(xScale(0), yScale(startV));
     equityCurve.forEach((v, i) => ctx.lineTo(xScale(i), yScale(v)));
-    ctx.lineTo(xScale(equityCurve.length - 1), yScale(minV));
-    ctx.lineTo(xScale(0), yScale(minV));
-    ctx.closePath();
-    ctx.fillStyle = finalV >= startV ? 'rgba(22,163,74,0.15)' : 'rgba(220,38,38,0.15)';
-    ctx.fill();
+    ctx.lineTo(xScale(equityCurve.length - 1), yScale(minV)); ctx.lineTo(xScale(0), yScale(minV)); ctx.closePath();
+    ctx.fillStyle = finalV >= startV ? 'rgba(22,163,74,0.15)' : 'rgba(220,38,38,0.15)'; ctx.fill();
     ctx.beginPath();
-    equityCurve.forEach((v, i) => {
-        const x = xScale(i), y = yScale(v);
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-    });
-    ctx.strokeStyle = finalV >= startV ? '#16a34a' : '#dc2626';
-    ctx.lineWidth = 2.5;
-    ctx.lineJoin = 'round';
-    ctx.stroke();
-    ctx.fillStyle = isDark ? '#e8eaed' : '#1a1a1a';
-    ctx.font = 'bold 11px -apple-system, sans-serif';
-    ctx.textAlign = 'left';
+    equityCurve.forEach((v, i) => { const x = xScale(i), y = yScale(v); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+    ctx.strokeStyle = finalV >= startV ? '#16a34a' : '#dc2626'; ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.stroke();
+    ctx.fillStyle = isDark ? '#e8eaed' : '#1a1a1a'; ctx.font = 'bold 11px -apple-system, sans-serif'; ctx.textAlign = 'left';
     ctx.fillText('Courbe d\'equity (' + (equityCurve.length - 1) + ' trades)', margin.left, 14);
 }
 
@@ -2080,205 +1845,109 @@ function drawCandlesChart(candles, analysis, tfLabel) {
     if ($tfLabel) $tfLabel.textContent = tfLabel;
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
+    canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
     const ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr);
     const W = rect.width, H = rect.height;
     const isDark = document.body.classList.contains('dark');
     ctx.clearRect(0, 0, W, H);
-    if (!candles || candles.length < 10) {
-        ctx.fillStyle = isDark ? '#6b7280' : '#9ca3af';
-        ctx.font = '13px -apple-system, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Pas assez de bougies', W/2, H/2);
-        return;
-    }
+    if (!candles || candles.length < 10) { ctx.fillStyle = isDark ? '#6b7280' : '#9ca3af'; ctx.font = '13px -apple-system, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Pas assez de bougies', W/2, H/2); return; }
     const visible = candles.slice(-60);
     const margin = { top: 10, right: 60, bottom: 20, left: 10 };
-    const plotW = W - margin.left - margin.right;
-    const plotH = H - margin.top - margin.bottom;
-    const allHigh = Math.max(...visible.map(c => c.high));
-    const allLow = Math.min(...visible.map(c => c.low));
+    const plotW = W - margin.left - margin.right, plotH = H - margin.top - margin.bottom;
+    const allHigh = Math.max(...visible.map(c => c.high)), allLow = Math.min(...visible.map(c => c.low));
     const padding = (allHigh - allLow) * 0.05;
-    const yMax = allHigh + padding;
-    const yMin = allLow - padding;
-    const candleWidth = plotW / visible.length;
-    const bodyWidth = candleWidth * 0.6;
+    const yMax = allHigh + padding, yMin = allLow - padding;
+    const candleWidth = plotW / visible.length, bodyWidth = candleWidth * 0.6;
     const xScale = i => margin.left + i * candleWidth + candleWidth / 2;
     const yScale = p => margin.top + plotH - ((p - yMin) / (yMax - yMin)) * plotH;
-    ctx.strokeStyle = isDark ? '#2d3744' : '#e5e7eb';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = isDark ? '#2d3744' : '#e5e7eb'; ctx.lineWidth = 1;
     ctx.beginPath();
-    for (let i = 0; i <= 4; i++) {
-        const y = margin.top + i * plotH / 4;
-        ctx.moveTo(margin.left, y); ctx.lineTo(margin.left + plotW, y);
-    }
+    for (let i = 0; i <= 4; i++) { const y = margin.top + i * plotH / 4; ctx.moveTo(margin.left, y); ctx.lineTo(margin.left + plotW, y); }
     ctx.stroke();
-    ctx.fillStyle = isDark ? '#9ca3af' : '#6b7280';
-    ctx.font = '9px -apple-system, sans-serif';
-    ctx.textAlign = 'left';
-    for (let i = 0; i <= 4; i++) {
-        const price = yMax - (i * (yMax - yMin) / 4);
-        const y = margin.top + i * plotH / 4;
-        ctx.fillText(formatPrice(price), margin.left + plotW + 4, y + 3);
-    }
+    ctx.fillStyle = isDark ? '#9ca3af' : '#6b7280'; ctx.font = '9px -apple-system, sans-serif'; ctx.textAlign = 'left';
+    for (let i = 0; i <= 4; i++) { const price = yMax - (i * (yMax - yMin) / 4); ctx.fillText(formatPrice(price), margin.left + plotW + 4, margin.top + i * plotH / 4 + 3); }
     const visibleStartIdx = candles.length - visible.length;
     if (analysis && analysis.obs) {
         for (const ob of analysis.obs) {
             if (ob.index < visibleStartIdx) continue;
             const xPos = xScale(ob.index - visibleStartIdx);
-            const obColor = ob.type === 'bull' ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)';
-            const obBorder = ob.type === 'bull' ? 'rgba(34,197,94,0.8)' : 'rgba(239,68,68,0.8)';
-            const yTop = yScale(ob.top);
-            const yBottom = yScale(ob.bottom);
-            ctx.fillStyle = obColor;
+            const yTop = yScale(ob.top), yBottom = yScale(ob.bottom);
+            ctx.fillStyle = ob.type === 'bull' ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)';
             ctx.fillRect(xPos - candleWidth * 3, yTop, candleWidth * 6, yBottom - yTop);
-            ctx.strokeStyle = obBorder;
+            ctx.strokeStyle = ob.type === 'bull' ? 'rgba(34,197,94,0.8)' : 'rgba(239,68,68,0.8)';
             ctx.lineWidth = ob.freshness === 'fresh' ? 2 : 1;
             ctx.strokeRect(xPos - candleWidth * 3, yTop, candleWidth * 6, yBottom - yTop);
         }
     }
-    if (analysis && analysis.fvgs) {
-        for (const fvg of analysis.fvgs) {
-            if (fvg.index < visibleStartIdx) continue;
-            const xPos = xScale(fvg.index - visibleStartIdx);
-            const fvgColor = fvg.type === 'bull' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)';
-            const yTop = yScale(fvg.top);
-            const yBottom = yScale(fvg.bottom);
-            ctx.fillStyle = fvgColor;
-            ctx.fillRect(xPos - candleWidth * 2, yTop, candleWidth * 4, yBottom - yTop);
-            ctx.strokeStyle = 'rgba(168,85,247,0.6)';
-            ctx.setLineDash([3, 2]);
-            ctx.strokeRect(xPos - candleWidth * 2, yTop, candleWidth * 4, yBottom - yTop);
-            ctx.setLineDash([]);
-        }
-    }
     visible.forEach((c, i) => {
         const x = xScale(i);
-        const openY = yScale(c.open);
-        const closeY = yScale(c.close);
-        const highY = yScale(c.high);
-        const lowY = yScale(c.low);
-        const bullish = c.close >= c.open;
-        const color = bullish ? '#16a34a' : '#dc2626';
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(x, highY);
-        ctx.lineTo(x, lowY);
-        ctx.stroke();
+        const openY = yScale(c.open), closeY = yScale(c.close), highY = yScale(c.high), lowY = yScale(c.low);
+        const color = c.close >= c.open ? '#16a34a' : '#dc2626';
+        ctx.strokeStyle = color; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x, highY); ctx.lineTo(x, lowY); ctx.stroke();
         ctx.fillStyle = color;
-        const bodyTop = Math.min(openY, closeY);
-        const bodyHeight = Math.max(1, Math.abs(closeY - openY));
-        ctx.fillRect(x - bodyWidth / 2, bodyTop, bodyWidth, bodyHeight);
+        ctx.fillRect(x - bodyWidth / 2, Math.min(openY, closeY), bodyWidth, Math.max(1, Math.abs(closeY - openY)));
     });
     if (analysis && analysis.sweeps) {
         for (const sweep of analysis.sweeps) {
             if (sweep.index < visibleStartIdx) continue;
-            const xPos = xScale(sweep.index - visibleStartIdx);
-            const yPos = yScale(sweep.level);
-            ctx.strokeStyle = sweep.tier === 'weekly' ? '#7c3aed' : '#f59e0b';
-            ctx.lineWidth = 2;
+            const xPos = xScale(sweep.index - visibleStartIdx), yPos = yScale(sweep.level);
+            ctx.strokeStyle = sweep.tier === 'weekly' ? '#7c3aed' : '#f59e0b'; ctx.lineWidth = 2;
             ctx.setLineDash([5, 3]);
-            ctx.beginPath();
-            ctx.moveTo(xPos - candleWidth * 4, yPos);
-            ctx.lineTo(xPos + candleWidth * 6, yPos);
-            ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(xPos - candleWidth * 4, yPos); ctx.lineTo(xPos + candleWidth * 6, yPos); ctx.stroke();
             ctx.setLineDash([]);
         }
     }
     if (analysis && analysis.levels) {
-        const levels = analysis.levels;
-        const drawLevelLine = (price, color, label, dash) => {
+        const drawLevel = (price, color, label, dash) => {
             const y = yScale(price);
             if (y < margin.top || y > margin.top + plotH) return;
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash(dash || [6, 3]);
-            ctx.beginPath();
-            ctx.moveTo(margin.left, y);
-            ctx.lineTo(margin.left + plotW, y);
-            ctx.stroke();
+            ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.setLineDash(dash || [6, 3]);
+            ctx.beginPath(); ctx.moveTo(margin.left, y); ctx.lineTo(margin.left + plotW, y); ctx.stroke();
             ctx.setLineDash([]);
-            ctx.fillStyle = color;
-            ctx.font = 'bold 9px -apple-system, sans-serif';
-            ctx.textAlign = 'right';
+            ctx.fillStyle = color; ctx.font = 'bold 9px -apple-system, sans-serif'; ctx.textAlign = 'right';
             ctx.fillText(label, margin.left + plotW - 4, y - 3);
         };
-        drawLevelLine(levels.entryPrice, '#2563eb', 'Entrée');
-        drawLevelLine(levels.slPrice, '#dc2626', 'SL');
-        if (levels.tp2Price && !isNaN(levels.tp2Price)) drawLevelLine(levels.tp2Price, '#16a34a', 'TP2');
-        if (levels.tp1Price && !isNaN(levels.tp1Price) && levels.tp1Price !== levels.tp2Price) drawLevelLine(levels.tp1Price, '#22c55e', 'TP1', [3, 3]);
+        drawLevel(analysis.levels.entryPrice, '#2563eb', 'Entrée');
+        drawLevel(analysis.levels.slPrice, '#dc2626', 'SL');
+        if (analysis.levels.tp2Price && !isNaN(analysis.levels.tp2Price)) drawLevel(analysis.levels.tp2Price, '#16a34a', 'TP2');
+        if (analysis.levels.tp1Price && !isNaN(analysis.levels.tp1Price)) drawLevel(analysis.levels.tp1Price, '#22c55e', 'TP1', [3, 3]);
     }
 }
 
 // ══════════════════════════════════════════════════════════════════
-// AUDIT IA DEEPSEEK
+// DEEPSEEK IA
 // ══════════════════════════════════════════════════════════════════
-function getDeepSeekKey() {
-    try { return (localStorage.getItem(STORAGE.deepseek) || '').trim(); } catch (e) { return ''; }
-}
+function getDeepSeekKey() { try { return (localStorage.getItem(STORAGE.deepseek) || '').trim(); } catch (e) { return ''; } }
 function saveDeepSeekKey() {
     const input = $('deepseek-key');
     if (!input) return;
     const key = input.value.trim();
-    if (key && !key.startsWith('sk-')) {
-        if (!confirm('La clé ne commence pas par "sk-". Continuer ?')) return;
-    }
+    if (key && !key.startsWith('sk-')) { if (!confirm('La clé ne commence pas par "sk-". Continuer ?')) return; }
     try { localStorage.setItem(STORAGE.deepseek, key); } catch (e) {}
     toast(key ? 'Clé DeepSeek enregistrée ✓' : 'Clé supprimée', key ? 'success' : 'warn');
 }
-
 async function callDeepSeek(prompt, options = {}) {
     const key = getDeepSeekKey();
     if (!key) throw new Error('Clé DeepSeek non configurée');
-    const systemPrompt = options.systemPrompt || `Tu es un analyste trader senior expert en Smart Money Concepts (SMC), avec 15+ ans d'expérience.
-
-MISSION :
-- Analyser en profondeur les setups SMC Top-Down (D1→H4→H1→M15→M5)
-- Vérifier la cohérence : D1 biais → H4 confirme → H1 zone → M15 confirmation → M5 trigger
-- Vérifier ACHAT en Discount / VENTE en Premium
-- Proposer des pistes d'amélioration CONCRÈTES
-- Donner un score de qualité /100
-
-STYLE : Français professionnel, texte simple SANS markdown, exigeant et critique.`;
+    const systemPrompt = options.systemPrompt || `Tu es un analyste trader senior expert en SMC (Smart Money Concepts), 15+ ans d'expérience. Tu analyses en profondeur les setups Top-Down D1→H4→H1→M15→M5. Tu es exigeant, critique et tu proposes des améliorations concrètes. Français professionnel, texte simple SANS markdown.`;
     const res = await fetch(DEEPSEEK_API, {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            model: 'deepseek-reasoner',
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: prompt }
-            ],
-            max_tokens: options.maxTokens || 2000
-        })
+        body: JSON.stringify({ model: 'deepseek-reasoner', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: prompt }], max_tokens: options.maxTokens || 2000 })
     });
-    if (!res.ok) {
-        const err = await res.text();
-        throw new Error('HTTP ' + res.status + ' — ' + err.slice(0, 200));
-    }
+    if (!res.ok) { const err = await res.text(); throw new Error('HTTP ' + res.status + ' — ' + err.slice(0, 200)); }
     const data = await res.json();
     if (!data.choices || !data.choices[0]) throw new Error('Réponse invalide');
     return data.choices[0].message.content;
 }
-
 async function auditAnalysis(synthesis, levels, results, symbol) {
     if (!getDeepSeekKey()) return null;
     const entryR = results.M5 || results.M15;
     const smcScore = computeSMCScore(results, synthesis, levels);
     const status = getScoreStatus(smcScore.total);
-    const summary = {
-        symbol,
-        signal: synthesis.signal,
-        smc_score: smcScore.total,
-        smc_status: status.label,
-        smc_details: smcScore.details,
-        entry: levels.entry, sl: levels.sl, tp1: levels.tp1, tp2: levels.tp2,
-        rr: levels.riskReward,
-        topdown: synthesis.topDown
-    };
+    const summary = { symbol, signal: synthesis.signal, smc_score: smcScore.total, smc_status: status.label, smc_details: smcScore.details, entry: levels.entry, sl: levels.sl, tp1: levels.tp1, tp2: levels.tp2, rr: levels.riskReward, topdown: synthesis.topDown };
     const prompt = `Analyse STRATÉGIQUE Top-Down d'un setup SMC :
 
 ${JSON.stringify(summary, null, 2)}
@@ -2286,7 +1955,6 @@ ${JSON.stringify(summary, null, 2)}
 Rappel : D1 (biais) → H4 (structure) → H1 (analyse) → M15 (confirmation) → M5 (entrée). ACHAT en Discount de structure haussière, VENTE en Premium de structure baissière.
 
 Réponds en français, format texte SANS markdown, 6 sections numérotées :
-
 1. LECTURE DE LA CASCADE TOP-DOWN (3-4 phrases)
 2. VALIDATION LOGIQUE SMC (2-3 phrases)
 3. FORCES DU SETUP (3 puces avec •)
@@ -2296,8 +1964,7 @@ Réponds en français, format texte SANS markdown, 6 sections numérotées :
     try { return await callDeepSeek(prompt, { maxTokens: 2000 }); }
     catch (e) { return 'Erreur audit : ' + e.message; }
 }
-
-async function auditBacktest(stats, trades, symbol, tf) {
+async function auditBacktest(stats, trades, symbol) {
     if (!getDeepSeekKey()) return null;
     const scores = trades.map(t => t.smcScore).filter(s => s !== undefined);
     const avgScore = scores.length ? scores.reduce((s, v) => s + v, 0) / scores.length : 0;
@@ -2306,12 +1973,9 @@ async function auditBacktest(stats, trades, symbol, tf) {
     const lowScoreTrades = trades.filter(t => t.smcScore < 75);
     const summary = {
         symbol, strategy: 'Top-Down D1→H4→H1→M15→M5',
-        total_trades: stats.total,
-        wins: stats.wins, losses: stats.losses, be: stats.be,
-        winrate: stats.winrate,
-        totalR: stats.totalR, avgR: stats.avgR,
-        pnlPct: stats.pnlPct, maxDD: stats.maxDD,
-        profitFactor: stats.profitFactor, sharpe: stats.sharpe,
+        total_trades: stats.total, wins: stats.wins, losses: stats.losses, be: stats.be,
+        winrate: stats.winrate, totalR: stats.totalR, avgR: stats.avgR, pnlPct: stats.pnlPct,
+        maxDD: stats.maxDD, profitFactor: stats.profitFactor, sharpe: stats.sharpe,
         avg_score: parseFloat(avgScore.toFixed(1)),
         distribution: {
             high_85plus: { count: highScoreTrades.length, winrate: highScoreTrades.length ? Math.round(highScoreTrades.filter(t => t.result === 'tp').length / highScoreTrades.length * 100) : 0 },
@@ -2319,14 +1983,11 @@ async function auditBacktest(stats, trades, symbol, tf) {
             low_below75: { count: lowScoreTrades.length, winrate: lowScoreTrades.length ? Math.round(lowScoreTrades.filter(t => t.result === 'tp').length / lowScoreTrades.length * 100) : 0 }
         }
     };
-    const prompt = `Analyse STRATÉGIQUE des résultats d'un backtest SMC Top-Down :
+    const prompt = `Analyse STRATÉGIQUE des résultats d'un backtest SMC Top-Down sur ${symbol} :
 
 ${JSON.stringify(summary, null, 2)}
 
-Backtest avec spread, slippage, commission, TP1/TP2 partiels.
-
 Réponds en français, format texte SANS markdown, 7 sections numérotées :
-
 1. LECTURE GLOBALE (3-4 phrases)
 2. COMPARAISON AUX ATTENTES SMC (2-3 phrases)
 3. IMPACT DU SEUIL DE VALIDATION (3 puces avec •)
@@ -2337,22 +1998,159 @@ Réponds en français, format texte SANS markdown, 7 sections numérotées :
     try { return await callDeepSeek(prompt, { maxTokens: 2500 }); }
     catch (e) { return 'Erreur audit backtest : ' + e.message; }
 }
-
 async function testDeepSeek() {
     const key = getDeepSeekKey();
     if (!key) { toast('Enregistre d\'abord ta clé DeepSeek', 'warn'); return; }
     toast('Test en cours… (30 sec)', 'warn', 35000);
-    try {
-        const reply = await callDeepSeek('Réponds juste "OK".', { maxTokens: 100 });
-        toast('DeepSeek connecté ✓', 'success', 3500);
-        log('Test DeepSeek : ' + reply);
-    } catch (e) {
-        toast('Erreur : ' + e.message.slice(0, 60), 'error', 5000);
-    }
+    try { const reply = await callDeepSeek('Réponds juste "OK".', { maxTokens: 100 }); toast('DeepSeek connecté ✓', 'success', 3500); log('Test : ' + reply); }
+    catch (e) { toast('Erreur : ' + e.message.slice(0, 60), 'error', 5000); }
 }
 
+// ✅ PHASE 6 — AUDIT HEBDOMADAIRE
+async function runWeeklyAudit() {
+    if (!getDeepSeekKey()) { toast('Configure DeepSeek d\'abord', 'warn'); return; }
+    const box = loadAnalysisBox();
+    const now = Date.now();
+    const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+    const thisWeek = box.filter(a => a.savedAt >= oneWeekAgo);
+    if (thisWeek.length < 3) { toast('Pas assez d\'analyses cette semaine (min 3)', 'warn', 3500); return; }
+    const btn = $('weekly-audit-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '🧠 Audit IA en cours… (60-90s)'; }
+    try {
+        const summary = { period: 'Cette semaine', total_analyses: thisWeek.length, by_symbol: {}, by_signal: { ACHAT: 0, VENTE: 0, ATTENDRE: 0 }, avg_score: 0, avg_confidence: 0, avg_rr: 0, top_down_compliance: { d1_defined: 0, h4_confirms: 0, h1_zone_ok: 0, m15_confirms: 0, m5_triggers: 0 }, outcomes: { tp: 0, sl: 0, be: 0, pending: 0 }, best_setups: [], worst_setups: [] };
+        let totalScore = 0, totalConf = 0, totalRR = 0;
+        for (const a of thisWeek) {
+            if (!summary.by_symbol[a.symbol]) summary.by_symbol[a.symbol] = 0;
+            summary.by_symbol[a.symbol]++;
+            if (summary.by_signal[a.signal] !== undefined) summary.by_signal[a.signal]++;
+            totalScore += a.smcScore || 0;
+            totalConf += a.confidence || 0;
+            totalRR += parseFloat((a.levels?.rr || '').replace('1:', '')) || 0;
+            if (a.topDown) {
+                if (a.topDown.d1Bias !== 'range') summary.top_down_compliance.d1_defined++;
+                if (a.topDown.h4Confirms) summary.top_down_compliance.h4_confirms++;
+                if (a.topDown.h1Zone === 'discount' || a.topDown.h1Zone === 'premium') summary.top_down_compliance.h1_zone_ok++;
+                if (a.topDown.m15Confirms) summary.top_down_compliance.m15_confirms++;
+                if (a.topDown.m5Triggers) summary.top_down_compliance.m5_triggers++;
+            }
+            if (a.outcome === 'tp') summary.outcomes.tp++; else if (a.outcome === 'sl') summary.outcomes.sl++; else if (a.outcome === 'be') summary.outcomes.be++; else summary.outcomes.pending++;
+            if (a.smcScore >= 85) summary.best_setups.push({ symbol: a.symbol, signal: a.signal, score: a.smcScore, reason: a.orientationReason });
+            if (a.smcScore < 80 && a.outcome === 'sl') summary.worst_setups.push({ symbol: a.symbol, signal: a.signal, score: a.smcScore, reason: a.orientationReason });
+        }
+        summary.avg_score = parseFloat((totalScore / thisWeek.length).toFixed(1));
+        summary.avg_confidence = parseFloat((totalConf / thisWeek.length).toFixed(1));
+        summary.avg_rr = parseFloat((totalRR / thisWeek.length).toFixed(2));
+        summary.best_setups = summary.best_setups.slice(0, 5);
+        summary.worst_setups = summary.worst_setups.slice(0, 5);
+        const prompt = `Tu es un analyste trader senior expert en SMC. Voici le résumé de la semaine de trading d'un utilisateur :
+
+${JSON.stringify(summary, null, 2)}
+
+CONTEXTE :
+- Top-Down : D1 (biais) → H4 (structure) → H1 (analyse) → M15 (confirmation) → M5 (entrée)
+- ACHAT en Discount de structure haussière, VENTE en Premium de structure baissière
+- Seuil SMC actuel : ${getScanConfig().minScore}/100
+- 3 instruments : EUR/USD, XAU/USD, BTC/USD
+
+MISSION : AUDIT HEBDOMADAIRE STRATÉGIQUE + RECOMMANDATIONS CONCRÈTES.
+
+Réponds en français, format texte SANS markdown, en 7 sections numérotées :
+1. SYNTHÈSE DE LA SEMAINE (3-4 phrases)
+2. PERFORMANCE DU SEUIL ACTUEL (2-3 phrases)
+3. COMPLIANCE TOP-DOWN (3 puces avec •)
+4. FORCES IDENTIFIÉES (3 puces avec •)
+5. FAIBLESSES IDENTIFIÉES (3 puces avec •)
+6. RECOMMANDATIONS CONCRÈTES (5 puces avec •) : modifier seuil, ajouter/retirer critère, changer TP1/TP2, prioriser instruments, ajuster R/R
+7. VERDICT HEBDOMADAIRE (note /100 + 3 actions prioritaires)`;
+        const auditText = await callDeepSeek(prompt, { maxTokens: 3000 });
+        const weeklyAudits = JSON.parse(localStorage.getItem(STORAGE.weeklyAudits) || '[]');
+        weeklyAudits.unshift({ week: new Date().toISOString().slice(0, 10), period: 'Semaine du ' + new Date(oneWeekAgo).toLocaleDateString('fr-FR'), totalAnalyses: thisWeek.length, avgScore: summary.avg_score, audit: auditText, summary, createdAt: Date.now() });
+        if (weeklyAudits.length > 20) weeklyAudits.length = 20;
+        try { localStorage.setItem(STORAGE.weeklyAudits, JSON.stringify(weeklyAudits)); } catch (e) {}
+        renderWeeklyAudit(auditText, summary);
+        renderWeeklyAuditsHistory();
+        toast('Audit hebdomadaire terminé ✓', 'success', 4000);
+    } catch (e) {
+        log('Erreur audit hebdo : ' + e.message);
+        toast('Erreur audit : ' + e.message.slice(0, 60), 'error', 5000);
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '🧠 Lancer l\'audit hebdomadaire IA'; }
+    }
+}
+function renderWeeklyAudit(auditText, summary) {
+    const el = $('weekly-audit-result');
+    if (!el) return;
+    el.style.display = 'block';
+    el.innerHTML =
+        '<div style="padding:0.6rem;background:var(--panel-2);border-radius:8px;margin-bottom:0.5rem;">' +
+            '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem;margin-bottom:0.5rem;">' +
+                '<div class="stat-card"><div class="st-label">Analyses</div><div class="st-value neutral">' + summary.total_analyses + '</div></div>' +
+                '<div class="stat-card"><div class="st-label">Score moy.</div><div class="st-value neutral">' + summary.avg_score + '</div></div>' +
+                '<div class="stat-card"><div class="st-label">R/R moy.</div><div class="st-value neutral">' + summary.avg_rr + '</div></div>' +
+            '</div>' +
+        '</div>' +
+        '<div class="ai-response">' + esc(auditText) + '</div>' +
+        '<button class="btn-secondary" id="extract-recommendations-btn" style="width:100%;margin-top:0.6rem;">📋 Extraire les recommandations à appliquer</button>' +
+        '<div id="recommendations-panel" style="display:none;margin-top:0.6rem;"></div>';
+    setTimeout(() => { $('extract-recommendations-btn')?.addEventListener('click', () => extractRecommendations(auditText)); }, 100);
+}
+function extractRecommendations(auditText) {
+    const panel = $('recommendations-panel');
+    if (!panel) return;
+    panel.style.display = 'block';
+    panel.innerHTML =
+        '<div style="padding:0.6rem;background:var(--panel-2);border-radius:8px;">' +
+            '<div style="font-weight:700;margin-bottom:0.5rem;">⚙️ Recommandations applicables :</div>' +
+            '<div style="display:grid;gap:0.4rem;">' +
+                '<button class="btn-secondary" onclick="applyRecommendation(\'seuil-85\')">📈 Passer le seuil à 85</button>' +
+                '<button class="btn-secondary" onclick="applyRecommendation(\'seuil-75\')">📉 Baisser le seuil à 75</button>' +
+                '<button class="btn-secondary" onclick="applyRecommendation(\'rr-2.5\')">⚖️ R/R minimum à 1:2.5</button>' +
+                '<button class="btn-secondary btn-success" onclick="showIATextRecommendations()">🧠 Voir les recommandations IA brutes</button>' +
+            '</div>' +
+        '</div>';
+}
+window.applyRecommendation = function(type) {
+    const config = getScanConfig();
+    switch (type) {
+        case 'seuil-85': config.minScore = 85; $('scan-conf').value = 85; $('scan-conf-label').textContent = 85; toast('Seuil passé à 85 ✓', 'success'); break;
+        case 'seuil-75': config.minScore = 75; $('scan-conf').value = 75; $('scan-conf-label').textContent = 75; toast('Seuil passé à 75 ✓', 'success'); break;
+        case 'rr-2.5': config.minRR = 2.5; $('scan-rr').value = 2.5; toast('R/R minimum à 1:2.5 ✓', 'success'); break;
+    }
+    try { localStorage.setItem(STORAGE.scanConfig, JSON.stringify(config)); } catch (e) {}
+    renderThresholdsDisplay();
+};
+window.showIATextRecommendations = function() {
+    const audits = JSON.parse(localStorage.getItem(STORAGE.weeklyAudits) || '[]');
+    if (!audits.length) { toast('Aucun audit disponible', 'warn'); return; }
+    const modal = $('auto-trade-modal'), details = $('auto-trade-details');
+    if (!modal || !details) return;
+    details.innerHTML = '<div style="font-size:0.78rem;line-height:1.6;white-space:pre-wrap;max-height:60vh;overflow-y:auto;">' + esc(audits[0].audit) + '</div>';
+    modal.classList.add('visible');
+};
+function renderWeeklyAuditsHistory() {
+    const el = $('weekly-audits-history');
+    if (!el) return;
+    const audits = JSON.parse(localStorage.getItem(STORAGE.weeklyAudits) || '[]');
+    if (!audits.length) { el.innerHTML = '<div class="empty-state">Aucun audit hebdomadaire</div>'; return; }
+    el.innerHTML = audits.slice(0, 5).map((a, i) =>
+        '<div style="padding:0.5rem;background:var(--panel-2);border-radius:6px;margin-bottom:0.4rem;border-left:3px solid var(--info);">' +
+            '<div style="font-weight:700;font-size:0.8rem;">' + esc(a.period) + '</div>' +
+            '<div style="font-size:0.7rem;color:var(--ink-dim);">' + a.totalAnalyses + ' analyses · Score moy. ' + a.avgScore + '</div>' +
+            '<button class="btn-secondary" style="margin-top:0.3rem;font-size:0.65rem;" onclick="showSpecificAudit(' + i + ')">📄 Voir l\'audit</button>' +
+        '</div>').join('');
+}
+window.showSpecificAudit = function(idx) {
+    const audits = JSON.parse(localStorage.getItem(STORAGE.weeklyAudits) || '[]');
+    const audit = audits[idx];
+    if (!audit) return;
+    const modal = $('auto-trade-modal'), details = $('auto-trade-details');
+    if (!modal || !details) return;
+    details.innerHTML = '<div style="font-size:0.78rem;line-height:1.6;white-space:pre-wrap;max-height:60vh;overflow-y:auto;">' + esc(audit.audit) + '</div>';
+    modal.classList.add('visible');
+};
+
 // ══════════════════════════════════════════════════════════════════
-// TELEGRAM AUTOMATIQUE
+// TELEGRAM AUTOMATIQUE + SAUVEGARDE + AUDIT IA
 // ══════════════════════════════════════════════════════════════════
 async function autoSendToTelegram(synthesis, levels, results, symbol) {
     if (synthesis.signal === 'ATTENDRE') return;
@@ -2365,12 +2163,10 @@ async function autoSendToTelegram(synthesis, levels, results, symbol) {
     const now = Date.now();
     const ANTI_SPAM_MS = 30 * 60 * 1000;
     if (lastTelegramSent[key] && (now - lastTelegramSent[key]) < ANTI_SPAM_MS) return;
-
     const status = getScoreStatus(smcScore.total);
     const emoji = synthesis.signal === 'ACHAT' ? '🟢' : '🔴';
     const priorityEmoji = smcScore.total >= 85 ? '🔥🔥🔥' : smcScore.total >= 75 ? '🔥🔥' : '🔥';
-
-    let text = '🚨 *SIGNAL SMC TOP-DOWN v5.4* 🚨\n\n';
+    let text = '🚨 *SIGNAL SMC TOP-DOWN v5.5* 🚨\n\n';
     text += '📊 *' + symbol + '*\n';
     text += emoji + ' Signal : *' + synthesis.signal + '*\n';
     text += '🎯 SMC Score : *' + smcScore.total + '/100* ' + status.label + ' ' + priorityEmoji + '\n';
@@ -2380,10 +2176,10 @@ async function autoSendToTelegram(synthesis, levels, results, symbol) {
     if (synthesis.topDown) {
         const td = synthesis.topDown;
         text += '🧭 D1 : ' + (td.d1Bias === 'bullish' ? '📈' : td.d1Bias === 'bearish' ? '📉' : '↔️') + ' ' + td.d1Bias + '\n';
-        text += '🏛️ H4 : ' + (td.h4Confirms ? '✅' : '❌') + ' ' + td.h4Direction + '\n';
+        text += '🏛️ H4 : ' + (td.h4Confirms ? '✅' : '❌') + '\n';
         text += '🔍 H1 : ' + (td.h1Zone === 'discount' ? '💎 Discount' : '🔺 Premium') + '\n';
-        text += '✅ M15 : ' + (td.m15Confirms ? '✅' : '❌') + (td.m15HasMSS ? ' MSS' : '') + (td.m15HasSweep ? ' Sweep' : '') + '\n';
-        text += '🎯 M5 : ' + (td.m5Triggers ? '✅ Trigger' : '❌ Pas de trigger') + '\n';
+        text += '✅ M15 : ' + (td.m15Confirms ? '✅' : '❌') + '\n';
+        text += '🎯 M5 : ' + (td.m5Triggers ? '✅ Trigger' : '❌') + '\n';
     }
     text += '━━━━━━━━━━━━━━\n\n';
     text += '📥 Entrée : `' + levels.entry + '`\n';
@@ -2392,7 +2188,6 @@ async function autoSendToTelegram(synthesis, levels, results, symbol) {
     text += '🎯 TP2 : `' + levels.tp2 + '`\n';
     text += '⚖️ R/R : *' + levels.riskReward + '*\n\n';
     text += '🕐 ' + new Date().toLocaleString('fr-FR');
-
     const sent = await sendToAllTelegram(text);
     if (sent > 0) {
         lastTelegramSent[key] = now;
@@ -2401,6 +2196,37 @@ async function autoSendToTelegram(synthesis, levels, results, symbol) {
         addScanLog('✅ Telegram envoyé : ' + synthesis.signal + ' ' + symbol + ' (score ' + smcScore.total + ', ' + sent + ' compte(s))', 'success');
         renderAutoSendStats();
         proposeAutoTrade(synthesis, levels, results, symbol);
+    }
+    // ✅ PHASE 6 — Sauvegarde + Audit IA automatique
+    await saveAndAuditAnalysis(synthesis, levels, results, symbol, smcScore, sent);
+}
+
+async function saveAndAuditAnalysis(synthesis, levels, results, symbol, smcScore, telegramSent) {
+    const entryR = results.M5 || results.M15;
+    const analysis = {
+        symbol, signal: synthesis.signal, smcScore: smcScore.total,
+        smcDetails: smcScore.details, confidence: synthesis.confidence,
+        topDown: synthesis.topDown, orientationReason: synthesis.orientationReason,
+        levels: { entry: levels.entry, sl: levels.sl, tp1: levels.tp1, tp2: levels.tp2, rr: levels.riskReward },
+        setup: {
+            obTotal: (entryR.obs || []).length,
+            obFresh: (entryR.obs || []).filter(o => o.freshness === 'fresh').length,
+            obDisplaced: (entryR.obs || []).filter(o => o.displacement).length,
+            fvgTotal: (entryR.fvgs || []).length,
+            sweeps: (entryR.sweeps || []).length
+        },
+        atr: entryR.atr, zone: entryR.pd?.zone, zonePosition: entryR.pd?.position,
+        telegramSent, outcome: null, auditIA: null
+    };
+    const saved = addToAnalysisBox(analysis);
+    if (getDeepSeekKey()) {
+        auditAnalysis(synthesis, levels, results, symbol).then(auditText => {
+            if (auditText && !auditText.startsWith('Erreur')) {
+                updateAnalysisBoxEntry(saved.id, { auditIA: auditText, audited: true, auditedAt: Date.now() });
+                log('🤖 Audit IA sauvegardé');
+                renderAnalysisBoxStats();
+            }
+        }).catch(e => log('Erreur audit auto : ' + e.message));
     }
 }
 
@@ -2412,12 +2238,11 @@ function renderAutoSendStats() {
     if (!keys.length) { el.innerHTML = '<div style="color:var(--ink-dim);">Aucun envoi récent</div>'; return; }
     el.innerHTML = '<div style="margin-bottom:0.3rem;"><strong>Derniers envois (anti-spam 30 min) :</strong></div>' +
         keys.map(k => {
-            const parts = k.split('_');
-            const symbol = parts[0], direction = parts[1];
+            const parts = k.split('_'), symbol = parts[0], direction = parts[1];
             const elapsed = Math.round((Date.now() - sent[k]) / 60000);
             const remaining = Math.max(0, 30 - elapsed);
             return '<div style="padding:0.3rem;background:var(--panel-2);border-radius:4px;margin-bottom:0.2rem;">' +
-                '📤 <strong>' + symbol + '</strong> ' + direction + ' · il y a ' + elapsed + ' min' +
+                '📤 <strong>' + symbol + '</strong> ' + direction + ' · ' + elapsed + ' min' +
                 (remaining > 0 ? ' · <span style="color:var(--warn);">bloqué ' + remaining + ' min</span>' : ' · <span style="color:var(--success);">prêt</span>') +
             '</div>';
         }).join('');
@@ -2426,10 +2251,8 @@ function renderAutoSendStats() {
 function proposeAutoTrade(synthesis, levels, results, symbol) {
     const smcScore = computeSMCScore(results, synthesis, levels);
     if (!isSignalValid(smcScore.total)) return;
-    const modal = $('auto-trade-modal');
-    const details = $('auto-trade-details');
+    const modal = $('auto-trade-modal'), details = $('auto-trade-details');
     if (!modal || !details) return;
-    const entryR = results.M5 || results.M15;
     const status = getScoreStatus(smcScore.total);
     const direction = synthesis.signal === 'ACHAT' ? 'buy' : 'sell';
     const capital = parseFloat(localStorage.getItem('smc_capital') || '100');
@@ -2457,13 +2280,7 @@ function proposeAutoTrade(synthesis, levels, results, symbol) {
 function executeAutoTrade() {
     const data = window._pendingTrade;
     if (!data) return;
-    const trade = {
-        instrument: data.symbol, direction: data.direction,
-        entry: data.levels.entryPrice, sl: data.levels.slPrice, tp: data.levels.tpPrice,
-        size: data.sizeResult.size, capital: data.capital, risk: data.risk,
-        smcScore: data.smcScore, autoAdded: true
-    };
-    addTrade(trade);
+    addTrade({ instrument: data.symbol, direction: data.direction, entry: data.levels.entryPrice, sl: data.levels.slPrice, tp: data.levels.tpPrice, size: data.sizeResult.size, capital: data.capital, risk: data.risk, smcScore: data.smcScore, autoAdded: true });
     renderTrades(); renderStats();
     toast('✅ Position ajoutée au journal', 'success');
     window._pendingTrade = null;
@@ -2478,16 +2295,12 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
     const banner = $('signal-banner');
     banner.className = 'signal-banner ' + synthesis.signalClass;
     $('signal-value').textContent = synthesis.signal;
-
     const smcScore = computeSMCScore(results, synthesis, levels);
     const status = getScoreStatus(smcScore.total);
     const totalColor = status.color;
-
     $('signal-conf').innerHTML =
         '<div class="smc-score-container">' +
-            '<div class="smc-score-total" style="color:' + totalColor + ';">' +
-                status.emoji + ' SMC Score : ' + smcScore.total + '/100 ' + status.label +
-            '</div>' +
+            '<div class="smc-score-total" style="color:' + totalColor + ';">' + status.emoji + ' SMC Score : ' + smcScore.total + '/100 ' + status.label + '</div>' +
             '<div>├─ Structure&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ' + smcScore.details.structure + '/100</div>' +
             '<div>├─ Liquidité&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ' + smcScore.details.liquidity + '/100</div>' +
             '<div>├─ Displacement&nbsp;: ' + smcScore.details.displacement + '/100</div>' +
@@ -2498,127 +2311,62 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
             '<div>└─ Liq. hierarchy: ' + smcScore.details.liquidity_hierarchy + '/100</div>' +
             '<div class="score-note">' + status.action + ' (seuil : ' + getScanConfig().minScore + '/100)</div>' +
         '</div>';
-
     $('confidence-fill').style.width = smcScore.total + '%';
     $('confidence-fill').style.background = totalColor;
     $('signal-setup').innerHTML = '🧭 ' + (synthesis.orientationReason || 'Analyse Top-Down');
-
     const entryTF = 'M5';
     const entryR = results[entryTF] || results.M15 || results.H1;
-
-    // TF grid 5 cartes
-    const tfRoles = {
-        D1: { icon: '🧭', label: 'Biais' },
-        H4: { icon: '🏛️', label: 'Structure' },
-        H1: { icon: '🔍', label: 'Analyse' },
-        M15: { icon: '✅', label: 'Confirm' },
-        M5: { icon: '🎯', label: 'Entrée' }
-    };
+    const tfRoles = { D1: { icon: '🧭', label: 'Biais' }, H4: { icon: '🏛️', label: 'Structure' }, H1: { icon: '🔍', label: 'Analyse' }, M15: { icon: '✅', label: 'Confirm' }, M5: { icon: '🎯', label: 'Entrée' } };
     $('tf-grid').innerHTML = Object.keys(tfRoles).map(tf => {
         const r = results[tf];
         const role = tfRoles[tf];
         if (!r) return '<div class="tf-card range" style="opacity:0.4;"><div class="tf-name">' + role.icon + ' ' + tf + '</div><div class="tf-direction">—</div><div class="tf-detail">N/A</div></div>';
         const cls = r.direction === 'bullish' ? 'bull' : r.direction === 'bearish' ? 'bear' : 'range';
         const label = r.direction === 'bullish' ? '📈 Bull' : r.direction === 'bearish' ? '📉 Bear' : '↔️ Range';
-        return '<div class="tf-card ' + cls + '">' +
-            '<div class="tf-name">' + role.icon + ' ' + tf + '</div>' +
-            '<div class="tf-direction">' + label + '</div>' +
-            '<div class="tf-detail">' + role.label + '</div>' +
-        '</div>';
+        return '<div class="tf-card ' + cls + '"><div class="tf-name">' + role.icon + ' ' + tf + '</div><div class="tf-direction">' + label + '</div><div class="tf-detail">' + role.label + '</div></div>';
     }).join('');
-
-    // Cascade Top-Down
     const td = synthesis.topDown;
     if (td) {
         const tdEl = $('topdown-cascade');
         if (tdEl) {
             tdEl.innerHTML =
                 '<div style="font-size:0.78rem;line-height:1.8;">' +
-                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;margin-bottom:0.3rem;">' +
-                        '<strong>🧭 D1 Biais :</strong> ' +
-                        '<span class="smc-tag ' + (td.d1Bias === 'bullish' ? 'bull' : td.d1Bias === 'bearish' ? 'bear' : 'neutral') + '">' + td.d1Bias + '</span> (' + td.d1Strength + '%)' +
-                    '</div>' +
-                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;margin-bottom:0.3rem;">' +
-                        '<strong>🏛️ H4 Confirme :</strong> ' +
-                        (td.h4Confirms ? '<span class="smc-tag bull">✅ OUI</span>' : '<span class="smc-tag bear">❌ NON</span>') + ' (' + td.h4Direction + ')' +
-                    '</div>' +
-                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;margin-bottom:0.3rem;">' +
-                        '<strong>🔍 H1 Zone :</strong> ' +
-                        '<span class="smc-tag ' + (td.h1Zone === 'discount' ? 'bull' : td.h1Zone === 'premium' ? 'bear' : 'neutral') + '">' + td.h1Zone + '</span>' +
-                    '</div>' +
-                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;margin-bottom:0.3rem;">' +
-                        '<strong>✅ M15 Confirme :</strong> ' +
-                        (td.m15Confirms ? '<span class="smc-tag bull">✅ OUI</span>' : '<span class="smc-tag bear">❌ NON</span>') +
-                        (td.m15HasMSS ? ' <span class="smc-tag info">MSS</span>' : '') +
-                        (td.m15HasSweep ? ' <span class="smc-tag warn">Sweep</span>' : '') +
-                    '</div>' +
-                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;">' +
-                        '<strong>🎯 M5 Trigger :</strong> ' +
-                        (td.m5Triggers ? '<span class="smc-tag bull">✅ OUI</span>' : '<span class="smc-tag bear">❌ NON</span>') +
-                    '</div>' +
+                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;margin-bottom:0.3rem;"><strong>🧭 D1 Biais :</strong> <span class="smc-tag ' + (td.d1Bias === 'bullish' ? 'bull' : td.d1Bias === 'bearish' ? 'bear' : 'neutral') + '">' + td.d1Bias + '</span> (' + td.d1Strength + '%)</div>' +
+                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;margin-bottom:0.3rem;"><strong>🏛️ H4 Confirme :</strong> ' + (td.h4Confirms ? '<span class="smc-tag bull">✅ OUI</span>' : '<span class="smc-tag bear">❌ NON</span>') + ' (' + td.h4Direction + ')</div>' +
+                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;margin-bottom:0.3rem;"><strong>🔍 H1 Zone :</strong> <span class="smc-tag ' + (td.h1Zone === 'discount' ? 'bull' : td.h1Zone === 'premium' ? 'bear' : 'neutral') + '">' + td.h1Zone + '</span></div>' +
+                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;margin-bottom:0.3rem;"><strong>✅ M15 Confirme :</strong> ' + (td.m15Confirms ? '<span class="smc-tag bull">✅ OUI</span>' : '<span class="smc-tag bear">❌ NON</span>') + (td.m15HasMSS ? ' <span class="smc-tag info">MSS</span>' : '') + (td.m15HasSweep ? ' <span class="smc-tag warn">Sweep</span>' : '') + '</div>' +
+                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;"><strong>🎯 M5 Trigger :</strong> ' + (td.m5Triggers ? '<span class="smc-tag bull">✅ OUI</span>' : '<span class="smc-tag bear">❌ NON</span>') + '</div>' +
                 '</div>';
         }
     }
-
-    if (state.candles.M5) {
-        drawCandlesChart(state.candles.M5, { obs: entryR.obs, fvgs: entryR.fvgs, sweeps: entryR.sweeps, levels: levels }, 'M5');
-    }
-
+    if (state.candles.M5) drawCandlesChart(state.candles.M5, { obs: entryR.obs, fvgs: entryR.fvgs, sweeps: entryR.sweeps, levels: levels }, 'M5');
     $('level-entry').textContent = levels.entry;
     $('level-sl').textContent = levels.sl;
     $('level-tp').textContent = levels.tp;
     $('level-tp1').textContent = levels.tp1;
     $('level-tp2').textContent = levels.tp2;
     $('level-rr').textContent = levels.riskReward;
-
-    let structHTML = '<p><strong>TF entrée :</strong> M5 · ATR : ' + (entryR.atr ? formatPrice(entryR.atr) : '—') + '</p>';
-    structHTML += '<p><strong>Structure M5 :</strong> ' + entryR.structure.trend + ' · <strong>externe :</strong> ' + entryR.structure.externalTrend + '</p>';
-    structHTML += '<p><strong>Structure dominante D1 :</strong> ' + (synthesis.dominantStructure || 'range') + '</p>';
-    $('smc-structure').innerHTML = structHTML;
-
+    $('smc-structure').innerHTML = '<p><strong>TF entrée :</strong> M5 · ATR : ' + (entryR.atr ? formatPrice(entryR.atr) : '—') + '</p><p><strong>Structure M5 :</strong> ' + entryR.structure.trend + ' · <strong>externe :</strong> ' + entryR.structure.externalTrend + '</p><p><strong>Structure dominante D1 :</strong> ' + (synthesis.dominantStructure || 'range') + '</p>';
     const h = entryR.hierarchy || {};
-    let liqHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.3rem;font-size:0.75rem;">';
-    liqHTML += '<div><strong>PDH :</strong> ' + (h.pdh ? formatPrice(h.pdh) : '—') + '</div>';
-    liqHTML += '<div><strong>PDL :</strong> ' + (h.pdl ? formatPrice(h.pdl) : '—') + '</div>';
-    liqHTML += '<div><strong>PWH :</strong> ' + (h.pwh ? formatPrice(h.pwh) : '—') + '</div>';
-    liqHTML += '<div><strong>PWL :</strong> ' + (h.pwl ? formatPrice(h.pwl) : '—') + '</div>';
-    liqHTML += '</div>';
-    $('liquidity-container').innerHTML = liqHTML;
-
+    $('liquidity-container').innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.3rem;font-size:0.75rem;">' +
+        '<div><strong>PDH :</strong> ' + (h.pdh ? formatPrice(h.pdh) : '—') + '</div>' +
+        '<div><strong>PDL :</strong> ' + (h.pdl ? formatPrice(h.pdl) : '—') + '</div>' +
+        '<div><strong>PWH :</strong> ' + (h.pwh ? formatPrice(h.pwh) : '—') + '</div>' +
+        '<div><strong>PWL :</strong> ' + (h.pwl ? formatPrice(h.pwl) : '—') + '</div></div>';
     const obs = entryR.obs || [];
-    $('ob-container').innerHTML = obs.length ? obs.map(ob => {
-        const freshnessTag = ob.freshness === 'fresh' ? '<span class="smc-tag bull">Fresh</span>' : '<span class="smc-tag neutral">Mitigated</span>';
-        const dispTag = ob.displacement ? '<span class="smc-tag info">Displacement</span>' : '';
-        return '<div style="margin-bottom:0.4rem;">' +
-            '<span class="smc-tag ' + (ob.type === 'bull' ? 'bull' : 'bear') + '">' + (ob.type === 'bull' ? '📈 OB Bull' : '📉 OB Bear') + '</span>' + freshnessTag + dispTag +
-            ' <span style="font-family:ui-monospace,monospace;font-size:0.75rem;">' + formatPrice(ob.bottom) + ' → ' + formatPrice(ob.top) + '</span>' +
-        '</div>';
-    }).join('') : '<p style="color:var(--ink-dim);">Aucun OB.</p>';
-
+    $('ob-container').innerHTML = obs.length ? obs.map(ob => '<div style="margin-bottom:0.4rem;"><span class="smc-tag ' + (ob.type === 'bull' ? 'bull' : 'bear') + '">' + (ob.type === 'bull' ? '📈 OB Bull' : '📉 OB Bear') + '</span>' + (ob.freshness === 'fresh' ? '<span class="smc-tag bull">Fresh</span>' : '<span class="smc-tag neutral">Mitigated</span>') + (ob.displacement ? '<span class="smc-tag info">Displacement</span>' : '') + ' <span style="font-family:ui-monospace,monospace;font-size:0.75rem;">' + formatPrice(ob.bottom) + ' → ' + formatPrice(ob.top) + '</span></div>').join('') : '<p style="color:var(--ink-dim);">Aucun OB.</p>';
     const fvgs = entryR.fvgs || [];
-    $('fvg-container').innerHTML = fvgs.length ? fvgs.map(f => {
-        const fillTag = f.fillPct === 0 ? '<span class="smc-tag bull">Non rempli</span>' : '<span class="smc-tag neutral">Rempli ' + f.fillPct + '%</span>';
-        return '<div style="margin-bottom:0.3rem;"><span class="smc-tag ' + (f.type === 'bull' ? 'bull' : 'bear') + '">' + f.type + '</span>' + fillTag + ' ' + formatPrice(f.bottom) + ' → ' + formatPrice(f.top) + '</div>';
-    }).join('') : '<p style="color:var(--ink-dim);">Aucun FVG.</p>';
-
+    $('fvg-container').innerHTML = fvgs.length ? fvgs.map(f => '<div style="margin-bottom:0.3rem;"><span class="smc-tag ' + (f.type === 'bull' ? 'bull' : 'bear') + '">' + f.type + '</span>' + (f.fillPct === 0 ? '<span class="smc-tag bull">Non rempli</span>' : '<span class="smc-tag neutral">Rempli ' + f.fillPct + '%</span>') + ' ' + formatPrice(f.bottom) + ' → ' + formatPrice(f.top) + '</div>').join('') : '<p style="color:var(--ink-dim);">Aucun FVG.</p>';
     const pd = entryR.pd;
     $('pd-container').innerHTML = '<p>Range M5 : ' + formatPrice(pd.low) + ' → ' + formatPrice(pd.high) + '</p><p>Zone M5 : <span class="smc-tag ' + (pd.zone === 'discount' ? 'bull' : 'bear') + '">' + (pd.zone === 'discount' ? '💎 Discount' : '🔺 Premium') + ' (' + pd.position + '%)</span></p>';
-
-    $('scenarios-container').innerHTML = scenarios.map(s =>
-        '<div class="scenario ' + s.type + '"><div style="font-weight:700;">' + esc(s.title) + '</div><div style="font-size:0.7rem;color:var(--ink-dim);">' + esc(s.prob) + '</div><div>' + esc(s.text) + '</div></div>'
-    ).join('');
-
+    $('scenarios-container').innerHTML = scenarios.map(s => '<div class="scenario ' + s.type + '"><div style="font-weight:700;">' + esc(s.title) + '</div><div style="font-size:0.7rem;color:var(--ink-dim);">' + esc(s.prob) + '</div><div>' + esc(s.text) + '</div></div>').join('');
     state.lastAnalysis = { timestamp: Date.now(), symbol, signal: synthesis.signal, levels, results, currentPrice, smcScore: smcScore.total };
     autoSendToTelegram(synthesis, levels, results, symbol);
-
     if (getDeepSeekKey()) {
-        const auditBox = $('audit-analysis-container');
-        const auditContent = $('audit-analysis-content');
+        const auditBox = $('audit-analysis-container'), auditContent = $('audit-analysis-content');
         auditBox.style.display = 'block';
         auditContent.innerHTML = '<div style="color:var(--ink-dim);font-size:0.78rem;"><span class="spinner" style="display:inline-block;vertical-align:middle;"></span> Analyse IA stratégique en cours… (30-45 sec)</div>';
-        auditAnalysis(synthesis, levels, results, symbol).then(text => {
-            if (text) auditContent.innerHTML = '<div class="ai-response">' + esc(text) + '</div>';
-        });
+        auditAnalysis(synthesis, levels, results, symbol).then(text => { if (text) auditContent.innerHTML = '<div class="ai-response">' + esc(text) + '</div>'; });
     }
     $('report-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -2648,10 +2396,8 @@ function updateTrade(id, updates) {
 function computePnL(trade, exitPrice) {
     const specs = getSpecs(trade.instrument);
     const dir = trade.direction === 'buy' ? 1 : -1;
-    const priceDiff = (exitPrice - trade.entry) * dir;
-    const pipsCount = priceDiff / specs.pipValue;
-    const dollars = pipsCount * (specs.pipValuePerLot || 10) * (parseFloat(trade.size) || 1);
-    return { pips: parseFloat(pipsCount.toFixed(1)), dollars: parseFloat(dollars.toFixed(2)) };
+    const pipsCount = ((exitPrice - trade.entry) * dir) / specs.pipValue;
+    return { pips: parseFloat(pipsCount.toFixed(1)), dollars: parseFloat((pipsCount * (specs.pipValuePerLot || 10) * (parseFloat(trade.size) || 1)).toFixed(2)) };
 }
 async function trackOpenTrades() {
     const trades = loadTrades();
@@ -2663,14 +2409,11 @@ async function trackOpenTrades() {
             if (!price) continue;
             updateTrade(trade.id, { currentPrice: price, lastChecked: Date.now() });
             const dir = trade.direction === 'buy' ? 1 : -1;
-            const tpReached = dir > 0 ? price >= trade.tp : price <= trade.tp;
-            if (tpReached) { closeTrade(trade.id, 'tp', price); continue; }
-            const slReached = dir > 0 ? price <= trade.sl : price >= trade.sl;
-            if (slReached) { closeTrade(trade.id, trade.beMoved ? 'be' : 'sl', price); continue; }
+            if (dir > 0 ? price >= trade.tp : price <= trade.tp) { closeTrade(trade.id, 'tp', price); continue; }
+            if (dir > 0 ? price <= trade.sl : price >= trade.sl) { closeTrade(trade.id, trade.beMoved ? 'be' : 'sl', price); continue; }
         } catch (e) {}
     }
-    renderTrades();
-    renderStats();
+    renderTrades(); renderStats();
 }
 async function closeTrade(id, result, exitPrice) {
     const trades = loadTrades();
@@ -2687,8 +2430,7 @@ async function closeTrade(id, result, exitPrice) {
     const emoji = result === 'tp' ? '🎉' : result === 'be' ? '⚖️' : '❌';
     const label = result === 'tp' ? 'TAKE PROFIT' : result === 'be' ? 'BREAK EVEN' : 'STOP LOSS';
     sendNotification(emoji + ' Position fermée', trade.instrument + ' — ' + label);
-    renderTrades();
-    renderStats();
+    renderTrades(); renderStats();
 }
 window.manualCloseTrade = function(id, result) {
     if (!confirm('Confirmer : ' + result.toUpperCase() + ' ?')) return;
@@ -2708,41 +2450,21 @@ function renderTrades() {
     else openList.innerHTML = open.map(t => {
         const current = t.currentPrice || t.entry;
         const pnl = computePnL(t, current);
-        return '<div class="trade-item open">' +
-            '<div class="t-header"><span class="t-instrument">' + esc(t.instrument) + '</span><span class="t-direction ' + t.direction + '">' + (t.direction === 'buy' ? '🟢 ACHAT' : '🔴 VENTE') + '</span></div>' +
-            '<div class="t-prices">' +
-            '<div class="entry"><div class="p-label">Entrée</div><div class="p-value">' + formatPrice(t.entry) + '</div></div>' +
-            '<div class="sl"><div class="p-label">SL</div><div class="p-value">' + formatPrice(t.sl) + '</div></div>' +
-            '<div class="tp"><div class="p-label">TP</div><div class="p-value">' + formatPrice(t.tp) + '</div></div>' +
-            '</div>' +
+        return '<div class="trade-item open"><div class="t-header"><span class="t-instrument">' + esc(t.instrument) + '</span><span class="t-direction ' + t.direction + '">' + (t.direction === 'buy' ? '🟢 ACHAT' : '🔴 VENTE') + '</span></div>' +
+            '<div class="t-prices"><div class="entry"><div class="p-label">Entrée</div><div class="p-value">' + formatPrice(t.entry) + '</div></div><div class="sl"><div class="p-label">SL</div><div class="p-value">' + formatPrice(t.sl) + '</div></div><div class="tp"><div class="p-label">TP</div><div class="p-value">' + formatPrice(t.tp) + '</div></div></div>' +
             '<div class="t-footer"><span>Prix : ' + formatPrice(current) + '</span><span class="t-pnl" style="color:' + (pnl.dollars >= 0 ? 'var(--success)' : 'var(--error)') + '">' + (pnl.pips > 0 ? '+' : '') + pnl.pips + ' pips</span></div>' +
-            '<div class="t-actions">' +
-            '<button class="btn-secondary" onclick="manualCloseTrade(\'' + t.id + '\',\'tp\')">TP</button>' +
-            '<button class="btn-secondary" onclick="manualCloseTrade(\'' + t.id + '\',\'be\')">BE</button>' +
-            '<button class="btn-secondary btn-danger" onclick="manualCloseTrade(\'' + t.id + '\',\'sl\')">SL</button>' +
-            '</div></div>';
+            '<div class="t-actions"><button class="btn-secondary" onclick="manualCloseTrade(\'' + t.id + '\',\'tp\')">TP</button><button class="btn-secondary" onclick="manualCloseTrade(\'' + t.id + '\',\'be\')">BE</button><button class="btn-secondary btn-danger" onclick="manualCloseTrade(\'' + t.id + '\',\'sl\')">SL</button></div></div>';
     }).join('');
     const closedList = $('closed-trades-list');
     if (!closed.length) closedList.innerHTML = '<div class="empty-state">Aucune position fermée</div>';
     else closedList.innerHTML = closed.map(t => {
         const pnl = t.pnl || { pips: 0, dollars: 0 };
         const cls = t.result === 'tp' ? 'tp' : t.result === 'be' ? 'be' : 'sl';
-        return '<div class="trade-item ' + cls + '">' +
-            '<div class="t-header"><span class="t-instrument">' + esc(t.instrument) + '</span>' +
-            '<span class="t-direction ' + t.direction + '">' + (t.result === 'tp' ? '✅ TP' : t.result === 'be' ? '⚖️ BE' : '❌ SL') + '</span></div>' +
-            '<div class="t-prices">' +
-            '<div class="entry"><div class="p-label">Entrée</div><div class="p-value">' + formatPrice(t.entry) + '</div></div>' +
-            '<div class="sl"><div class="p-label">Sortie</div><div class="p-value">' + formatPrice(t.exitPrice) + '</div></div>' +
-            '<div class="tp"><div class="p-label">P&L</div><div class="p-value" style="color:' + (pnl.dollars >= 0 ? 'var(--success)' : 'var(--error)') + '">' + (pnl.dollars > 0 ? '+' : '') + pnl.dollars + '€</div></div>' +
-            '</div>' +
-            '<div class="t-footer"><span>' + (t.direction === 'buy' ? 'ACHAT' : 'VENTE') + '</span><span>' + formatDate(t.closedAt) + '</span></div>' +
-            '</div>';
+        return '<div class="trade-item ' + cls + '"><div class="t-header"><span class="t-instrument">' + esc(t.instrument) + '</span><span class="t-direction ' + t.direction + '">' + (t.result === 'tp' ? '✅ TP' : t.result === 'be' ? '⚖️ BE' : '❌ SL') + '</span></div>' +
+            '<div class="t-prices"><div class="entry"><div class="p-label">Entrée</div><div class="p-value">' + formatPrice(t.entry) + '</div></div><div class="sl"><div class="p-label">Sortie</div><div class="p-value">' + formatPrice(t.exitPrice) + '</div></div><div class="tp"><div class="p-label">P&L</div><div class="p-value" style="color:' + (pnl.dollars >= 0 ? 'var(--success)' : 'var(--error)') + '">' + (pnl.dollars > 0 ? '+' : '') + pnl.dollars + '€</div></div></div>' +
+            '<div class="t-footer"><span>' + (t.direction === 'buy' ? 'ACHAT' : 'VENTE') + '</span><span>' + formatDate(t.closedAt) + '</span></div></div>';
     }).join('');
 }
-
-// ══════════════════════════════════════════════════════════════════
-// STATS
-// ══════════════════════════════════════════════════════════════════
 function computeStats(trades) {
     const closed = trades.filter(t => t.status === 'closed');
     if (!closed.length) return { total: 0, wins: 0, losses: 0, be: 0, winrate: 0, totalPips: 0, totalDollars: 0 };
@@ -2752,12 +2474,10 @@ function computeStats(trades) {
     const totalPips = closed.reduce((s, t) => s + (t.pnl?.pips || 0), 0);
     const totalDollars = closed.reduce((s, t) => s + (t.pnl?.dollars || 0), 0);
     const decided = wins + losses;
-    const winrate = decided > 0 ? Math.round(wins / decided * 100) : 0;
-    return { total: closed.length, wins, losses, be, winrate, totalPips: parseFloat(totalPips.toFixed(1)), totalDollars: parseFloat(totalDollars.toFixed(2)) };
+    return { total: closed.length, wins, losses, be, winrate: decided > 0 ? Math.round(wins / decided * 100) : 0, totalPips: parseFloat(totalPips.toFixed(1)), totalDollars: parseFloat(totalDollars.toFixed(2)) };
 }
 function renderStatCards(container, s) {
-    container.innerHTML =
-        '<div class="stat-card"><div class="st-label">Trades</div><div class="st-value neutral">' + s.total + '</div></div>' +
+    container.innerHTML = '<div class="stat-card"><div class="st-label">Trades</div><div class="st-value neutral">' + s.total + '</div></div>' +
         '<div class="stat-card"><div class="st-label">Gagnants</div><div class="st-value win">' + s.wins + '</div></div>' +
         '<div class="stat-card"><div class="st-label">Perdants</div><div class="st-value loss">' + s.losses + '</div></div>' +
         '<div class="stat-card"><div class="st-label">BE</div><div class="st-value neutral">' + s.be + '</div></div>' +
@@ -2769,8 +2489,7 @@ function renderStats() {
     const trades = loadTrades();
     renderStatCards($('stats-global'), computeStats(trades));
     const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const weekTrades = trades.filter(t => t.status === 'closed' && (t.closedAt || 0) > weekAgo);
-    renderStatCards($('stats-week'), computeStats(weekTrades));
+    renderStatCards($('stats-week'), computeStats(trades.filter(t => t.status === 'closed' && (t.closedAt || 0) > weekAgo)));
     const closed = trades.filter(t => t.status === 'closed');
     const threshold = getScanConfig().minScore;
     const complianceEl = $('stats-compliance');
@@ -2780,13 +2499,11 @@ function renderStats() {
         const below = withScore.filter(t => t.smcScore < threshold);
         const aboveWR = above.length ? Math.round(above.filter(t => t.result === 'tp').length / above.length * 100) : 0;
         const belowWR = below.length ? Math.round(below.filter(t => t.result === 'tp').length / below.length * 100) : 0;
-        complianceEl.innerHTML =
-            '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.4rem;">' +
-                '<div class="stat-card"><div class="st-label">Seuil actuel</div><div class="st-value neutral">' + threshold + '</div></div>' +
-                '<div class="stat-card"><div class="st-label">≥ Seuil</div><div class="st-value win">' + above.length + ' (' + aboveWR + '%)</div></div>' +
-                '<div class="stat-card"><div class="st-label">&lt; Seuil</div><div class="st-value loss">' + below.length + ' (' + belowWR + '%)</div></div>' +
-                '<div class="stat-card"><div class="st-label">Sans score</div><div class="st-value neutral">' + (closed.length - withScore.length) + '</div></div>' +
-            '</div>';
+        complianceEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.4rem;">' +
+            '<div class="stat-card"><div class="st-label">Seuil actuel</div><div class="st-value neutral">' + threshold + '</div></div>' +
+            '<div class="stat-card"><div class="st-label">≥ Seuil</div><div class="st-value win">' + above.length + ' (' + aboveWR + '%)</div></div>' +
+            '<div class="stat-card"><div class="st-label">&lt; Seuil</div><div class="st-value loss">' + below.length + ' (' + belowWR + '%)</div></div>' +
+            '<div class="stat-card"><div class="st-label">Sans score</div><div class="st-value neutral">' + (closed.length - withScore.length) + '</div></div></div>';
     }
 }
 
@@ -2798,13 +2515,7 @@ async function sendNotification(title, body) {
     if (Notification.permission !== 'granted') return false;
     try {
         const reg = await navigator.serviceWorker.ready;
-        await reg.showNotification(title, {
-            body: body,
-            icon: 'https://ui-avatars.com/api/?name=SMC&background=16a34a&color=fff&size=192&bold=true',
-            badge: 'https://ui-avatars.com/api/?name=SMC&background=16a34a&color=fff&size=72&bold=true',
-            vibrate: [200, 100, 200],
-            tag: 'smc-' + Date.now()
-        });
+        await reg.showNotification(title, { body, icon: 'https://ui-avatars.com/api/?name=SMC&background=16a34a&color=fff&size=192&bold=true', badge: 'https://ui-avatars.com/api/?name=SMC&background=16a34a&color=fff&size=72&bold=true', vibrate: [200, 100, 200], tag: 'smc-' + Date.now() });
         return true;
     } catch (e) { return false; }
 }
@@ -2815,54 +2526,25 @@ async function sendNotification(title, body) {
 function loadTelegramAccounts() {
     try {
         const stored = JSON.parse(localStorage.getItem(STORAGE.telegramAccounts) || '[]');
-        const sent = JSON.parse(localStorage.getItem(STORAGE.lastTgSent) || '{}');
-        lastTelegramSent = sent;
+        lastTelegramSent = JSON.parse(localStorage.getItem(STORAGE.lastTgSent) || '{}');
         return stored;
     } catch (e) { return []; }
 }
-function saveTelegramAccounts(accounts) {
-    try { localStorage.setItem(STORAGE.telegramAccounts, JSON.stringify(accounts)); } catch (e) {}
-}
+function saveTelegramAccounts(accounts) { try { localStorage.setItem(STORAGE.telegramAccounts, JSON.stringify(accounts)); } catch (e) {} }
 function renderTelegramAccounts() {
     const accounts = loadTelegramAccounts();
     const list = $('telegram-accounts-list');
     if (!accounts.length) { list.innerHTML = '<div class="empty-state">Aucun compte</div>'; return; }
-    list.innerHTML = accounts.map((acc, i) =>
-        '<div class="tg-account"><div class="tg-header"><span class="tg-name">📱 ' + esc(acc.name || 'Compte ' + (i+1)) + '</span>' +
-        '<div><span class="tg-toggle ' + (acc.enabled ? 'active' : 'inactive') + '" data-toggle-idx="' + i + '">' + (acc.enabled ? 'ACTIF' : 'INACTIF') + '</span>' +
-        '<button class="tg-remove" data-remove-idx="' + i + '">✕</button></div></div>' +
-        '<div style="font-size:0.72rem;color:var(--ink-dim);">Chat ID : ' + esc(acc.chatId) + '</div></div>'
-    ).join('');
-    list.querySelectorAll('[data-toggle-idx]').forEach(el => {
-        el.addEventListener('click', () => {
-            const idx = parseInt(el.dataset.toggleIdx, 10);
-            const accounts = loadTelegramAccounts();
-            accounts[idx].enabled = !accounts[idx].enabled;
-            saveTelegramAccounts(accounts);
-            renderTelegramAccounts();
-        });
-    });
-    list.querySelectorAll('[data-remove-idx]').forEach(el => {
-        el.addEventListener('click', () => {
-            const idx = parseInt(el.dataset.removeIdx, 10);
-            if (!confirm('Supprimer ?')) return;
-            const accounts = loadTelegramAccounts();
-            accounts.splice(idx, 1);
-            saveTelegramAccounts(accounts);
-            renderTelegramAccounts();
-        });
-    });
+    list.innerHTML = accounts.map((acc, i) => '<div class="tg-account"><div class="tg-header"><span class="tg-name">📱 ' + esc(acc.name || 'Compte ' + (i+1)) + '</span><div><span class="tg-toggle ' + (acc.enabled ? 'active' : 'inactive') + '" data-toggle-idx="' + i + '">' + (acc.enabled ? 'ACTIF' : 'INACTIF') + '</span><button class="tg-remove" data-remove-idx="' + i + '">✕</button></div></div><div style="font-size:0.72rem;color:var(--ink-dim);">Chat ID : ' + esc(acc.chatId) + '</div></div>').join('');
+    list.querySelectorAll('[data-toggle-idx]').forEach(el => el.addEventListener('click', () => { const idx = parseInt(el.dataset.toggleIdx, 10); const accounts = loadTelegramAccounts(); accounts[idx].enabled = !accounts[idx].enabled; saveTelegramAccounts(accounts); renderTelegramAccounts(); }));
+    list.querySelectorAll('[data-remove-idx]').forEach(el => el.addEventListener('click', () => { const idx = parseInt(el.dataset.removeIdx, 10); if (!confirm('Supprimer ?')) return; const accounts = loadTelegramAccounts(); accounts.splice(idx, 1); saveTelegramAccounts(accounts); renderTelegramAccounts(); }));
 }
 async function sendToAllTelegram(text) {
     const accounts = loadTelegramAccounts().filter(a => a.enabled && a.token && a.chatId);
     let sent = 0;
     for (const acc of accounts) {
         try {
-            const res = await fetch('https://api.telegram.org/bot' + acc.token + '/sendMessage', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: acc.chatId, text, parse_mode: 'Markdown' })
-            });
+            const res = await fetch('https://api.telegram.org/bot' + acc.token + '/sendMessage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: acc.chatId, text, parse_mode: 'Markdown' }) });
             const data = await res.json();
             if (data.ok) sent++;
         } catch (e) {}
@@ -2878,29 +2560,16 @@ function loadScanInstruments() {
         const stored = JSON.parse(localStorage.getItem(STORAGE.scanInstruments) || 'null');
         if (!stored) return [...DEFAULT_SCAN_INSTRUMENTS];
         const filtered = stored.filter(inst => ALLOWED_INSTRUMENTS.includes(inst));
-        if (filtered.length === 0) return [...DEFAULT_SCAN_INSTRUMENTS];
-        return filtered;
+        return filtered.length === 0 ? [...DEFAULT_SCAN_INSTRUMENTS] : filtered;
     } catch (e) { return [...DEFAULT_SCAN_INSTRUMENTS]; }
 }
-function saveScanInstruments(list) {
-    try { localStorage.setItem(STORAGE.scanInstruments, JSON.stringify(list)); } catch (e) {}
-}
+function saveScanInstruments(list) { try { localStorage.setItem(STORAGE.scanInstruments, JSON.stringify(list)); } catch (e) {} }
 function renderScanInstruments() {
     const list = loadScanInstruments();
     const container = $('scan-instruments-list');
     if (!list.length) { container.innerHTML = '<div class="empty-state">Aucun instrument</div>'; return; }
-    container.innerHTML = list.map((inst, i) =>
-        '<div class="scan-instrument"><span class="si-name">📊 ' + esc(inst) + '</span><button class="si-remove" data-remove-scan="' + i + '">✕</button></div>'
-    ).join('');
-    container.querySelectorAll('[data-remove-scan]').forEach(el => {
-        el.addEventListener('click', () => {
-            const idx = parseInt(el.dataset.removeScan, 10);
-            const list = loadScanInstruments();
-            list.splice(idx, 1);
-            saveScanInstruments(list);
-            renderScanInstruments();
-        });
-    });
+    container.innerHTML = list.map((inst, i) => '<div class="scan-instrument"><span class="si-name">📊 ' + esc(inst) + '</span><button class="si-remove" data-remove-scan="' + i + '">✕</button></div>').join('');
+    container.querySelectorAll('[data-remove-scan]').forEach(el => el.addEventListener('click', () => { const idx = parseInt(el.dataset.removeScan, 10); const list = loadScanInstruments(); list.splice(idx, 1); saveScanInstruments(list); renderScanInstruments(); }));
 }
 function getScanConfig() {
     try {
@@ -2909,11 +2578,7 @@ function getScanConfig() {
     } catch (e) { return { freqMin: 30, minScore: 80, minRR: 2 }; }
 }
 function saveScanConfig() {
-    const config = {
-        freqMin: parseInt($('scan-freq').value, 10) || 30,
-        minScore: parseInt($('scan-conf').value, 10) || 80,
-        minRR: parseFloat($('scan-rr').value) || 2
-    };
+    const config = { freqMin: parseInt($('scan-freq').value, 10) || 30, minScore: parseInt($('scan-conf').value, 10) || 80, minRR: parseFloat($('scan-rr').value) || 2 };
     try { localStorage.setItem(STORAGE.scanConfig, JSON.stringify(config)); } catch (e) {}
     const label = $('scan-conf-label');
     if (label) label.textContent = config.minScore;
@@ -2925,19 +2590,11 @@ function renderThresholdsDisplay() {
     const threshold = getScanConfig().minScore;
     const autoDisplay = $('auto-threshold-display');
     if (autoDisplay) autoDisplay.textContent = threshold;
-    el.innerHTML =
-        '<div style="font-size:0.75rem;line-height:1.6;">' +
-            '<div style="margin-bottom:0.4rem;"><strong>Seuil actuel : <span style="color:var(--info);">' + threshold + '/100</span></strong></div>' +
-            '<div style="padding:0.4rem;border-left:3px solid var(--error);margin-bottom:0.3rem;background:var(--panel-2);border-radius:4px;">' +
-                '<span class="smc-tag" style="background:var(--error);color:#fff;">❌ &lt; ' + threshold + '</span> Rejeté — pas d\'envoi Telegram' +
-            '</div>' +
-            '<div style="padding:0.4rem;border-left:3px solid var(--warn);margin-bottom:0.3rem;background:var(--panel-2);border-radius:4px;">' +
-                '<span class="smc-tag" style="background:var(--warn);color:#fff;">🟡 ' + threshold + ' - 84</span> Acceptable — envoi auto' +
-            '</div>' +
-            '<div style="padding:0.4rem;border-left:3px solid var(--success);background:var(--panel-2);border-radius:4px;">' +
-                '<span class="smc-tag" style="background:var(--success);color:#fff;">🟢 ≥ 85</span> Excellent — envoi auto prioritaire' +
-            '</div>' +
-        '</div>';
+    el.innerHTML = '<div style="font-size:0.75rem;line-height:1.6;">' +
+        '<div style="margin-bottom:0.4rem;"><strong>Seuil actuel : <span style="color:var(--info);">' + threshold + '/100</span></strong></div>' +
+        '<div style="padding:0.4rem;border-left:3px solid var(--error);margin-bottom:0.3rem;background:var(--panel-2);border-radius:4px;"><span class="smc-tag" style="background:var(--error);color:#fff;">❌ &lt; ' + threshold + '</span> Rejeté</div>' +
+        '<div style="padding:0.4rem;border-left:3px solid var(--warn);margin-bottom:0.3rem;background:var(--panel-2);border-radius:4px;"><span class="smc-tag" style="background:var(--warn);color:#fff;">🟡 ' + threshold + ' - 84</span> Acceptable</div>' +
+        '<div style="padding:0.4rem;border-left:3px solid var(--success);background:var(--panel-2);border-radius:4px;"><span class="smc-tag" style="background:var(--success);color:#fff;">🟢 ≥ 85</span> Excellent</div></div>';
 }
 function addScanLog(message, type = 'info') {
     const logs = JSON.parse(localStorage.getItem(STORAGE.scanLog) || '[]');
@@ -2965,9 +2622,7 @@ async function analyzeInstrumentForScan(inst, minScore, minRR) {
             const r = analyzeTimeframe(candles);
             if (r) results[tf] = r;
             await sleep(300);
-        } catch (e) {
-            return { ok: false, error: tf + ' : ' + e.message };
-        }
+        } catch (e) { return { ok: false, error: tf + ' : ' + e.message }; }
     }
     if (Object.keys(results).length < 4) return { ok: false, error: 'Données insuffisantes' };
     const synthesis = synthesizeTopDown(results);
@@ -2988,7 +2643,7 @@ async function runScan() {
     if (!instruments.length) { addScanLog('Aucun instrument', 'warn'); return; }
     const accounts = loadTelegramAccounts().filter(a => a.enabled);
     if (!accounts.length) { addScanLog('Aucun compte Telegram actif', 'warn'); return; }
-    addScanLog('🔍 Scan Top-Down v5.4 · ' + instruments.length + ' instruments · seuil ' + config.minScore, 'info');
+    addScanLog('🔍 Scan Top-Down v5.5 · ' + instruments.length + ' instruments · seuil ' + config.minScore, 'info');
     let signalsFound = 0;
     for (const inst of instruments) {
         if (!state.scanning) { addScanLog('⏸ Interrompu', 'warn'); return; }
@@ -2998,18 +2653,17 @@ async function runScan() {
             if (!analysis.ok) { addScanLog('❌ ' + inst + ' : ' + analysis.error, 'error'); continue; }
             if (!analysis.valid) { addScanLog('⏭ ' + inst + ' : ' + analysis.reason, 'info'); continue; }
             const emoji = analysis.synthesis.signal === 'ACHAT' ? '🟢' : '🔴';
-            let text = '🚨 *SIGNAL TOP-DOWN v5.4* 🚨\n\n📊 *' + inst + '*\n' + emoji + ' *' + analysis.synthesis.signal + '*\n🎯 Score : *' + analysis.smcScore.total + '/100*\n🧭 ' + (analysis.synthesis.orientationReason || '') + '\n\n';
+            let text = '🚨 *SIGNAL TOP-DOWN v5.5* 🚨\n\n📊 *' + inst + '*\n' + emoji + ' *' + analysis.synthesis.signal + '*\n🎯 Score : *' + analysis.smcScore.total + '/100*\n🧭 ' + (analysis.synthesis.orientationReason || '') + '\n\n';
             text += '📥 `' + analysis.levels.entry + '`\n🛑 `' + analysis.levels.sl + '`\n🎯 `' + analysis.levels.tp1 + '` / `' + analysis.levels.tp2 + '`\n⚖️ ' + analysis.levels.riskReward;
             const sent = await sendToAllTelegram(text);
             if (sent > 0) {
                 signalsFound++;
                 addScanLog('🚨 ' + analysis.synthesis.signal + ' ' + inst + ' (' + analysis.smcScore.total + ')', 'success');
                 sendNotification('🚨 Signal SMC', inst + ' — ' + analysis.synthesis.signal + ' Score ' + analysis.smcScore.total);
+                await saveAndAuditAnalysis(analysis.synthesis, analysis.levels, analysis.results, inst, analysis.smcScore, sent);
             }
             await sleep(1000);
-        } catch (e) {
-            addScanLog('❌ ' + inst + ' : ' + e.message, 'error');
-        }
+        } catch (e) { addScanLog('❌ ' + inst + ' : ' + e.message, 'error'); }
     }
     addScanLog(signalsFound > 0 ? '✅ ' + signalsFound + ' signal(aux)' : '✅ Aucun signal', 'info');
     renderAutoSendStats();
@@ -3030,13 +2684,9 @@ function scheduleNextScan(min) {
     state.countdownTimer = setInterval(() => {
         if (!state.scanning) { clearInterval(state.countdownTimer); return; }
         const rem = Math.max(0, state.nextScanTime - Date.now());
-        const m = Math.floor(rem / 60000);
-        const s = Math.floor((rem % 60000) / 1000);
+        const m = Math.floor(rem / 60000), s = Math.floor((rem % 60000) / 1000);
         $('scan-status-display').innerHTML = '🟢 Actif · ' + m + 'm ' + String(s).padStart(2, '0') + 's';
-        if (rem <= 0) {
-            clearInterval(state.countdownTimer);
-            if (state.scanning) runScan().then(() => { if (state.scanning) scheduleNextScan(getScanConfig().freqMin); });
-        }
+        if (rem <= 0) { clearInterval(state.countdownTimer); if (state.scanning) runScan().then(() => { if (state.scanning) scheduleNextScan(getScanConfig().freqMin); }); }
     }, 1000);
 }
 function stopScanner() {
@@ -3072,15 +2722,14 @@ async function runAnalysis() {
         setStatus('Analyse Top-Down…');
         const synthesis = synthesizeTopDown(results);
         if (!synthesis) throw new Error('Impossible de synthétiser');
-        const entryTF = 'M5';
-        const lastCandle = state.candles[entryTF];
+        const lastCandle = state.candles.M5;
         const currentPrice = lastCandle[lastCandle.length - 1].close;
-        const entryR = results[entryTF] || results.M15 || results.H1;
+        const entryR = results.M5 || results.M15 || results.H1;
         const levels = computeSMCLevels(results, synthesis, currentPrice, entryR);
         const scenarios = buildScenarios(results, synthesis, levels);
         renderReport(results, synthesis, levels, scenarios, currentPrice, state.symbol);
         setStatus(null);
-        toast('Analyse Top-Down v5.4 complète ✓', 'success');
+        toast('Analyse Top-Down v5.5 complète ✓', 'success');
     } catch (e) {
         log('Erreur : ' + e.message);
         setStatus(null);
@@ -3116,15 +2765,14 @@ function initTabs() {
             $('panel-' + tab.dataset.tab).classList.add('active');
             if (tab.dataset.tab === 'journal') renderTrades();
             if (tab.dataset.tab === 'stats') renderStats();
+            if (tab.dataset.tab === 'box') { renderAnalysisBoxStats(); renderAnalysisBoxList(); renderWeeklyAuditsHistory(); }
             if (tab.dataset.tab === 'scanner') { renderScanInstruments(); renderScanLog(); renderThresholdsDisplay(); renderAutoSendStats(); }
             if (tab.dataset.tab === 'settings') { renderTelegramAccounts(); updateCacheStats(); }
         });
     });
 }
 function initSections() {
-    document.querySelectorAll('.section-header').forEach(h => {
-        h.addEventListener('click', () => h.parentElement.classList.toggle('open'));
-    });
+    document.querySelectorAll('.section-header').forEach(h => h.addEventListener('click', () => h.parentElement.classList.toggle('open')));
 }
 function initSymbols() {
     const sel = $('symbol-select');
@@ -3137,11 +2785,7 @@ function initSymbols() {
     sel.innerHTML = html;
     sel.value = 'EUR/USD';
     state.symbol = 'EUR/USD';
-    sel.addEventListener('change', (e) => {
-        state.symbol = e.target.value;
-        lastPrice = null;
-        if (state.ready) subscribeTicks(state.symbol);
-    });
+    sel.addEventListener('change', (e) => { state.symbol = e.target.value; lastPrice = null; if (state.ready) subscribeTicks(state.symbol); });
 }
 function initSettings() {
     const tk = getTwelveKey();
@@ -3167,10 +2811,9 @@ function initSettings() {
         accounts.push({ name, token, chatId, enabled: true });
         saveTelegramAccounts(accounts);
         renderTelegramAccounts();
-        toast('Ajouté ✓', 'success');
     });
     $('test-all-telegram-btn')?.addEventListener('click', async () => {
-        const sent = await sendToAllTelegram('🧠 *SMC Top-Down v5.4* — Test');
+        const sent = await sendToAllTelegram('🧠 *SMC Top-Down v5.5* — Test');
         toast(sent > 0 ? 'Envoyé à ' + sent : 'Aucun actif', sent > 0 ? 'success' : 'warn');
     });
     $('enable-push-btn')?.addEventListener('click', async () => {
@@ -3183,14 +2826,17 @@ function initSettings() {
         toast(ok ? 'Envoyé ✓' : 'Active d\'abord', ok ? 'success' : 'warn');
     });
     $('clear-cache-btn')?.addEventListener('click', clearApiCache);
+    $('weekly-audit-btn')?.addEventListener('click', runWeeklyAudit);
+    $('clear-box-btn')?.addEventListener('click', clearAnalysisBox);
     $('clear-all-btn')?.addEventListener('click', () => {
         if (!confirm('Effacer TOUTES les données ?')) return;
         Object.values(STORAGE).forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
         renderTrades(); renderStats(); renderTelegramAccounts(); renderScanInstruments(); updateCacheStats();
+        renderAnalysisBoxStats(); renderAnalysisBoxList(); renderWeeklyAuditsHistory();
         toast('Données effacées', 'warn');
     });
     $('export-data-btn')?.addEventListener('click', () => {
-        const data = { trades: loadTrades(), telegram: loadTelegramAccounts(), scanInstruments: loadScanInstruments(), exportDate: new Date().toISOString() };
+        const data = { trades: loadTrades(), telegram: loadTelegramAccounts(), scanInstruments: loadScanInstruments(), analysisBox: loadAnalysisBox(), exportDate: new Date().toISOString() };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url; a.download = 'smc-backup-' + Date.now() + '.json'; a.click();
@@ -3200,11 +2846,7 @@ function initSettings() {
     updateCacheStats();
 }
 function initTradeForm() {
-    $('add-trade-btn')?.addEventListener('click', () => {
-        const s = $('add-trade-section');
-        s.style.display = s.style.display === 'none' ? 'block' : 'none';
-        s.classList.add('open');
-    });
+    $('add-trade-btn')?.addEventListener('click', () => { const s = $('add-trade-section'); s.style.display = s.style.display === 'none' ? 'block' : 'none'; s.classList.add('open'); });
     $('cancel-trade-btn')?.addEventListener('click', () => { $('add-trade-section').style.display = 'none'; });
     ['trade-entry', 'trade-sl', 'trade-capital', 'trade-risk', 'trade-instrument'].forEach(id => {
         $(id)?.addEventListener('input', () => {
@@ -3236,18 +2878,10 @@ function initTradeForm() {
         renderTrades(); renderStats();
         toast('Position enregistrée ✓', 'success');
     });
-    $('sync-prices-btn')?.addEventListener('click', async () => {
-        setStatus('Sync…');
-        await trackOpenTrades();
-        setStatus(null);
-        toast('Prix synchronisés ✓', 'success');
-    });
+    $('sync-prices-btn')?.addEventListener('click', async () => { setStatus('Sync…'); await trackOpenTrades(); setStatus(null); toast('Prix synchronisés ✓', 'success'); });
 }
 function initScanner() {
-    renderScanInstruments();
-    renderScanLog();
-    renderThresholdsDisplay();
-    renderAutoSendStats();
+    renderScanInstruments(); renderScanLog(); renderThresholdsDisplay(); renderAutoSendStats();
     const config = getScanConfig();
     $('scan-freq').value = config.freqMin;
     $('scan-conf').value = config.minScore;
@@ -3257,10 +2891,7 @@ function initScanner() {
         const input = $('new-instrument-input');
         const inst = input.value.trim().toUpperCase();
         if (!inst) return;
-        if (!ALLOWED_INSTRUMENTS.includes(inst)) {
-            toast('Instrument non autorisé. Utilise : EUR/USD, XAU/USD ou BTC/USD', 'error', 3500);
-            return;
-        }
+        if (!ALLOWED_INSTRUMENTS.includes(inst)) { toast('Instrument non autorisé. Utilise : EUR/USD, XAU/USD ou BTC/USD', 'error', 3500); return; }
         const list = loadScanInstruments();
         if (list.includes(inst)) { toast('Déjà présent', 'warn'); return; }
         if (list.length >= 3) { toast('Maximum 3 instruments', 'warn', 3500); return; }
@@ -3268,17 +2899,11 @@ function initScanner() {
         saveScanInstruments(list);
         input.value = '';
         renderScanInstruments();
-        toast(inst + ' ajouté ✓', 'success');
     });
-    $('scanner-toggle')?.addEventListener('click', () => {
-        if (state.scanning) stopScanner(); else startScanner();
-    });
+    $('scanner-toggle')?.addEventListener('click', () => { if (state.scanning) stopScanner(); else startScanner(); });
     $('scan-freq')?.addEventListener('change', saveScanConfig);
     $('scan-rr')?.addEventListener('change', saveScanConfig);
-    $('scan-conf')?.addEventListener('input', (e) => {
-        const label = $('scan-conf-label');
-        if (label) label.textContent = e.target.value;
-    });
+    $('scan-conf')?.addEventListener('input', (e) => { const label = $('scan-conf-label'); if (label) label.textContent = e.target.value; });
     $('scan-conf')?.addEventListener('change', saveScanConfig);
     $('reset-auto-send-btn')?.addEventListener('click', () => {
         lastTelegramSent = {};
@@ -3289,17 +2914,11 @@ function initScanner() {
 }
 function initModal() {
     $('auto-trade-yes')?.addEventListener('click', executeAutoTrade);
-    $('auto-trade-no')?.addEventListener('click', () => {
-        window._pendingTrade = null;
-        $('auto-trade-modal').classList.remove('visible');
-    });
+    $('auto-trade-no')?.addEventListener('click', () => { window._pendingTrade = null; $('auto-trade-modal').classList.remove('visible'); });
 }
 function initBacktest() {
     $('bt-run-btn')?.addEventListener('click', runBacktest);
-    $('bt-score-min')?.addEventListener('input', (e) => {
-        const label = $('bt-score-label');
-        if (label) label.textContent = e.target.value;
-    });
+    $('bt-score-min')?.addEventListener('input', (e) => { const label = $('bt-score-label'); if (label) label.textContent = e.target.value; });
     $('bt-audit-btn')?.addEventListener('click', async () => {
         if (!getDeepSeekKey()) { toast('Configure DeepSeek d\'abord', 'warn'); return; }
         const btn = $('bt-audit-btn');
@@ -3307,7 +2926,7 @@ function initBacktest() {
         btn.textContent = '🧠 Analyse IA en cours… (30-45s)';
         const trades = window._lastBacktestTrades || [];
         const stats = window._lastBacktestStats || {};
-        const auditText = await auditBacktest(stats, trades, $('bt-instrument').value, 'M5');
+        const auditText = await auditBacktest(stats, trades, $('bt-instrument').value);
         const el = $('bt-audit-result');
         el.style.display = 'block';
         el.innerHTML = '<div class="ai-response">' + esc(auditText) + '</div>';
@@ -3330,12 +2949,15 @@ async function init() {
     renderTrades();
     renderStats();
     renderTelegramAccounts();
+    renderAnalysisBoxStats();
+    renderAnalysisBoxList();
+    renderWeeklyAuditsHistory();
     $('theme-toggle').addEventListener('click', toggleTheme);
     $('analyze-btn').addEventListener('click', runAnalysis);
     $('send-telegram-btn')?.addEventListener('click', () => {
         if (!state.lastAnalysis) { toast('Aucune analyse', 'warn'); return; }
         const a = state.lastAnalysis;
-        sendToAllTelegram('🧠 *SMC v5.4* — ' + a.symbol + '\n\nSignal : *' + a.signal + '* (Score ' + a.smcScore + '/100)\nEntrée : ' + a.levels.entry + '\nSL : ' + a.levels.sl + '\nTP1 : ' + a.levels.tp1 + '\nTP2 : ' + a.levels.tp2);
+        sendToAllTelegram('🧠 *SMC v5.5* — ' + a.symbol + '\n\nSignal : *' + a.signal + '* (Score ' + a.smcScore + '/100)\nEntrée : ' + a.levels.entry + '\nSL : ' + a.levels.sl + '\nTP1 : ' + a.levels.tp1 + '\nTP2 : ' + a.levels.tp2);
     });
     await connectTwelveData();
     subscribeTicks(state.symbol);
@@ -3348,7 +2970,7 @@ async function init() {
             notifyButton: { enable: true, position: 'bottom-right', size: 'medium', theme: 'default' }
         });
     });
-    log('SMC Trader Pro v5.4 Top-Down prêt — D1→H4→H1→M15→M5');
+    log('SMC Trader Pro v5.5 prêt — Top-Down + Boîte + Audit IA hebdo');
 }
 init();
 </script>
