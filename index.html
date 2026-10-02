@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SMC Trader Pro v5.9.1</title>
+<title>SMC Trader Pro v5.9</title>
 <meta name="theme-color" content="#16a34a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -264,6 +264,8 @@
     body.dark .bt-trade-row.win { background: #052e1644; }
     body.dark .bt-trade-row.loss { background: #450a0a44; }
     .ai-response { font-size: 0.78rem; line-height: 1.6; white-space: pre-wrap; padding: 0.8rem; background: var(--panel-2); border-radius: 8px; border-left: 3px solid var(--info); }
+    
+    /* MT5 Section */
     .mt5-status-box { padding: 0.8rem; border-radius: 8px; margin-bottom: 0.7rem; font-size: 0.8rem; }
     .mt5-status-box.connected { background: #dcfce7; color: #15803d; border: 2px solid #86efac; }
     .mt5-status-box.disconnected { background: #fee2e2; color: #b91c1c; border: 2px solid #fca5a5; }
@@ -287,7 +289,7 @@
     </div>
     <button class="theme-toggle" id="theme-toggle">🌙</button>
     <h1>🧠 SMC Trader Pro</h1>
-    <p class="subtitle">v5.9.1 · Semi-Auto · Top-Down H4→M5 · EUR/USD · XAU/USD · BTC/USD</p>
+    <p class="subtitle">v5.9 · Top-Down H4→M5 · EUR/USD · XAU/USD · BTC/USD</p>
     <div class="conn-status" id="conn-status">
         <span class="dot"></span>
         <span id="conn-text">Prêt</span>
@@ -318,8 +320,8 @@
                     <select id="symbol-select"></select>
                 </div>
                 <div style="font-size:0.72rem;color:var(--info);padding:0.5rem;background:var(--panel-2);border-radius:6px;line-height:1.5;">
-                    🎯 <strong>Mode SEMI-AUTO v5.9.1</strong><br>
-                    Journal + Boîte automatiques · MT5 manuel (bouton)
+                    🎯 <strong>Logique Top-Down v5.9</strong><br>
+                    H4 (biais) → H1 (structure) → M15 (analyse) → M5 (entrée)
                 </div>
             </div>
         </div>
@@ -387,7 +389,7 @@
         <div style="margin-top:0.5rem;">
             <button class="btn-secondary" id="send-telegram-btn">📤 Envoyer manuellement Telegram</button>
             <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.4rem;line-height:1.5;">
-                ⓘ <strong>Mode semi-auto</strong> : Journal + Boîte auto · MT5 manuel
+                ⓘ <strong>Envoi automatique + sauvegarde + audit IA</strong> activés pour chaque signal validé (score ≥ <span id="auto-threshold-display">80</span>/100).
             </div>
         </div>
     </div>
@@ -544,7 +546,7 @@
                     <input type="range" id="bt-score-min" min="60" max="95" step="5" value="80" style="width:100%;">
                 </div>
                 <div style="font-size:0.72rem;color:var(--info);padding:0.5rem;background:var(--panel-2);border-radius:6px;margin-bottom:0.7rem;line-height:1.5;">
-                    🎯 <strong>Logique Top-Down v5.9.1</strong> : H4 → H1 → M15 → M5 · D1 retiré · Entrée marché · Priorité SL · Plafonds.
+                    🎯 <strong>Logique Top-Down v5.9</strong> : H4 → H1 → M15 → M5 · D1 retiré · Entrée marché · Priorité SL · Plafonds.
                 </div>
                 <button class="btn-primary" id="bt-run-btn">▶️ Lancer le backtest Top-Down</button>
                 <div class="bt-progress" id="bt-progress" style="display:none;">
@@ -753,7 +755,8 @@
                     <button class="btn-secondary" id="mt5-refresh-btn">🔄 Rafraîchir le compte</button>
                 </div>
                 <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.5rem;line-height:1.5;">
-                    ⓘ Utilisez l'URL Cloudflare Tunnel (wss://) pour la connexion depuis votre téléphone.
+                    ⓘ Utilisez l'URL Cloudflare Tunnel (wss://) pour la connexion depuis votre téléphone.<br>
+                    ⓘ Exemple : <code style="font-size:0.65rem;">wss://pod-shore-extend-owned.trycloudflare.com</code>
                 </div>
             </div>
         </div>
@@ -855,7 +858,10 @@
             <button class="btn-secondary" id="auto-trade-no">Non, ignorer</button>
             <button class="btn-secondary btn-mt5" id="auto-trade-mt5">📤 MT5</button>
             <button class="btn-secondary btn-success" id="auto-trade-yes">💾 Journal</button>
-        </div><script>
+        </div>
+    </div>
+</div>
+<script>
 // ══════════════════════════════════════════════════════════════════
 // SERVICE WORKER
 // ══════════════════════════════════════════════════════════════════
@@ -926,7 +932,7 @@ const state = {
     ready: false, symbol: 'EUR/USD', candles: {}, lastAnalysis: null,
     tickInterval: null, scanning: false, countdownTimer: null,
     nextScanTime: null, backtestRunning: false,
-    mt5: { ws: null, connected: false, authenticated: false, account: null, reconnectTimer: null, lastPing: 0, pingTimer: null }
+    mt5: { ws: null, connected: false, authenticated: false, account: null, reconnectTimer: null, lastPing: 0 }
 };
 let lastTelegramSent = {};
 
@@ -986,39 +992,42 @@ function mt5SaveConfig() {
     } catch (e) {}
     toast('Configuration MT5 enregistrée ✓', 'success');
 }
-function mt5LoadConfigToUI() {
-    const url = mt5GetUrl();
-    const token = mt5GetToken();
-    if (url) $('mt5-ws-url').value = url;
-    if (token) $('mt5-token').value = token;
-}
 function mt5UpdateUI(status, subText) {
     const box = $('mt5-status-box');
     const icon = $('mt5-status-icon');
     const text = $('mt5-status-text');
     const sub = $('mt5-status-sub');
     const grid = $('mt5-info-grid');
-    if (!box) return;
     box.classList.remove('connected', 'disconnected', 'connecting');
     if (status === 'connected') {
-        box.classList.add('connected'); icon.textContent = '🟢';
-        text.textContent = 'MT5 connecté'; sub.textContent = subText || 'Bridge opérationnel';
+        box.classList.add('connected');
+        icon.textContent = '🟢';
+        text.textContent = 'MT5 connecté';
+        sub.textContent = subText || 'Bridge opérationnel';
         grid.style.display = 'grid';
     } else if (status === 'connecting') {
-        box.classList.add('connecting'); icon.textContent = '🟡';
-        text.textContent = 'Connexion en cours…'; sub.textContent = subText || '';
+        box.classList.add('connecting');
+        icon.textContent = '🟡';
+        text.textContent = 'Connexion en cours…';
+        sub.textContent = subText || '';
         grid.style.display = 'none';
     } else {
-        box.classList.add('disconnected'); icon.textContent = '🔴';
-        text.textContent = 'MT5 non connecté'; sub.textContent = subText || 'Configurez URL + Token';
+        box.classList.add('disconnected');
+        icon.textContent = '🔴';
+        text.textContent = 'MT5 non connecté';
+        sub.textContent = subText || 'Configurez URL + Token';
         grid.style.display = 'none';
     }
+    // Header status
     const h = $('mt5-header-status');
     const ht = $('mt5-header-text');
-    if (h && ht) {
-        h.classList.remove('connected', 'disconnected');
-        if (status === 'connected') { h.classList.add('connected'); ht.textContent = 'MT5 OK'; }
-        else { h.classList.add('disconnected'); ht.textContent = 'MT5 déco'; }
+    h.classList.remove('connected', 'disconnected');
+    if (status === 'connected') {
+        h.classList.add('connected');
+        ht.textContent = 'MT5 OK';
+    } else {
+        h.classList.add('disconnected');
+        ht.textContent = 'MT5 déco';
     }
 }
 function mt5UpdateAccount(acc) {
@@ -1033,52 +1042,89 @@ function mt5Connect() {
     const token = mt5GetToken();
     if (!url) { toast('URL WebSocket manquante', 'warn'); return; }
     if (!token) { toast('Token manquant', 'warn'); return; }
-    if (state.mt5.ws && state.mt5.ws.readyState === WebSocket.OPEN) { toast('Déjà connecté à MT5', 'warn'); return; }
+    if (state.mt5.ws && state.mt5.ws.readyState === WebSocket.OPEN) {
+        toast('Déjà connecté à MT5', 'warn');
+        return;
+    }
     mt5UpdateUI('connecting', 'Connexion à ' + url + '…');
+    log('MT5 : connexion à ' + url);
     try {
         const ws = new WebSocket(url);
         state.mt5.ws = ws;
         ws.onopen = () => {
+            log('MT5 : WebSocket ouvert');
             state.mt5.connected = true;
             state.mt5.lastPing = Date.now();
+            // Envoyer un ping + demander le statut
             mt5Send({ type: 'get_status' });
             mt5Send({ type: 'get_account' });
+            // Ping toutes les 20s
             if (state.mt5.pingTimer) clearInterval(state.mt5.pingTimer);
             state.mt5.pingTimer = setInterval(() => mt5Send({ type: 'ping' }), 20000);
         };
-        ws.onmessage = (ev) => { try { mt5HandleMessage(JSON.parse(ev.data)); } catch (e) { log('MT5 : message invalide'); } };
-        ws.onerror = () => { mt5UpdateUI('disconnected', 'Erreur WebSocket'); };
+        ws.onmessage = (ev) => {
+            try {
+                const msg = JSON.parse(ev.data);
+                mt5HandleMessage(msg);
+            } catch (e) { log('MT5 : message invalide ' + e.message); }
+        };
+        ws.onerror = (e) => {
+            log('MT5 : erreur WebSocket');
+            mt5UpdateUI('disconnected', 'Erreur WebSocket');
+        };
         ws.onclose = () => {
+            log('MT5 : WebSocket fermé');
             state.mt5.connected = false;
             state.mt5.authenticated = false;
             if (state.mt5.pingTimer) clearInterval(state.mt5.pingTimer);
             mt5UpdateUI('disconnected', 'Connexion perdue, reconnexion…');
+            // Reconnexion auto toutes les 5s
             if (state.mt5.reconnectTimer) clearTimeout(state.mt5.reconnectTimer);
             state.mt5.reconnectTimer = setTimeout(mt5Connect, 5000);
         };
-    } catch (e) { mt5UpdateUI('disconnected', 'Erreur : ' + e.message); }
+    } catch (e) {
+        log('MT5 : exception ' + e.message);
+        mt5UpdateUI('disconnected', 'Erreur : ' + e.message);
+    }
 }
 function mt5Disconnect() {
     if (state.mt5.reconnectTimer) clearTimeout(state.mt5.reconnectTimer);
     if (state.mt5.pingTimer) clearInterval(state.mt5.pingTimer);
-    if (state.mt5.ws) { state.mt5.ws.onclose = null; state.mt5.ws.close(); state.mt5.ws = null; }
+    if (state.mt5.ws) {
+        state.mt5.ws.onclose = null;
+        state.mt5.ws.close();
+        state.mt5.ws = null;
+    }
     state.mt5.connected = false;
     state.mt5.authenticated = false;
     mt5UpdateUI('disconnected', 'Déconnecté manuellement');
     toast('Déconnecté de MT5', 'success');
 }
 function mt5Send(obj) {
-    if (!state.mt5.ws || state.mt5.ws.readyState !== WebSocket.OPEN) return false;
-    try { state.mt5.ws.send(JSON.stringify(obj)); return true; }
-    catch (e) { return false; }
+    if (!state.mt5.ws || state.mt5.ws.readyState !== WebSocket.OPEN) {
+        log('MT5 : pas de connexion, envoi impossible');
+        return false;
+    }
+    try {
+        state.mt5.ws.send(JSON.stringify(obj));
+        return true;
+    } catch (e) {
+        log('MT5 : erreur envoi ' + e.message);
+        return false;
+    }
 }
 function mt5HandleMessage(msg) {
+    log('MT5 : reçu ' + msg.type);
     switch (msg.type) {
         case 'welcome':
             state.mt5.authenticated = true;
-            if (msg.account) { state.mt5.account = msg.account; mt5UpdateAccount(msg.account); }
+            if (msg.account) {
+                state.mt5.account = msg.account;
+                mt5UpdateAccount(msg.account);
+            }
             mt5UpdateUI('connected', 'Bridge connecté (v' + (msg.version || '?') + ')');
             toast('✅ MT5 connecté !', 'success', 3000);
+            // Marquer le bouton "Envoyer vers MT5" comme actif
             if (state.lastAnalysis) $('send-to-mt5-btn').disabled = false;
             break;
         case 'mt5_status':
@@ -1126,7 +1172,11 @@ function mt5ShowOrderResult(msg) {
     el.innerHTML = '✅ <strong>Ticket #' + msg.ticket + '</strong> · ' + msg.symbol + ' ' + (msg.action || '') + ' @ ' + (msg.price || '?');
 }
 function mt5SendOrder(order) {
-    if (!state.mt5.connected) { toast('MT5 non connecté', 'warn'); return false; }
+    if (!state.mt5.connected) {
+        toast('MT5 non connecté', 'warn');
+        return false;
+    }
+    // Calculer sl_points et tp_points selon l'instrument
     const specs = getSpecs(order.symbol);
     const point = specs.tickSize;
     const slPoints = Math.round(Math.abs(order.entry - order.sl) / point);
@@ -1136,20 +1186,23 @@ function mt5SendOrder(order) {
         type: 'open_order',
         request_id: requestId,
         order: {
-            symbol: order.symbol.replace('/', ''),
-            direction: order.direction,
+            symbol: order.symbol.replace('/', ''),  // EURUSD au lieu de EUR/USD
+            direction: order.direction,  // 'buy' ou 'sell'
             entry: order.entry,
             sl: order.sl,
             tp: order.tp,
             lot: order.lot || 0.01,
             sl_points: slPoints,
             tp_points: tpPoints,
-            comment: 'SMC v5.9.1'
+            comment: 'SMC v5.9'
         }
     };
     const sent = mt5Send(payload);
-    if (sent) toast('📤 Ordre envoyé à MT5…', 'warn', 3000);
-    else toast('❌ Erreur d\'envoi à MT5', 'error');
+    if (sent) {
+        toast('📤 Ordre envoyé à MT5…', 'warn', 3000);
+    } else {
+        toast('❌ Erreur d\'envoi à MT5', 'error');
+    }
     return sent;
 }
 
@@ -1300,6 +1353,16 @@ function renderAnalysisBoxList() {
         '</div>';
     }).join('');
 }
+window.showAnalysisAudit = function(id) {
+    const box = loadAnalysisBox();
+    const a = box.find(x => x.id === id);
+    if (!a || !a.auditIA) return;
+    const modal = $('auto-trade-modal'), details = $('auto-trade-details');
+    if (!modal || !details) return;
+    details.innerHTML = '<div style="font-size:0.8rem;font-weight:700;margin-bottom:0.5rem;">' + esc(a.symbol) + ' — ' + a.signal + ' (' + a.smcScore + '/100)</div>' +
+        '<div style="font-size:0.78rem;line-height:1.6;white-space:pre-wrap;max-height:60vh;overflow-y:auto;">' + esc(a.auditIA) + '</div>';
+    modal.classList.add('visible');
+};
 
 // ══════════════════════════════════════════════════════════════════
 // CONNEXION TWELVE DATA
@@ -1874,7 +1937,7 @@ async function runBacktest() {
         window._lastBacktestTrades = trades;
         window._lastBacktestStats = stats;
         renderBacktestResults(stats, trades, equityCurve);
-        toast('Backtest v5.9.1 terminé : ' + trades.length + ' trades', 'success', 4000);
+        toast('Backtest v5.9 terminé : ' + trades.length + ' trades', 'success', 4000);
     } catch (e) {
         log('Erreur backtest : ' + e.message);
         toast('Erreur backtest : ' + e.message, 'error', 5000);
@@ -2106,7 +2169,7 @@ async function auditBacktest(stats, trades, symbol) {
     const midScoreTrades = trades.filter(t => t.smcScore >= 75 && t.smcScore < 85);
     const lowScoreTrades = trades.filter(t => t.smcScore < 75);
     const summary = {
-        symbol, strategy: 'Top-Down H4→H1→M15→M5 v5.9.1',
+        symbol, strategy: 'Top-Down H4→H1→M15→M5 v5.9',
         total_trades: stats.total, wins: stats.wins, losses: stats.losses, be: stats.be,
         winrate: stats.winrate, totalR: stats.totalR, avgR: stats.avgR, pnlPct: stats.pnlPct,
         maxDD: stats.maxDD, profitFactor: stats.profitFactor, sharpe: stats.sharpe,
@@ -2179,7 +2242,7 @@ async function runWeeklyAudit() {
 ${JSON.stringify(summary, null, 2)}
 
 CONTEXTE :
-- Top-Down v5.9.1 : H4 → H1 → M15 → M5
+- Top-Down v5.9 : H4 → H1 → M15 → M5
 - ACHAT en Discount de structure haussière, VENTE en Premium de structure baissière
 - Seuil SMC actuel : ${getScanConfig().minScore}/100
 
@@ -2259,7 +2322,7 @@ async function autoSendToTelegram(synthesis, levels, results, symbol) {
     if (lastTelegramSent[key] && (now - lastTelegramSent[key]) < 30 * 60 * 1000) return;
     const status = getScoreStatus(smcScore.total);
     const emoji = synthesis.signal === 'ACHAT' ? '🟢' : '🔴';
-    let text = '🚨 *SIGNAL SMC v5.9.1* 🚨\n\n📊 *' + symbol + '*\n' + emoji + ' Signal : *' + synthesis.signal + '*\n🎯 SMC Score : *' + smcScore.total + '/100* ' + status.label + '\n🧭 ' + (synthesis.orientationReason || '') + '\n\n';
+    let text = '🚨 *SIGNAL SMC v5.9* 🚨\n\n📊 *' + symbol + '*\n' + emoji + ' Signal : *' + synthesis.signal + '*\n🎯 SMC Score : *' + smcScore.total + '/100* ' + status.label + '\n🧭 ' + (synthesis.orientationReason || '') + '\n\n';
     if (synthesis.topDown) {
         const td = synthesis.topDown;
         text += '🧭 H4 : ' + td.h4Bias + ' | 🏛️ H1 : ' + (td.h1Confirms ? '✅' : '❌') + ' | 🔍 M15 : ' + td.m15Zone + ' | 🎯 M5 : ' + (td.m5Triggers ? '✅' : '❌') + '\n\n';
@@ -2270,45 +2333,13 @@ async function autoSendToTelegram(synthesis, levels, results, symbol) {
         lastTelegramSent[key] = now;
         try { localStorage.setItem(STORAGE.lastTgSent, JSON.stringify(lastTelegramSent)); } catch (e) {}
         sendNotification('🚨 Signal ' + synthesis.signal, symbol + ' — Score ' + smcScore.total + '/100');
-        addScanLog('✅ Telegram envoyé : ' + synthesis.signal + ' ' + symbol, 'success');
+        addScanLog('✅ Telegram envoyé : ' + synthesis.signal + ' ' + symbol + ' (score ' + smcScore.total + ')', 'success');
         renderAutoSendStats();
+        proposeAutoTrade(synthesis, levels, results, symbol);
     }
-    proposeAutoTrade(synthesis, levels, results, symbol);
+    await saveAndAuditAnalysis(synthesis, levels, results, symbol, smcScore, sent);
 }
-
-// ══════════════════════════════════════════════════════════════════
-// ✅ v5.9.1 SEMI-AUTO — Journal + Boîte auto, MT5 manuel
-// ══════════════════════════════════════════════════════════════════
-function proposeAutoTrade(synthesis, levels, results, symbol) {
-    const smcScore = computeSMCScore(results, synthesis, levels);
-    if (!isSignalValid(smcScore.total)) return;
-    if (synthesis.signal === 'ATTENDRE') return;
-
-    const direction = synthesis.signal === 'ACHAT' ? 'buy' : 'sell';
-    const capital = parseFloat(localStorage.getItem('smc_capital') || '100');
-    const risk = parseFloat(localStorage.getItem('smc_risk') || '1');
-    const sizeResult = computePositionSizeBrokerGrade(capital, risk, levels.entryPrice, levels.slPrice, symbol);
-
-    // 1️⃣ ENREGISTREMENT AUTO DANS LE JOURNAL
-    const trade = {
-        instrument: symbol,
-        direction: direction,
-        entry: levels.entryPrice,
-        sl: levels.slPrice,
-        tp: levels.tpPrice,
-        size: sizeResult.size,
-        capital: capital,
-        risk: risk,
-        smcScore: smcScore.total,
-        autoAdded: true,
-        source: 'semi-auto'
-    };
-    addTrade(trade);
-    renderTrades();
-    renderStats();
-    log('📓 Trade sauvegardé dans le journal : ' + symbol + ' ' + direction);
-
-    // 2️⃣ ENREGISTREMENT AUTO DANS LA BOÎTE + AUDIT IA
+async function saveAndAuditAnalysis(synthesis, levels, results, symbol, smcScore, telegramSent) {
     const entryR = results.M5 || results.M15;
     const analysis = {
         symbol, signal: synthesis.signal, smcScore: smcScore.total,
@@ -2323,10 +2354,9 @@ function proposeAutoTrade(synthesis, levels, results, symbol) {
             sweeps: (entryR.sweeps || []).length
         },
         atr: entryR.atr, zone: entryR.pd?.zone, zonePosition: entryR.pd?.position,
-        telegramSent: 0, outcome: null, auditIA: null
+        telegramSent, outcome: null, auditIA: null
     };
     const saved = addToAnalysisBox(analysis);
-    log('📦 Analyse sauvegardée dans la boîte');
     if (getDeepSeekKey()) {
         auditAnalysis(synthesis, levels, results, symbol).then(auditText => {
             if (auditText && !auditText.startsWith('Erreur')) {
@@ -2335,19 +2365,51 @@ function proposeAutoTrade(synthesis, levels, results, symbol) {
             }
         }).catch(e => log('Erreur audit auto : ' + e.message));
     }
-
-    // 3️⃣ MT5 : PAS D'ENVOI AUTO — Bouton manuel dans le rapport
-    const mt5Btn = $('send-to-mt5-btn');
-    if (mt5Btn && state.mt5.connected && state.mt5.authenticated) {
-        mt5Btn.disabled = false;
-        mt5Btn.textContent = '🚀 Envoyer vers MT5 (manuel)';
-    }
-
-    if (state.mt5.connected && state.mt5.authenticated) {
-        toast('📓 Trade journalisé · Cliquez sur "🚀 Envoyer vers MT5"', 'success', 5000);
-    } else {
-        toast('📓 Trade journalisé (MT5 non connecté)', 'success', 4000);
-    }
+}
+function renderAutoSendStats() {
+    const el = $('auto-send-stats');
+    if (!el) return;
+    const sent = JSON.parse(localStorage.getItem(STORAGE.lastTgSent) || '{}');
+    const keys = Object.keys(sent);
+    if (!keys.length) { el.innerHTML = '<div style="color:var(--ink-dim);">Aucun envoi récent</div>'; return; }
+    el.innerHTML = '<div style="margin-bottom:0.3rem;"><strong>Derniers envois (anti-spam 30 min) :</strong></div>' +
+        keys.map(k => {
+            const parts = k.split('_'), symbol = parts[0], direction = parts[1];
+            const elapsed = Math.round((Date.now() - sent[k]) / 60000);
+            const remaining = Math.max(0, 30 - elapsed);
+            return '<div style="padding:0.3rem;background:var(--panel-2);border-radius:4px;margin-bottom:0.2rem;">📤 <strong>' + symbol + '</strong> ' + direction + ' · ' + elapsed + ' min' + (remaining > 0 ? ' · <span style="color:var(--warn);">bloqué ' + remaining + ' min</span>' : ' · <span style="color:var(--success);">prêt</span>') + '</div>';
+        }).join('');
+}
+function proposeAutoTrade(synthesis, levels, results, symbol) {
+    const smcScore = computeSMCScore(results, synthesis, levels);
+    if (!isSignalValid(smcScore.total)) return;
+    const modal = $('auto-trade-modal'), details = $('auto-trade-details');
+    if (!modal || !details) return;
+    const status = getScoreStatus(smcScore.total);
+    const direction = synthesis.signal === 'ACHAT' ? 'buy' : 'sell';
+    const capital = parseFloat(localStorage.getItem('smc_capital') || '100');
+    const risk = parseFloat(localStorage.getItem('smc_risk') || '1');
+    const sizeResult = computePositionSizeBrokerGrade(capital, risk, levels.entryPrice, levels.slPrice, symbol);
+    details.innerHTML =
+        '<div class="m-signal ' + (direction === 'buy' ? 'buy' : 'sell') + '">' + (direction === 'buy' ? '🟢 ACHAT' : '🔴 VENTE') + ' — ' + esc(symbol) + '</div>' +
+        '<div class="m-row"><span class="m-label">SMC Score</span><span class="m-value">' + smcScore.total + '/100 ' + status.label + '</span></div>' +
+        '<div class="m-row"><span class="m-label">📥 Entrée</span><span class="m-value entry">' + levels.entry + '</span></div>' +
+        '<div class="m-row"><span class="m-label">🛑 Stop Loss</span><span class="m-value sl">' + levels.sl + '</span></div>' +
+        '<div class="m-row"><span class="m-label">🎯 TP1</span><span class="m-value tp">' + levels.tp1 + '</span></div>' +
+        '<div class="m-row"><span class="m-label">🎯 TP2</span><span class="m-value tp">' + levels.tp2 + '</span></div>' +
+        '<div class="m-row"><span class="m-label">⚖️ R/R</span><span class="m-value">' + levels.riskReward + '</span></div>' +
+        '<div class="m-row"><span class="m-label">📊 Taille</span><span class="m-value">' + sizeResult.size + ' lots</span></div>';
+    window._pendingTrade = { direction, symbol, levels, results, sizeResult, capital, risk, smcScore: smcScore.total };
+    modal.classList.add('visible');
+}
+function executeAutoTrade() {
+    const data = window._pendingTrade;
+    if (!data) return;
+    addTrade({ instrument: data.symbol, direction: data.direction, entry: data.levels.entryPrice, sl: data.levels.slPrice, tp: data.levels.tpPrice, size: data.sizeResult.size, capital: data.capital, risk: data.risk, smcScore: data.smcScore, autoAdded: true });
+    renderTrades(); renderStats();
+    toast('✅ Position ajoutée au journal', 'success');
+    window._pendingTrade = null;
+    $('auto-trade-modal').classList.remove('visible');
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -2421,6 +2483,7 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
     $('pd-container').innerHTML = '<p>Range M5 : ' + formatPrice(pd.low) + ' → ' + formatPrice(pd.high) + '</p><p>Zone M5 : <span class="smc-tag ' + (pd.zone === 'discount' ? 'bull' : 'bear') + '">' + (pd.zone === 'discount' ? '💎 Discount' : '🔺 Premium') + ' (' + pd.position + '%)</span></p>';
     $('scenarios-container').innerHTML = scenarios.map(s => '<div class="scenario ' + s.type + '"><div style="font-weight:700;">' + esc(s.title) + '</div><div style="font-size:0.7rem;color:var(--ink-dim);">' + esc(s.prob) + '</div><div>' + esc(s.text) + '</div></div>').join('');
     state.lastAnalysis = { timestamp: Date.now(), symbol, signal: synthesis.signal, levels, results, currentPrice, smcScore: smcScore.total };
+    // Activer le bouton MT5 si connecté
     if (state.mt5.connected) {
         const btn = $('send-to-mt5-btn');
         if (btn) btn.disabled = false;
@@ -2656,7 +2719,7 @@ async function runScan() {
     const config = getScanConfig();
     const instruments = loadScanInstruments();
     if (!instruments.length) { addScanLog('Aucun instrument', 'warn'); return; }
-    addScanLog('🔍 Scan Top-Down v5.9.1 · ' + instruments.length + ' instruments · seuil ' + config.minScore, 'info');
+    addScanLog('🔍 Scan Top-Down v5.9 · ' + instruments.length + ' instruments · seuil ' + config.minScore, 'info');
     let signalsFound = 0;
     for (const inst of instruments) {
         if (!state.scanning) { addScanLog('⏸ Interrompu', 'warn'); return; }
@@ -2666,7 +2729,7 @@ async function runScan() {
             if (!analysis.valid) { addScanLog('⏭ ' + inst + ' : ' + analysis.reason, 'info'); continue; }
             signalsFound++;
             addScanLog('🚨 ' + analysis.synthesis.signal + ' ' + inst + ' (' + analysis.smcScore.total + ')', 'success');
-            await autoSendToTelegram(analysis.synthesis, analysis.levels, analysis.results, inst);
+            await saveAndAuditAnalysis(analysis.synthesis, analysis.levels, analysis.results, inst, analysis.smcScore, 0);
             await sleep(1000);
         } catch (e) { addScanLog('❌ ' + inst + ' : ' + e.message, 'error'); }
     }
@@ -2734,7 +2797,7 @@ async function runAnalysis() {
         const scenarios = buildScenarios(results, synthesis, levels);
         renderReport(results, synthesis, levels, scenarios, currentPrice, state.symbol);
         setStatus(null);
-        toast('Analyse Top-Down v5.9.1 complète ✓', 'success');
+        toast('Analyse Top-Down v5.9 complète ✓', 'success');
     } catch (e) {
         log('Erreur : ' + e.message);
         setStatus(null);
@@ -2792,6 +2855,12 @@ function initSymbols() {
     state.symbol = 'EUR/USD';
     sel.addEventListener('change', (e) => { state.symbol = e.target.value; lastPrice = null; if (state.ready) subscribeTicks(state.symbol); });
 }
+function mt5LoadConfigToUI() {
+    const url = mt5GetUrl();
+    const token = mt5GetToken();
+    if (url) $('mt5-ws-url').value = url;
+    if (token) $('mt5-token').value = token;
+}
 function initSettings() {
     const tk = getTwelveKey();
     if (tk) $('twelvedata-key').value = tk;
@@ -2804,6 +2873,7 @@ function initSettings() {
     if (dk) $('deepseek-key').value = dk;
     $('save-deepseek')?.addEventListener('click', saveDeepSeekKey);
     $('test-deepseek')?.addEventListener('click', testDeepSeek);
+    // MT5 buttons
     $('mt5-connect-btn')?.addEventListener('click', () => { mt5SaveConfig(); mt5Connect(); });
     $('mt5-disconnect-btn')?.addEventListener('click', mt5Disconnect);
     $('mt5-refresh-btn')?.addEventListener('click', () => { if (state.mt5.connected) { mt5Send({ type: 'get_account' }); mt5Send({ type: 'get_status' }); toast('Rafraîchissement…', 'success'); } else toast('Non connecté', 'warn'); });
@@ -2817,7 +2887,7 @@ function initSettings() {
         saveTelegramAccounts(accounts); renderTelegramAccounts();
     });
     $('test-all-telegram-btn')?.addEventListener('click', async () => {
-        const sent = await sendToAllTelegram('🧠 *SMC Top-Down v5.9.1* — Test');
+        const sent = await sendToAllTelegram('🧠 *SMC Top-Down v5.9* — Test');
         toast(sent > 0 ? 'Envoyé à ' + sent : 'Aucun actif', sent > 0 ? 'success' : 'warn');
     });
     $('enable-push-btn')?.addEventListener('click', async () => {
@@ -2917,20 +2987,19 @@ function initScanner() {
     });
 }
 function initModal() {
-    $('auto-trade-yes')?.addEventListener('click', () => {
-        const data = window._pendingTrade;
-        if (!data) return;
-        addTrade({ instrument: data.symbol, direction: data.direction, entry: data.levels.entryPrice, sl: data.levels.slPrice, tp: data.levels.tpPrice, size: data.sizeResult.size, capital: data.capital, risk: data.risk, smcScore: data.smcScore, autoAdded: true });
-        renderTrades(); renderStats();
-        toast('✅ Position ajoutée au journal', 'success');
-        window._pendingTrade = null;
-        $('auto-trade-modal').classList.remove('visible');
-    });
+    $('auto-trade-yes')?.addEventListener('click', executeAutoTrade);
     $('auto-trade-mt5')?.addEventListener('click', () => {
         const data = window._pendingTrade;
         if (!data) return;
         if (!state.mt5.connected) { toast('MT5 non connecté', 'warn'); return; }
-        mt5SendOrder({ symbol: data.symbol, direction: data.direction, entry: data.levels.entryPrice, sl: data.levels.slPrice, tp: data.levels.tpPrice, lot: parseFloat(data.sizeResult.size) || 0.01 });
+        mt5SendOrder({
+            symbol: data.symbol,
+            direction: data.direction,
+            entry: data.levels.entryPrice,
+            sl: data.levels.slPrice,
+            tp: data.levels.tpPrice,
+            lot: parseFloat(data.sizeResult.size) || 0.01
+        });
         $('auto-trade-modal').classList.remove('visible');
     });
     $('auto-trade-no')?.addEventListener('click', () => { window._pendingTrade = null; $('auto-trade-modal').classList.remove('visible'); });
@@ -2968,22 +3037,31 @@ async function init() {
         const a = state.lastAnalysis;
         if (a.signal === 'ATTENDRE') { toast('Signal neutre — rien à envoyer', 'warn'); return; }
         if (!confirm('Envoyer l\'ordre ' + a.signal + ' ' + a.symbol + ' à MT5 ?')) return;
-        mt5SendOrder({ symbol: a.symbol, direction: a.signal === 'ACHAT' ? 'buy' : 'sell', entry: a.levels.entryPrice, sl: a.levels.slPrice, tp: a.levels.tpPrice, lot: 0.01 });
+        mt5SendOrder({
+            symbol: a.symbol,
+            direction: a.signal === 'ACHAT' ? 'buy' : 'sell',
+            entry: a.levels.entryPrice,
+            sl: a.levels.slPrice,
+            tp: a.levels.tpPrice,
+            lot: 0.01  // Sera ajusté par l'EA selon le broker
+        });
     });
     await connectTwelveData();
     subscribeTicks(state.symbol);
+    // Auto-connexion MT5 si configurée
     const mt5Url = mt5GetUrl();
-    if (mt5Url && mt5GetToken()) { setTimeout(mt5Connect, 2000); }
-    else { mt5UpdateUI('disconnected', 'Configurez URL + Token'); }
+    if (mt5Url && mt5GetToken()) {
+        setTimeout(mt5Connect, 2000);
+    } else {
+        mt5UpdateUI('disconnected', 'Configurez URL + Token');
+    }
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({ appId: "86e53477-c701-4251-9f8a-53a737e5f759", notifyButton: { enable: true, position: 'bottom-right', size: 'medium', theme: 'default' } });
     });
-    log('SMC Trader Pro v5.9.1 SEMI-AUTO prêt');
+    log('SMC Trader Pro v5.9 prêt — MT5 bridge intégré');
 }
 init();
 </script>
 </body>
 </html>
-    </div>
-</div>
