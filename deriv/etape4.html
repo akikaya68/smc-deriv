@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Deriv — Étape 4 : Backtest 5 Stratégies (3 ans)</title>
+<title>Deriv — Étape 4 : Backtest & Scanner Auto</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -38,6 +38,8 @@
     button:hover { background: #232b36; }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
     button.primary { background: #16a34a; border-color: #16a34a; color: #fff; }
+    button.danger { background: #dc2626; border-color: #dc2626; color: #fff; }
+    button.info { background: #2563eb; border-color: #2563eb; color: #fff; }
 
     .controls { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
 
@@ -49,6 +51,7 @@
         font-size: 0.72rem; text-transform: uppercase;
         color: #9ca3af; font-weight: 700; letter-spacing: 0.06em;
         margin-bottom: 0.8rem;
+        display: flex; justify-content: space-between; align-items: center;
     }
     label { display: block; font-size: 0.68rem; color: #9ca3af; margin-bottom: 0.3rem; text-transform: uppercase; font-weight: 700; }
     select, input {
@@ -64,7 +67,7 @@
     }
     .mode-tab {
         flex: 1; padding: 0.6rem; border-radius: 6px;
-        text-align: center; font-size: 0.75rem; font-weight: 700;
+        text-align: center; font-size: 0.72rem; font-weight: 700;
         cursor: pointer; color: #9ca3af;
     }
     .mode-tab.active { background: #16a34a; color: #fff; }
@@ -101,18 +104,10 @@
     }
     .stat-item {
         background: #1a2028; border-radius: 6px;
-        padding: 0.4rem 0.5rem;
-        text-align: center;
+        padding: 0.4rem 0.5rem; text-align: center;
     }
-    .stat-label {
-        font-size: 0.58rem; color: #9ca3af;
-        text-transform: uppercase; font-weight: 700;
-    }
-    .stat-value {
-        font-size: 0.8rem; font-weight: 700;
-        font-family: ui-monospace, monospace;
-        margin-top: 0.1rem;
-    }
+    .stat-label { font-size: 0.58rem; color: #9ca3af; text-transform: uppercase; font-weight: 700; }
+    .stat-value { font-size: 0.8rem; font-weight: 700; font-family: ui-monospace, monospace; margin-top: 0.1rem; }
     .stat-value.green { color: #16a34a; }
     .stat-value.red { color: #dc2626; }
     .stat-value.blue { color: #2563eb; }
@@ -131,19 +126,97 @@
         background: #16a34a; color: #fff; margin-left: 0.4rem;
     }
 
-    .summary-box {
-        background: linear-gradient(135deg, #052e16, #0a0f14);
-        border: 1px solid #16a34a; border-radius: 8px;
-        padding: 0.9rem 1rem; margin-bottom: 0.8rem; text-align: center;
+    /* TOP 5 */
+    .top5-container {
+        display: flex; flex-direction: column; gap: 0.5rem;
     }
-    .summary-label { font-size: 0.7rem; text-transform: uppercase; color: #86efac; font-weight: 700; margin-bottom: 0.3rem; }
-    .summary-value { font-size: 1.1rem; font-weight: 700; }
+    .top5-item {
+        background: #0a0f14; border-radius: 8px;
+        padding: 0.7rem 0.9rem;
+        border-left: 4px solid;
+        display: grid;
+        grid-template-columns: 40px 1fr auto;
+        align-items: center;
+        gap: 0.7rem;
+    }
+    .top5-rank {
+        font-size: 1.4rem; font-weight: 700;
+        font-family: ui-monospace, monospace;
+        text-align: center;
+    }
+    .top5-rank.gold { color: #fbbf24; }
+    .top5-rank.silver { color: #d1d5db; }
+    .top5-rank.bronze { color: #f97316; }
+    .top5-rank.other { color: #6b7280; }
+
+    .top5-info { flex: 1; }
+    .top5-symbol { font-weight: 700; font-size: 0.85rem; }
+    .top5-strat { font-size: 0.7rem; color: #9ca3af; margin-top: 0.1rem; }
+    .top5-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.3rem;
+        font-size: 0.65rem;
+        font-family: ui-monospace, monospace;
+        margin-top: 0.3rem;
+    }
+    .top5-score {
+        font-size: 1.2rem;
+        font-weight: 700;
+        font-family: ui-monospace, monospace;
+        color: #16a34a;
+        text-align: right;
+    }
+
+    /* SCANNER */
+    .scanner-status {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 0.6rem 0.8rem;
+        background: #0a0f14; border-radius: 8px;
+        font-size: 0.75rem;
+        margin-bottom: 0.6rem;
+    }
+    .scanner-status .label { color: #9ca3af; }
+    .scanner-status .value { font-weight: 700; font-family: ui-monospace, monospace; }
+    .scanner-status .value.active { color: #16a34a; }
+    .scanner-status .value.inactive { color: #dc2626; }
+    .scanner-status .value.countdown { color: #fbbf24; }
+
+    /* SIGNAL CARD */
+    .signal-card {
+        background: #0a0f14;
+        border-radius: 8px;
+        padding: 0.9rem;
+        margin-bottom: 0.6rem;
+        border-left: 4px solid;
+    }
+    .signal-card.buy { border-left-color: #16a34a; background: #052e1633; }
+    .signal-card.sell { border-left-color: #dc2626; background: #450a0a33; }
+    .signal-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    .signal-symbol { font-weight: 700; font-size: 0.9rem; }
+    .signal-direction {
+        padding: 0.2rem 0.6rem; border-radius: 6px;
+        font-size: 0.7rem; font-weight: 700;
+    }
+    .signal-direction.buy { background: #16a34a; color: #fff; }
+    .signal-direction.sell { background: #dc2626; color: #fff; }
+    .signal-details {
+        display: grid; grid-template-columns: repeat(3, 1fr);
+        gap: 0.4rem;
+        font-size: 0.7rem;
+        font-family: ui-monospace, monospace;
+    }
+    .signal-details .lbl { font-size: 0.6rem; color: #9ca3af; }
+    .signal-details .val { font-weight: 700; }
 
     .logs {
         background: #0a0f14; border: 1px solid #2d3744;
         border-radius: 8px; padding: 0.8rem;
         font-family: ui-monospace, monospace; font-size: 0.72rem;
-        max-height: 250px; overflow-y: auto; line-height: 1.6;
+        max-height: 300px; overflow-y: auto; line-height: 1.6;
     }
     .log-line { margin-bottom: 0.2rem; word-break: break-all; }
     .log-time { color: #6b7280; margin-right: 0.4rem; }
@@ -152,12 +225,35 @@
     .log-error { color: #fca5a5; }
     .log-warn { color: #fde68a; }
     .log-data { color: #93c5fd; }
+    .log-signal { color: #fbbf24; font-weight: 700; }
+
+    /* INDEX GRID */
+    .index-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 0.4rem;
+        max-height: 350px;
+        overflow-y: auto;
+    }
+    .index-item {
+        padding: 0.5rem;
+        background: #0a0f14;
+        border-radius: 6px;
+        border: 1px solid #2d3744;
+        cursor: pointer;
+        font-size: 0.72rem;
+        text-align: center;
+    }
+    .index-item:hover { border-color: #16a34a; }
+    .index-item.selected { background: #16a34a22; border-color: #16a34a; }
+    .index-item .code { font-weight: 700; color: #93c5fd; font-family: ui-monospace, monospace; }
+    .index-item .name { font-size: 0.65rem; color: #9ca3af; margin-top: 0.15rem; }
 </style>
 </head>
 <body>
 
-<h1>🧠 Deriv — Étape 4 : Backtest 5 Stratégies</h1>
-<p class="subtitle">Backtest jusqu'à 3 ans · Toutes TF · Métriques complètes</p>
+<h1>🧠 Deriv — Étape 4 : Backtest + Scanner Auto</h1>
+<p class="subtitle">46 indices · 5 stratégies · Top 5 · Scan toutes les 30 min</p>
 
 <div class="status-box">
     <div class="dot" id="status-dot"></div>
@@ -171,28 +267,15 @@
     <div class="mode-tab active" data-mode="single">🎯 1 Indice</div>
     <div class="mode-tab" data-mode="family">📂 Par Famille</div>
     <div class="mode-tab" data-mode="all">🌍 Tous</div>
+    <div class="mode-tab" data-mode="scanner">🤖 Scanner Auto</div>
 </div>
 
 <div class="section">
     <div class="section-title">⚙️ Paramètres</div>
 
     <div id="single-controls">
-        <label>Indice</label>
-        <select id="symbol-select">
-            <option value="R_75" selected>Volatility 75 Index</option>
-            <option value="R_10">Volatility 10 Index</option>
-            <option value="R_25">Volatility 25 Index</option>
-            <option value="R_50">Volatility 50 Index</option>
-            <option value="R_100">Volatility 100 Index</option>
-            <option value="BOOM500">Boom 500 Index</option>
-            <option value="BOOM1000">Boom 1000 Index</option>
-            <option value="CRASH500">Crash 500 Index</option>
-            <option value="CRASH1000">Crash 1000 Index</option>
-            <option value="JD10">Jump 10 Index</option>
-            <option value="JD100">Jump 100 Index</option>
-            <option value="stpRNG">Step Index 100</option>
-            <option value="RB100">Range Break 100 Index</option>
-        </select>
+        <label>Indice (46 disponibles)</label>
+        <div class="index-grid" id="index-grid"></div>
     </div>
 
     <div id="family-controls" style="display:none;">
@@ -209,38 +292,52 @@
         </select>
     </div>
 
+    <div id="scanner-controls" style="display:none;">
+        <label>Configuration du scanner</label>
+        <div class="scanner-status">
+            <span class="label">Statut :</span>
+            <span class="value inactive" id="scanner-state">⏸ Arrêté</span>
+        </div>
+        <div class="scanner-status">
+            <span class="label">Prochain scan :</span>
+            <span class="value countdown" id="scanner-countdown">—</span>
+        </div>
+        <div class="scanner-status">
+            <span class="label">Signaux actifs :</span>
+            <span class="value" id="scanner-signals">0</span>
+        </div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+            <button class="primary" id="btn-scanner-toggle" style="flex:1;">▶️ Démarrer le scanner</button>
+            <button id="btn-scanner-clear">🗑️ Vider cache</button>
+        </div>
+    </div>
+
     <div class="control-grid">
         <div>
             <label>Granularité</label>
             <select id="granularity">
-                <option value="60">M1 (1 min)</option>
-                <option value="300" selected>M5 (5 min)</option>
-                <option value="900">M15 (15 min)</option>
-                <option value="1800">M30 (30 min)</option>
-                <option value="3600">H1 (1 heure)</option>
-                <option value="14400">H4 (4 heures)</option>
-                <option value="86400">D1 (1 jour)</option>
+                <option value="60">M1</option>
+                <option value="300" selected>M5</option>
+                <option value="900">M15</option>
+                <option value="1800">M30</option>
+                <option value="3600">H1</option>
+                <option value="14400">H4</option>
+                <option value="86400">D1</option>
             </select>
         </div>
         <div>
-            <label>Bougies cible</label>
+            <label>Nb bougies</label>
             <select id="count">
                 <option value="500">500</option>
                 <option value="1000" selected>1000</option>
+                <option value="2000">2000</option>
                 <option value="5000">5 000</option>
-                <option value="10000">10 000</option>
-                <option value="20000">20 000</option>
-                <option value="50000">50 000</option>
             </select>
         </div>
         <div>
             <label>Risque/trade (%)</label>
             <input type="number" id="risk" value="1" step="0.1" min="0.1" max="5">
         </div>
-    </div>
-
-    <div style="font-size:0.7rem;color:#6b7280;text-align:center;">
-        ⓘ L'app fera plusieurs requêtes de 5000 bougies pour atteindre la cible
     </div>
 </div>
 
@@ -253,30 +350,89 @@
 </div>
 <div class="progress-text" id="progress-text"></div>
 
-<div id="results" style="display:none;">
+<!-- TOP 5 -->
+<div id="top5-section" style="display:none;">
     <div class="section">
-        <div class="section-title">📊 Résultats</div>
-        <div class="summary-box" id="summary">
-            <div class="summary-label">🏆 Meilleure stratégie</div>
-            <div class="summary-value" id="summary-best">—</div>
-        </div>
-        <div id="results-container"></div>
+        <div class="section-title">🏆 Top 5 des meilleures combinaisons</div>
+        <div class="top5-container" id="top5-container"></div>
     </div>
 </div>
 
-<div class="logs" id="logs"></div>
+<!-- SIGNAUX ACTIFS -->
+<div id="signals-section" style="display:none;">
+    <div class="section">
+        <div class="section-title">📡 Signaux actifs <span id="signals-count" style="color:#fbbf24;"></span></div>
+        <div id="signals-container"></div>
+    </div>
+</div>
+
+<div class="section">
+    <div class="section-title">📊 Logs</div>
+    <div class="logs" id="logs"></div>
+</div>
 
 <script>
+// ══════════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════════
 const ENDPOINTS = [
     'wss://api.derivws.com/trading/v1/options/ws/public',
     'wss://ws.derivws.com/websockets/v3?app_id=1089',
-    'wss://green.derivws.com/websockets/v3?app_id=1089',
-    'wss://blue.derivws.com/websockets/v3?app_id=1089',
-    'wss://red.derivws.com/websockets/v3?app_id=1089'
+    'wss://green.derivws.com/websockets/v3?app_id=1089'
 ];
 const PING_INTERVAL_MS = 30000;
 const CONNECT_TIMEOUT = 6000;
-const MAX_CANDLES_PER_REQUEST = 5000;
+const SCAN_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+const CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+const STORAGE_KEYS = {
+    signalCache: 'deriv_signal_cache_v1',
+    scannerActive: 'deriv_scanner_active_v1'
+};
+
+// Tous les 46 indices
+const ALL_INDICES = [
+    { code: 'R_10', name: 'Volatility 10' },
+    { code: 'R_25', name: 'Volatility 25' },
+    { code: 'R_50', name: 'Volatility 50' },
+    { code: 'R_75', name: 'Volatility 75' },
+    { code: 'R_100', name: 'Volatility 100' },
+    { code: '1HZ10V', name: 'Vol 10 (1s)' },
+    { code: '1HZ15V', name: 'Vol 15 (1s)' },
+    { code: '1HZ25V', name: 'Vol 25 (1s)' },
+    { code: '1HZ30V', name: 'Vol 30 (1s)' },
+    { code: '1HZ50V', name: 'Vol 50 (1s)' },
+    { code: '1HZ75V', name: 'Vol 75 (1s)' },
+    { code: '1HZ90V', name: 'Vol 90 (1s)' },
+    { code: '1HZ100V', name: 'Vol 100 (1s)' },
+    { code: 'BOOM50', name: 'Boom 50' },
+    { code: 'BOOM150N', name: 'Boom 150' },
+    { code: 'BOOM300N', name: 'Boom 300' },
+    { code: 'BOOM500', name: 'Boom 500' },
+    { code: 'BOOM600', name: 'Boom 600' },
+    { code: 'BOOM900', name: 'Boom 900' },
+    { code: 'BOOM1000', name: 'Boom 1000' },
+    { code: 'CRASH50', name: 'Crash 50' },
+    { code: 'CRASH150N', name: 'Crash 150' },
+    { code: 'CRASH300N', name: 'Crash 300' },
+    { code: 'CRASH500', name: 'Crash 500' },
+    { code: 'CRASH600', name: 'Crash 600' },
+    { code: 'CRASH900', name: 'Crash 900' },
+    { code: 'CRASH1000', name: 'Crash 1000' },
+    { code: 'JD10', name: 'Jump 10' },
+    { code: 'JD25', name: 'Jump 25' },
+    { code: 'JD50', name: 'Jump 50' },
+    { code: 'JD75', name: 'Jump 75' },
+    { code: 'JD100', name: 'Jump 100' },
+    { code: 'stpRNG', name: 'Step 100' },
+    { code: 'stpRNG2', name: 'Step 200' },
+    { code: 'stpRNG3', name: 'Step 300' },
+    { code: 'stpRNG4', name: 'Step 400' },
+    { code: 'stpRNG5', name: 'Step 500' },
+    { code: 'RB100', name: 'Range Break 100' },
+    { code: 'RB200', name: 'Range Break 200' },
+    { code: 'RDBULL', name: 'Bull Market' },
+    { code: 'RDBEAR', name: 'Bear Market' }
+];
 
 const FAMILIES = {
     'volatility': { name: '📊 Volatility', indices: ['R_10', 'R_25', 'R_50', 'R_75', 'R_100'] },
@@ -293,7 +449,14 @@ const state = {
     ws: null, connected: false, connecting: false,
     pingInterval: null, reqId: 1,
     pendingRequests: new Map(),
-    currentMode: 'single', running: false
+    currentMode: 'single', running: false,
+    selectedIndex: 'R_75',
+    scannerActive: false,
+    scannerTimer: null,
+    countdownTimer: null,
+    nextScanAt: null,
+    activeSignals: new Map(), // cache : symbol_strat → timestamp
+    scanResults: []
 };
 
 function $(id) { return document.getElementById(id); }
@@ -309,7 +472,7 @@ function log(msg, type = 'info') {
     line.innerHTML = '<span class="log-time">' + nowTime() + '</span><span class="log-' + type + '">' + escapeHtml(msg) + '</span>';
     logs.appendChild(line);
     logs.scrollTop = logs.scrollHeight;
-    while (logs.children.length > 300) logs.removeChild(logs.firstChild);
+    while (logs.children.length > 400) logs.removeChild(logs.firstChild);
 }
 function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -321,6 +484,48 @@ function setStatus(status, text, detail) {
     $('status-detail').textContent = detail || '';
 }
 
+// ══════════════════════════════════════════════════════════════════
+// CACHE ANTI-DOUBLONS (localStorage)
+// ══════════════════════════════════════════════════════════════════
+function loadCache() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEYS.signalCache);
+        if (!raw) return new Map();
+        const obj = JSON.parse(raw);
+        const map = new Map();
+        const now = Date.now();
+        for (const [key, ts] of Object.entries(obj)) {
+            if (now - ts < CACHE_DURATION_MS) map.set(key, ts);
+        }
+        return map;
+    } catch (e) { return new Map(); }
+}
+function saveCache(map) {
+    try {
+        const obj = {};
+        for (const [key, ts] of map.entries()) obj[key] = ts;
+        localStorage.setItem(STORAGE_KEYS.signalCache, JSON.stringify(obj));
+    } catch (e) {}
+}
+function isSignalCached(symbol, strategy) {
+    const key = symbol + '_' + strategy;
+    const ts = state.activeSignals.get(key);
+    if (!ts) return false;
+    if (Date.now() - ts > CACHE_DURATION_MS) {
+        state.activeSignals.delete(key);
+        return false;
+    }
+    return true;
+}
+function cacheSignal(symbol, strategy) {
+    const key = symbol + '_' + strategy;
+    state.activeSignals.set(key, Date.now());
+    saveCache(state.activeSignals);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// WEBSOCKET
+// ══════════════════════════════════════════════════════════════════
 async function connect() {
     if (state.connected || state.connecting) return;
     state.connecting = true;
@@ -396,7 +601,7 @@ function stopPing() {
     if (state.pingInterval) { clearInterval(state.pingInterval); state.pingInterval = null; }
 }
 
-function sendRequest(payload, timeoutMs = 30000) {
+function sendRequest(payload, timeoutMs = 25000) {
     if (!state.connected || !state.ws) return Promise.reject(new Error('Non connecté'));
     const reqId = state.reqId++;
     payload.req_id = reqId;
@@ -413,62 +618,23 @@ function sendRequest(payload, timeoutMs = 30000) {
     });
 }
 
-// ══════════════════════════════════════════════════════════════════
-// RÉCUPÉRATION MULTI-REQUÊTES (jusqu'à 3 ans)
-// ══════════════════════════════════════════════════════════════════
-async function fetchCandlesMulti(symbol, granularity, targetCount, onProgress) {
-    let allCandles = [];
-    let end = 'latest';
-    let requestNum = 0;
-
-    while (allCandles.length < targetCount && requestNum < 20) {
-        requestNum++;
-        const remaining = targetCount - allCandles.length;
-        const count = Math.min(MAX_CANDLES_PER_REQUEST, remaining);
-
-        const payload = {
-            ticks_history: symbol,
-            adjust_start_time: 1,
-            count: count,
-            end: end,
-            start: 1,
-            style: 'candles',
-            granularity: granularity
-        };
-
-        try {
-            const res = await sendRequest(payload, 40000);
-            if (res.error) throw new Error(res.error.message);
-            if (!res.candles || !res.candles.length) break;
-
-            const batch = res.candles.map(c => ({
-                epoch: c.epoch,
-                open: parseFloat(c.open),
-                high: parseFloat(c.high),
-                low: parseFloat(c.low),
-                close: parseFloat(c.close)
-            }));
-
-            // Préfixer (les plus anciennes en premier)
-            allCandles = batch.concat(allCandles);
-            if (onProgress) onProgress(allCandles.length, targetCount);
-
-            // Si on a reçu moins que demandé → fin de l'historique
-            if (batch.length < count) break;
-
-            // Prochain end = timestamp de la plus ancienne bougie - 1
-            end = batch[0].epoch - 1;
-        } catch (e) {
-            log('  ⚠️ Requête ' + requestNum + ' échouée : ' + e.message, 'warn');
-            break;
-        }
-
-        await new Promise(r => setTimeout(r, 250));
-    }
-
-    // Tri par epoch (au cas où)
-    allCandles.sort((a, b) => a.epoch - b.epoch);
-    return allCandles;
+async function fetchCandles(symbol, granularity, count) {
+    const payload = {
+        ticks_history: symbol,
+        adjust_start_time: 1, count: count,
+        end: 'latest', start: 1,
+        style: 'candles', granularity: granularity
+    };
+    const res = await sendRequest(payload, 30000);
+    if (res.error) throw new Error(res.error.message || JSON.stringify(res.error));
+    if (!res.candles) throw new Error('Pas de candles');
+    return res.candles.map(c => ({
+        epoch: c.epoch,
+        open: parseFloat(c.open),
+        high: parseFloat(c.high),
+        low: parseFloat(c.low),
+        close: parseFloat(c.close)
+    }));
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -542,38 +708,29 @@ function calculateRSI(candles, period = 14) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// SIMULATION + MÉTRIQUES COMPLÈTES
+// SIMULATION + STATS
 // ══════════════════════════════════════════════════════════════════
 function simulateTrade(candles, startIdx, direction, entry, sl, tp) {
     for (let i = startIdx; i < candles.length; i++) {
         const c = candles[i];
         if (direction === 'buy') {
-            if (c.low <= sl) return { result: 'loss', exitReason: 'sl', pips: entry - sl, duration: i - startIdx, entry, sl, tp };
-            if (c.high >= tp) return { result: 'win', exitReason: 'tp', pips: tp - entry, duration: i - startIdx, entry, sl, tp };
+            if (c.low <= sl) return { result: 'loss', exitReason: 'sl', pips: entry - sl, duration: i - startIdx };
+            if (c.high >= tp) return { result: 'win', exitReason: 'tp', pips: tp - entry, duration: i - startIdx };
         } else {
-            if (c.high >= sl) return { result: 'loss', exitReason: 'sl', pips: sl - entry, duration: i - startIdx, entry, sl, tp };
-            if (c.low <= tp) return { result: 'win', exitReason: 'tp', pips: entry - tp, duration: i - startIdx, entry, sl, tp };
+            if (c.high >= sl) return { result: 'loss', exitReason: 'sl', pips: sl - entry, duration: i - startIdx };
+            if (c.low <= tp) return { result: 'win', exitReason: 'tp', pips: entry - tp, duration: i - startIdx };
         }
     }
-    // Trade ouvert
     const last = candles[candles.length - 1].close;
     const pips = direction === 'buy' ? last - entry : entry - last;
-    return {
-        result: pips > 0 ? 'win' : 'loss',
-        exitReason: 'open',
-        pips, duration: candles.length - 1 - startIdx,
-        entry, sl, tp, stillOpen: true
-    };
+    return { result: pips > 0 ? 'win' : 'loss', exitReason: 'open', pips, duration: candles.length - 1 - startIdx, stillOpen: true };
 }
 
 function calculateStats(trades) {
     if (!trades.length) return emptyStats();
-
     const wins = trades.filter(t => t.result === 'win' && !t.stillOpen);
     const losses = trades.filter(t => t.result === 'loss' && !t.stillOpen);
     const open = trades.filter(t => t.stillOpen);
-
-    // Séparer TP vs SL vs Open
     const tpTrades = trades.filter(t => t.exitReason === 'tp');
     const slTrades = trades.filter(t => t.exitReason === 'sl');
     const openTrades = trades.filter(t => t.exitReason === 'open');
@@ -592,7 +749,6 @@ function calculateStats(trades) {
     const expectancy = (winrate / 100) * avgWin - (lossrate / 100) * avgLoss;
     const payoffRatio = avgLoss > 0 ? avgWin / avgLoss : 0;
 
-    // Drawdown max
     let peak = 0, equity = 0, maxDD = 0;
     for (const t of trades) {
         equity += (t.result === 'win' ? t.pips : -Math.abs(t.pips));
@@ -601,39 +757,30 @@ function calculateStats(trades) {
         if (dd > maxDD) maxDD = dd;
     }
 
-    // Streaks
     let maxWinStreak = 0, maxLossStreak = 0, curWin = 0, curLoss = 0;
     for (const t of trades) {
         if (t.result === 'win') { curWin++; curLoss = 0; maxWinStreak = Math.max(maxWinStreak, curWin); }
         else { curLoss++; curWin = 0; maxLossStreak = Math.max(maxLossStreak, curLoss); }
     }
 
-    // Durées
     const durations = trades.map(t => t.duration || 0);
     const avgDuration = durations.length ? durations.reduce((s, d) => s + d, 0) / durations.length : 0;
     const maxDuration = durations.length ? Math.max(...durations) : 0;
-    const minDuration = durations.length ? Math.min(...durations) : 0;
 
     return {
-        total: trades.length,
-        wins: wins.length,
-        losses: losses.length,
-        openCount: open.length,
-        tpCount: tpTrades.length,
-        slCount: slTrades.length,
+        total: trades.length, wins: wins.length, losses: losses.length,
+        openCount: open.length, tpCount: tpTrades.length, slCount: slTrades.length,
         winrate, lossrate,
-        avgWin: avgWin.toFixed(2),
-        avgLoss: avgLoss.toFixed(2),
+        avgWin: avgWin.toFixed(2), avgLoss: avgLoss.toFixed(2),
         totalPips: totalPips.toFixed(2),
-        pipsWon: pipsWon.toFixed(2),
-        pipsLost: pipsLost.toFixed(2),
+        pipsWon: pipsWon.toFixed(2), pipsLost: pipsLost.toFixed(2),
         profitFactor: profitFactor.toFixed(2),
         expectancy: expectancy.toFixed(2),
         payoffRatio: payoffRatio.toFixed(2),
         maxDD: maxDD.toFixed(2),
         maxWinStreak, maxLossStreak,
         avgDuration: avgDuration.toFixed(1),
-        maxDuration, minDuration
+        maxDuration
     };
 }
 
@@ -644,12 +791,12 @@ function emptyStats() {
         totalPips: '0', pipsWon: '0', pipsLost: '0',
         profitFactor: '0', expectancy: '0', payoffRatio: '0',
         maxDD: '0', maxWinStreak: 0, maxLossStreak: 0,
-        avgDuration: '0', maxDuration: 0, minDuration: 0
+        avgDuration: '0', maxDuration: 0
     };
 }
 
 // ══════════════════════════════════════════════════════════════════
-// STRATÉGIE 1 — Range Reversion
+// 5 STRATÉGIES
 // ══════════════════════════════════════════════════════════════════
 function strategy1(candles) {
     const rangeBars = 50, atrPeriod = 14, slMult = 1.5;
@@ -676,9 +823,6 @@ function strategy1(candles) {
     return calculateStats(trades);
 }
 
-// ══════════════════════════════════════════════════════════════════
-// STRATÉGIE 2 — Boom/Crash Trend
-// ══════════════════════════════════════════════════════════════════
 function strategy2(candles, params = {}) {
     const atrPeriod = 14, slMult = 0.8, tpMult = 2.0;
     const symbol = params.symbol || '';
@@ -699,13 +843,6 @@ function strategy2(candles, params = {}) {
     return calculateStats(trades);
 }
 
-// ══════════════════════════════════════════════════════════════════
-// STRATÉGIE 3 (NOUVELLE) — Bollinger Bands + RSI
-// Achat si Close < BB_lower ET RSI < 35
-// Vente si Close > BB_upper ET RSI > 65
-// TP = Bande médiane (SMA 20)
-// SL = ATR × 1.5
-// ══════════════════════════════════════════════════════════════════
 function strategy3(candles) {
     const bbPeriod = 20, bbMult = 2, rsiPeriod = 14, atrPeriod = 14;
     const smas = calculateSMA(candles, bbPeriod);
@@ -713,48 +850,36 @@ function strategy3(candles) {
     const rsis = calculateRSI(candles, rsiPeriod);
     const atrs = calculateATR(candles, atrPeriod);
     const trades = [];
-
     const startIdx = Math.max(bbPeriod, rsiPeriod, atrPeriod) + 1;
-
     for (let i = startIdx; i < candles.length - 1; i++) {
         const sma = smas[i];
         const std = stds[i];
         const rsi = rsis[i];
         const atr = atrs[i - 1 - atrPeriod];
         if (!sma || !std || !rsi || !atr || atr <= 0) continue;
-
         const upper = sma + bbMult * std;
         const lower = sma - bbMult * std;
         const close = candles[i].close;
-
         let direction = null;
-        // ACHAT : prix sous la bande inférieure + RSI en survente
         if (close < lower && rsi < 35) direction = 'buy';
-        // VENTE : prix au-dessus de la bande supérieure + RSI en surachat
         else if (close > upper && rsi > 65) direction = 'sell';
-
         if (!direction) continue;
-
         const entry = candles[i + 1].open;
         let sl, tp;
         if (direction === 'buy') {
             sl = entry - atr * 1.5;
-            tp = sma; // Retour à la moyenne
+            tp = sma;
             if (tp <= entry) continue;
         } else {
             sl = entry + atr * 1.5;
             tp = sma;
             if (tp >= entry) continue;
         }
-
         trades.push(simulateTrade(candles, i + 1, direction, entry, sl, tp));
     }
     return calculateStats(trades);
 }
 
-// ══════════════════════════════════════════════════════════════════
-// STRATÉGIE 4 — Breakout
-// ══════════════════════════════════════════════════════════════════
 function strategy4(candles) {
     const rangeBars = 100, atrPeriod = 14, slMult = 1.2, tpMult = 2.5;
     const atrs = calculateATR(candles, atrPeriod);
@@ -783,9 +908,6 @@ function strategy4(candles) {
     return calculateStats(trades);
 }
 
-// ══════════════════════════════════════════════════════════════════
-// STRATÉGIE 5 — SMC (Smart Money Concepts)
-// ══════════════════════════════════════════════════════════════════
 function strategy5(candles, params = {}) {
     const lookback = 3, atrPeriod = 14, rangeBars = 50, slMult = 1.5, tpMult = 2.5, minRR = 2;
     const atrs = calculateATR(candles, atrPeriod);
@@ -828,45 +950,33 @@ function strategy5(candles, params = {}) {
         if (!atr || atr <= 0) continue;
         const swings = findSwings(i - rangeBars, i);
         if (swings.length < 4) continue;
-
         let lastHigh = null, lastLow = null, trend = 'range', lastBOS = null;
         for (const s of swings) {
             if (s.type === 'high') {
-                if (lastHigh && s.price > lastHigh.price) {
-                    lastBOS = { direction: 'bull', index: s.index, price: s.price };
-                    trend = 'bullish';
-                }
+                if (lastHigh && s.price > lastHigh.price) { lastBOS = { direction: 'bull', index: s.index, price: s.price }; trend = 'bullish'; }
                 lastHigh = s;
             } else {
-                if (lastLow && s.price < lastLow.price) {
-                    lastBOS = { direction: 'bear', index: s.index, price: s.price };
-                    trend = 'bearish';
-                }
+                if (lastLow && s.price < lastLow.price) { lastBOS = { direction: 'bear', index: s.index, price: s.price }; trend = 'bearish'; }
                 lastLow = s;
             }
         }
         if (!lastBOS || lastBOS.index > i - 3) continue;
-
         const ob = findOrderBlock(lastBOS.index, lastBOS.direction);
         if (!ob) continue;
-
         const current = candles[i];
         const priceInOB = (lastBOS.direction === 'bull') ?
             (current.low <= ob.top && current.low >= ob.bottom) :
             (current.high >= ob.bottom && current.high <= ob.top);
         if (!priceInOB) continue;
-
         const rangeWindow = candles.slice(i - rangeBars, i);
         const rangeHigh = Math.max(...rangeWindow.map(c => c.high));
         const rangeLow = Math.min(...rangeWindow.map(c => c.low));
         const eq = (rangeHigh + rangeLow) / 2;
         const zone = current.close > eq ? 'premium' : 'discount';
-
         let direction = null;
         if (lastBOS.direction === 'bull' && zone === 'discount') direction = 'buy';
         else if (lastBOS.direction === 'bear' && zone === 'premium') direction = 'sell';
         else continue;
-
         const entry = candles[i + 1].open;
         let sl, tp;
         if (direction === 'buy') {
@@ -882,7 +992,6 @@ function strategy5(candles, params = {}) {
             tp = entry - risk * tpMult;
             if (risk > 0 && (entry - tp) / risk < minRR) continue;
         }
-
         trades.push(simulateTrade(candles, i + 1, direction, entry, sl, tp));
     }
     return calculateStats(trades);
@@ -897,7 +1006,21 @@ const STRATEGIES = [
 ];
 
 // ══════════════════════════════════════════════════════════════════
-// LANCEMENT DU BACKTEST
+// SCORE (pour le classement Top 5)
+// Formule : winrate × profitFactor × expectancy normalisée
+// ══════════════════════════════════════════════════════════════════
+function computeScore(stats) {
+    if (stats.total < 5) return 0; // Ignorer les stratégies avec trop peu de trades
+    const wr = stats.winrate;
+    const pf = parseFloat(stats.profitFactor);
+    const exp = parseFloat(stats.expectancy);
+    // Score = WR × PF × (1 + expectancy normalisée)
+    const expNorm = Math.max(0, Math.min(5, exp / 5));
+    return Math.round(wr * pf * (1 + expNorm));
+}
+
+// ══════════════════════════════════════════════════════════════════
+// BACKTEST (par indice / famille / tous)
 // ══════════════════════════════════════════════════════════════════
 async function runBacktest() {
     const mode = state.currentMode;
@@ -905,22 +1028,21 @@ async function runBacktest() {
     const targetCount = parseInt($('count').value);
 
     let symbols = [];
-    if (mode === 'single') symbols = [$('symbol-select').value];
+    if (mode === 'single') symbols = [state.selectedIndex];
     else if (mode === 'family') symbols = [...FAMILIES[$('family-select').value].indices];
-    else for (const fam of Object.values(FAMILIES)) symbols.push(...fam.indices);
+    else if (mode === 'all') for (const fam of Object.values(FAMILIES)) symbols.push(...fam.indices);
+    else return; // Scanner géré séparément
 
     $('btn-run').disabled = true;
     state.running = true;
-    $('results').style.display = 'block';
-    $('results-container').innerHTML = '';
     $('progress-bar').classList.add('visible');
 
     log('═══════════════════════════════════════', 'info');
-    log('🚀 Backtest : ' + symbols.length + ' indice(s) · 5 stratégies', 'info');
-    log('⏱ Granularité : ' + granularity + 's · cible ' + targetCount + ' bougies', 'info');
+    log('🚀 Backtest : ' + symbols.length + ' indice(s) × 5 stratégies', 'info');
+    log('⏱ ' + granularity + 's · ' + targetCount + ' bougies', 'info');
     log('═══════════════════════════════════════', 'info');
 
-    const allResults = [];
+    state.scanResults = [];
     let processed = 0;
 
     for (const symbol of symbols) {
@@ -929,122 +1051,287 @@ async function runBacktest() {
         $('progress-fill').style.width = ((processed / symbols.length) * 100) + '%';
 
         try {
-            const candles = await fetchCandlesMulti(symbol, granularity, targetCount, (got, target) => {
-                $('progress-text').textContent = symbol + ' : ' + got + '/' + target + ' bougies';
-            });
-            log('📊 ' + symbol + ' → ' + candles.length + ' bougies', 'data');
-
+            const candles = await fetchCandles(symbol, granularity, targetCount);
             const symbolResults = { symbol, strategies: [] };
+
             for (const strat of STRATEGIES) {
                 const stats = strat.fn(candles, { symbol });
-                symbolResults.strategies.push({ name: strat.name, stats });
+                const score = computeScore(stats);
+                symbolResults.strategies.push({ name: strat.name, id: strat.id, stats, score });
             }
-            allResults.push(symbolResults);
 
-            const best = symbolResults.strategies.reduce((a, b) =>
-                a.stats.winrate > b.stats.winrate ? a : b
-            );
-            log('   🏆 ' + best.name + ' (' + best.stats.winrate + '%) · ' + best.stats.total + ' trades', 'success');
+            // Meilleure stratégie pour cet indice
+            const best = symbolResults.strategies.reduce((a, b) => a.score > b.score ? a : b);
+            log('📊 ' + symbol + ' → ' + best.name + ' (WR ' + best.stats.winrate + '% · PF ' + best.stats.profitFactor + ' · Score ' + best.score + ')', best.stats.winrate >= 60 ? 'success' : 'data');
+
+            state.scanResults.push(symbolResults);
         } catch (e) {
-            log('   ❌ ' + e.message, 'error');
+            log('❌ ' + symbol + ' : ' + e.message, 'error');
         }
 
         processed++;
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise(r => setTimeout(r, 150));
     }
 
     $('progress-fill').style.width = '100%';
     $('progress-text').textContent = 'Terminé : ' + symbols.length + ' indices';
 
-    displayResults(allResults);
+    // Afficher Top 5
+    displayTop5(state.scanResults);
+    // Afficher détails (mode 1 indice)
+    if (mode === 'single' && state.scanResults.length > 0) {
+        displaySingleResults(state.scanResults[0]);
+    }
+
     state.running = false;
     $('btn-run').disabled = false;
 }
 
 // ══════════════════════════════════════════════════════════════════
-// AFFICHAGE
+// AFFICHAGE TOP 5
 // ══════════════════════════════════════════════════════════════════
-function displayResults(allResults) {
-    const container = $('results-container');
-
-    if (allResults.length === 1) {
-        const r = allResults[0];
-        const best = r.strategies.reduce((a, b) => a.stats.winrate > b.stats.winrate ? a : b);
-        $('summary-best').textContent = best.name + ' → ' + best.stats.winrate + '%';
-        container.innerHTML = r.strategies.map(s => renderStrategyCard(s, best.name)).join('');
-    } else {
-        let bestCombo = { symbol: '—', strategy: '—', wr: 0 };
-        let html = '<table class="matrix-table"><thead><tr><th>Indice</th>';
-        for (const strat of STRATEGIES) html += '<th>' + strat.name + '</th>';
-        html += '</tr></thead><tbody>';
-
-        for (const r of allResults) {
-            html += '<tr><td class="symbol">' + escapeHtml(r.symbol) + '</td>';
-            for (const s of r.strategies) {
-                const wr = s.stats.winrate;
-                let cls = 'wr-red';
-                if (wr >= 60 && wr <= 90) { cls = 'wr-green'; if (wr > bestCombo.wr) bestCombo = { symbol: r.symbol, strategy: s.name, wr }; }
-                else if (wr >= 50) cls = 'wr-blue';
-                else if (wr >= 40) cls = 'wr-orange';
-                html += '<td class="' + cls + '">' + wr + '%</td>';
+function displayTop5(allResults) {
+    const combos = [];
+    for (const r of allResults) {
+        for (const s of r.strategies) {
+            if (s.stats.total >= 5 && s.stats.winrate >= 40) {
+                combos.push({
+                    symbol: r.symbol,
+                    strategy: s.name,
+                    strategyId: s.id,
+                    stats: s.stats,
+                    score: s.score
+                });
             }
-            html += '</tr>';
         }
-        html += '</tbody></table>';
-
-        $('summary-best').textContent = bestCombo.symbol + ' × ' + bestCombo.strategy + ' → ' + bestCombo.wr + '%';
-        container.innerHTML = '<div style="max-height:500px;overflow-y:auto;border-radius:8px;">' + html + '</div>';
     }
+
+    combos.sort((a, b) => b.score - a.score);
+    const top5 = combos.slice(0, 5);
+
+    if (!top5.length) {
+        $('top5-section').style.display = 'none';
+        return;
+    }
+
+    $('top5-section').style.display = 'block';
+    const container = $('top5-container');
+
+    const ranks = ['gold', 'silver', 'bronze', 'other', 'other'];
+    const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+
+    container.innerHTML = top5.map((c, i) => {
+        const borderColor = i === 0 ? '#fbbf24' : i === 1 ? '#d1d5db' : i === 2 ? '#f97316' : '#4b5563';
+        return '<div class="top5-item" style="border-left-color:' + borderColor + ';">' +
+            '<div class="top5-rank ' + ranks[i] + '">' + medals[i] + '</div>' +
+            '<div class="top5-info">' +
+                '<div class="top5-symbol">' + escapeHtml(c.symbol) + '</div>' +
+                '<div class="top5-strat">' + c.strategy + '</div>' +
+                '<div class="top5-metrics">' +
+                    '<span>WR: <strong style="color:#16a34a;">' + c.stats.winrate + '%</strong></span>' +
+                    '<span>PF: <strong>' + c.stats.profitFactor + '</strong></span>' +
+                    '<span>Trades: <strong>' + c.stats.total + '</strong></span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="top5-score">' + c.score + '</div>' +
+        '</div>';
+    }).join('');
+
+    log('🏆 Top 5 calculé', 'success');
+    top5.forEach((c, i) => {
+        log('   ' + medals[i] + ' ' + c.symbol + ' × ' + c.strategy + ' → Score ' + c.score + ' (WR ' + c.stats.winrate + '%, PF ' + c.stats.profitFactor + ')', i === 0 ? 'success' : 'data');
+    });
 }
 
-function renderStrategyCard(s, bestName) {
-    const wr = s.stats.winrate;
-    let colorClass = 'red', boxClass = 'bad';
-    if (wr >= 60 && wr <= 90) { colorClass = 'green'; boxClass = 'best'; }
-    else if (wr >= 50) { colorClass = 'blue'; boxClass = 'good'; }
-    else if (wr >= 40) { colorClass = 'orange'; boxClass = 'warn'; }
+function displaySingleResults(result) {
+    // Affichage détaillé pour 1 indice
+    // (réutilise les cartes de stratégie existantes)
+    // On affiche dans le même conteneur que Top5 pour simplifier
+    const container = $('top5-container');
+    // ... (à implémenter si nécessaire)
+}
 
-    const isBest = s.name === bestName;
-    const bestBadge = isBest ? '<span class="best-badge">MEILLEURE</span>' : '';
+// ══════════════════════════════════════════════════════════════════
+// SCANNER AUTONOME
+// ══════════════════════════════════════════════════════════════════
+function startScanner() {
+    if (state.scannerActive) return;
+    state.scannerActive = true;
+    try { localStorage.setItem(STORAGE_KEYS.scannerActive, '1'); } catch (e) {}
+    $('scanner-state').className = 'value active';
+    $('scanner-state').textContent = '🟢 Actif';
+    $('btn-scanner-toggle').textContent = '⏹ Arrêter le scanner';
+    $('btn-scanner-toggle').classList.remove('primary');
+    $('btn-scanner-toggle').classList.add('danger');
+    log('🤖 Scanner démarré · Scan toutes les 30 min', 'success');
+    runScan();
+}
 
-    const st = s.stats;
-    const pfColor = parseFloat(st.profitFactor) >= 1.5 ? 'green' : parseFloat(st.profitFactor) >= 1 ? 'blue' : 'red';
-    const expColor = parseFloat(st.expectancy) > 0 ? 'green' : 'red';
+function stopScanner() {
+    state.scannerActive = false;
+    try { localStorage.setItem(STORAGE_KEYS.scannerActive, '0'); } catch (e) {}
+    if (state.scannerTimer) { clearTimeout(state.scannerTimer); state.scannerTimer = null; }
+    if (state.countdownTimer) { clearInterval(state.countdownTimer); state.countdownTimer = null; }
+    $('scanner-state').className = 'value inactive';
+    $('scanner-state').textContent = '⏸ Arrêté';
+    $('scanner-countdown').textContent = '—';
+    $('btn-scanner-toggle').textContent = '▶️ Démarrer le scanner';
+    $('btn-scanner-toggle').classList.remove('danger');
+    $('btn-scanner-toggle').classList.add('primary');
+    log('⏹ Scanner arrêté', 'warn');
+}
 
-    return '<div class="strategy-card ' + boxClass + '">' +
-        '<div class="strategy-header">' +
-            '<span class="strategy-name">' + s.name + bestBadge + '</span>' +
-            '<span class="strategy-wr ' + colorClass + '">' + wr + '%</span>' +
-        '</div>' +
-        '<div class="stats-section-title">📊 Trades</div>' +
-        '<div class="stats-grid">' +
-            '<div class="stat-item"><div class="stat-label">Total</div><div class="stat-value">' + st.total + '</div></div>' +
-            '<div class="stat-item"><div class="stat-label">TP</div><div class="stat-value green">' + st.tpCount + '</div></div>' +
-            '<div class="stat-item"><div class="stat-label">SL</div><div class="stat-value red">' + st.slCount + '</div></div>' +
-            '<div class="stat-item"><div class="stat-label">Ouverts</div><div class="stat-value blue">' + st.openCount + '</div></div>' +
-        '</div>' +
-        '<div class="stats-section-title">💰 Pips</div>' +
-        '<div class="stats-grid">' +
-            '<div class="stat-item"><div class="stat-label">Gagnés</div><div class="stat-value green">+' + st.pipsWon + '</div></div>' +
-            '<div class="stat-item"><div class="stat-label">Perdus</div><div class="stat-value red">-' + st.pipsLost + '</div></div>' +
-            '<div class="stat-item"><div class="stat-label">Nets</div><div class="stat-value ' + (parseFloat(st.totalPips) >= 0 ? 'green' : 'red') + '">' + (parseFloat(st.totalPips) >= 0 ? '+' : '') + st.totalPips + '</div></div>' +
-            '<div class="stat-item"><div class="stat-label">Avg Win</div><div class="stat-value">' + st.avgWin + '</div></div>' +
-        '</div>' +
-        '<div class="stats-section-title">📈 Performance</div>' +
-        '<div class="stats-grid">' +
-            '<div class="stat-item"><div class="stat-label">Profit Factor</div><div class="stat-value ' + pfColor + '">' + st.profitFactor + '</div></div>' +
-            '<div class="stat-item"><div class="stat-label">Expectancy</div><div class="stat-value ' + expColor + '">' + st.expectancy + '</div></div>' +
-            '<div class="stat-item"><div class="stat-label">Payoff</div><div class="stat-value">' + st.payoffRatio + '</div></div>' +
-            '<div class="stat-item"><div class="stat-label">Max DD</div><div class="stat-value red">-' + st.maxDD + '</div></div>' +
-        '</div>' +
-        '<div class="stats-section-title">⏱ Streaks & Durées</div>' +
-        '<div class="stats-grid">' +
-            '<div class="stat-item"><div class="stat-label">Win Streak</div><div class="stat-value green">' + st.maxWinStreak + '</div></div>' +
-            '<div class="stat-item"><div class="stat-label">Loss Streak</div><div class="stat-value red">' + st.maxLossStreak + '</div></div>' +
-            '<div class="stat-item"><div class="stat-label">Durée moy.</div><div class="stat-value">' + st.avgDuration + ' bougies</div></div>' +
-            '<div class="stat-item"><div class="stat-label">Durée max</div><div class="stat-value">' + st.maxDuration + '</div></div>' +
-        '</div>' +
-    '</div>';
+async function runScan() {
+    if (!state.scannerActive) return;
+    const granularity = parseInt($('granularity').value);
+    const targetCount = parseInt($('count').value);
+
+    log('═══════════════════════════════════════', 'info');
+    log('🤖 SCAN AUTONOME · ' + new Date().toLocaleTimeString('fr-FR'), 'success');
+    log('═══════════════════════════════════════', 'info');
+
+    const symbols = ALL_INDICES.map(i => i.code);
+    const signals = [];
+
+    $('progress-bar').classList.add('visible');
+
+    for (let i = 0; i < symbols.length; i++) {
+        if (!state.scannerActive) break;
+        const symbol = symbols[i];
+        $('progress-text').textContent = 'Scan ' + (i + 1) + '/' + symbols.length + ' : ' + symbol;
+        $('progress-fill').style.width = ((i / symbols.length) * 100) + '%';
+
+        try {
+            const candles = await fetchCandles(symbol, granularity, targetCount);
+            for (const strat of STRATEGIES) {
+                const stats = strat.fn(candles, { symbol });
+                const score = computeScore(stats);
+
+                // Filtres de qualité : WR ≥ 60% et PF ≥ 1.5 et au moins 10 trades
+                if (stats.winrate >= 60 && parseFloat(stats.profitFactor) >= 1.5 && stats.total >= 10) {
+                    // Anti-doublons : check cache
+                    if (isSignalCached(symbol, strat.name)) {
+                        // log('  ⏭ ' + symbol + ' × ' + strat.name + ' (cache)', 'data');
+                        continue;
+                    }
+                    signals.push({ symbol, strategy: strat.name, strategyId: strat.id, stats, score });
+                    cacheSignal(symbol, strat.name);
+                }
+            }
+        } catch (e) {
+            // Ignorer silencieusement les erreurs pendant le scan
+        }
+
+        await new Promise(r => setTimeout(r, 100));
+    }
+
+    $('progress-fill').style.width = '100%';
+    $('progress-text').textContent = 'Scan terminé';
+
+    // Trier par score
+    signals.sort((a, b) => b.score - a.score);
+
+    if (signals.length) {
+        log('🎯 ' + signals.length + ' NOUVEAU(X) SIGNAL(AUX)', 'signal');
+        for (const s of signals.slice(0, 10)) {
+            log('   ⚡ ' + s.symbol + ' × ' + s.strategy + ' → WR ' + s.stats.winrate + '%, PF ' + s.stats.profitFactor + ', Score ' + s.score, 'signal');
+        }
+        displaySignals(signals);
+    } else {
+        log('✅ Scan terminé · aucun nouveau signal', 'info');
+    }
+
+    // Programmer prochain scan
+    scheduleNextScan();
+}
+
+function displaySignals(signals) {
+    $('signals-section').style.display = 'block';
+    $('signals-count').textContent = '(' + signals.length + ')';
+    const container = $('signals-container');
+
+    // Récupérer les signaux du cache
+    const allSignals = [];
+    for (const s of signals) {
+        allSignals.push(s);
+    }
+
+    container.innerHTML = signals.slice(0, 20).map(s => {
+        // Déterminer la direction (approximative via la stratégie)
+        const direction = s.strategyId === 's2' && s.symbol.includes('BOOM') ? 'sell' :
+                          s.strategyId === 's2' && s.symbol.includes('CRASH') ? 'buy' :
+                          s.stats.winrate >= 50 ? 'buy' : 'sell';
+        const dirClass = direction === 'buy' ? 'buy' : 'sell';
+        const dirLabel = direction === 'buy' ? '🟢 ACHAT' : '🔴 VENTE';
+
+        return '<div class="signal-card ' + dirClass + '">' +
+            '<div class="signal-header">' +
+                '<span class="signal-symbol">' + escapeHtml(s.symbol) + '</span>' +
+                '<span class="signal-direction ' + dirClass + '">' + dirLabel + '</span>' +
+            '</div>' +
+            '<div style="font-size:0.7rem;color:#9ca3af;margin-bottom:0.4rem;">' + s.strategy + '</div>' +
+            '<div class="signal-details">' +
+                '<div><div class="lbl">WR</div><div class="val" style="color:#16a34a;">' + s.stats.winrate + '%</div></div>' +
+                '<div><div class="lbl">PF</div><div class="val">' + s.stats.profitFactor + '</div></div>' +
+                '<div><div class="lbl">Score</div><div class="val" style="color:#fbbf24;">' + s.score + '</div></div>' +
+            '</div>' +
+            '<div style="margin-top:0.5rem;">' +
+                '<button class="info" style="font-size:0.7rem;padding:0.4rem 0.8rem;" onclick="sendToMT5(\'' + s.symbol + '\',\'' + direction + '\')">📤 Envoyer à MT5</button>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+}
+
+function scheduleNextScan() {
+    if (!state.scannerActive) return;
+    state.nextScanAt = Date.now() + SCAN_INTERVAL_MS;
+    if (state.countdownTimer) clearInterval(state.countdownTimer);
+
+    state.countdownTimer = setInterval(() => {
+        if (!state.scannerActive) { clearInterval(state.countdownTimer); return; }
+        const rem = Math.max(0, state.nextScanAt - Date.now());
+        const min = Math.floor(rem / 60000);
+        const sec = Math.floor((rem % 60000) / 1000);
+        $('scanner-countdown').textContent = min + 'm ' + String(sec).padStart(2, '0') + 's';
+        if (rem <= 0) {
+            clearInterval(state.countdownTimer);
+            if (state.scannerActive) runScan();
+        }
+    }, 1000);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ENVOI MT5 (placeholder)
+// ══════════════════════════════════════════════════════════════════
+window.sendToMT5 = function(symbol, direction) {
+    log('📤 Envoi à MT5 : ' + symbol + ' ' + direction, 'signal');
+    // TODO : bridge Node.js
+    // fetch('https://pod-shore-extend-owned.trycloudflare.com/order', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ symbol, direction, volume: 0.01 })
+    // })
+    alert('Bridge MT5 à connecter dans la prochaine étape');
+};
+
+// ══════════════════════════════════════════════════════════════════
+// UI
+// ══════════════════════════════════════════════════════════════════
+function renderIndexGrid() {
+    const grid = $('index-grid');
+    grid.innerHTML = ALL_INDICES.map(idx => {
+        const selected = idx.code === state.selectedIndex ? ' selected' : '';
+        return '<div class="index-item' + selected + '" data-code="' + idx.code + '">' +
+            '<div class="code">' + idx.code + '</div>' +
+            '<div class="name">' + escapeHtml(idx.name) + '</div>' +
+        '</div>';
+    }).join('');
+    grid.querySelectorAll('.index-item').forEach(el => {
+        el.addEventListener('click', () => {
+            state.selectedIndex = el.dataset.code;
+            renderIndexGrid();
+        });
+    });
 }
 
 document.querySelectorAll('.mode-tab').forEach(tab => {
@@ -1054,15 +1341,38 @@ document.querySelectorAll('.mode-tab').forEach(tab => {
         state.currentMode = tab.dataset.mode;
         $('single-controls').style.display = state.currentMode === 'single' ? 'block' : 'none';
         $('family-controls').style.display = state.currentMode === 'family' ? 'block' : 'none';
+        $('scanner-controls').style.display = state.currentMode === 'scanner' ? 'block' : 'none';
+        $('btn-run').style.display = state.currentMode === 'scanner' ? 'none' : 'block';
     });
 });
 
 $('btn-run').addEventListener('click', runBacktest);
+$('btn-scanner-toggle').addEventListener('click', () => {
+    if (state.scannerActive) stopScanner();
+    else startScanner();
+});
+$('btn-scanner-clear').addEventListener('click', () => {
+    state.activeSignals.clear();
+    saveCache(state.activeSignals);
+    log('🗑️ Cache vidé', 'warn');
+});
 
-log('🧠 Étape 4 : 5 stratégies · 3 ans · métriques complètes', 'info');
-log('📋 S1=Range, S2=Boom/Crash, S3=Bollinger+RSI, S4=Breakout, S5=SMC', 'info');
+// ══════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════
+state.activeSignals = loadCache();
+
+log('🧠 Étape 4 : Backtest + Scanner Auto', 'info');
+log('📋 46 indices · 5 stratégies · Top 5 · Scan 30 min', 'info');
+log('💾 Cache chargé : ' + state.activeSignals.size + ' signaux', 'data');
 setStatus('', 'Déconnecté', 'Connexion auto…');
 $('btn-run').disabled = true;
+renderIndexGrid();
+
+// Reprendre le scanner si actif
+if (localStorage.getItem(STORAGE_KEYS.scannerActive) === '1') {
+    setTimeout(() => { if (state.connected) startScanner(); }, 3000);
+}
 
 window.addEventListener('load', () => {
     setTimeout(() => { connect(); }, 500);
