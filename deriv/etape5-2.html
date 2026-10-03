@@ -286,15 +286,16 @@ const SYMBOL_MAP = {
 // CONFIG
 // ══════════════════════════════════════════════════════════════════
 const STORAGE = {
-    wsUrl: 'deriv_bridge_ws_url_v2',
-    wsToken: 'deriv_bridge_ws_token_v2'
+    wsUrl: 'deriv_bridge_ws_url_v3',
+    wsToken: 'deriv_bridge_ws_token_v3'
 };
 
 const state = {
     ws: null,
     connected: false,
     reqId: 1,
-    lastTicket: null
+    lastTicket: null,
+    orderTimeout: null
 };
 
 function $(id) { return document.getElementById(id); }
@@ -408,7 +409,7 @@ function sendMessage(payload) {
     }
     try {
         state.ws.send(JSON.stringify(payload));
-        log('📤 Envoyé : ' + JSON.stringify(payload).slice(0, 150), 'info');
+        log('📤 Envoyé : ' + JSON.stringify(payload).slice(0, 200), 'info');
         return true;
     } catch (e) {
         log('❌ Erreur envoi : ' + e.message, 'error');
@@ -416,9 +417,34 @@ function sendMessage(payload) {
     }
 }
 
+// ══════════════════════════════════════════════════════════════════
+// TRAITEMENT DES MESSAGES
+// ══════════════════════════════════════════════════════════════════
 function handleMessage(data) {
     log('📩 Reçu : type=' + (data.type || '?'), 'data');
 
+    // CAS 1 : open_order = réponse directe (peut être erreur ou confirmation)
+    if (data.type === 'open_order') {
+        if (data.status === 'error') {
+            log('❌ ORDRE REJETÉ', 'error');
+            log('   → Erreur : ' + (data.error || 'Inconnue'), 'error');
+            if (data.error_code) log('   → Code : ' + data.error_code, 'error');
+            if (state.orderTimeout) { clearTimeout(state.orderTimeout); state.orderTimeout = null; }
+        } else if (data.status === 'ok') {
+            log('✅ Ordre confirmé par MT5', 'success');
+            if (data.ticket) {
+                log('   → Ticket : ' + data.ticket, 'signal');
+                $('stat-ticket').textContent = data.ticket;
+                $('stat-ticket').className = 'stat-value green';
+                state.lastTicket = data.ticket;
+            }
+        } else {
+            log('   → ' + JSON.stringify(data).slice(0, 250), 'data');
+        }
+        return;
+    }
+
+    // CAS 2 : messages standards
     switch (data.type) {
         case 'welcome':
             log('   → Welcome (v' + data.version + ')', 'success');
@@ -433,7 +459,7 @@ function handleMessage(data) {
             $('stat-ea').textContent = data.ea_connected ? '🟢 OUI' : '🔴 NON';
             $('stat-queue').textContent = data.queue_length || 0;
             $('stat-account').textContent = data.account || '—';
-            log('   → EA=' + data.ea_connected + ' Queue=' + data.queue_length, 'data');
+            log('   → EA=' + data.ea_connected + ' | Queue=' + data.queue_length, 'data');
             break;
 
         case 'order_pending':
@@ -452,18 +478,41 @@ function handleMessage(data) {
             $('stat-ticket').textContent = data.ticket;
             $('stat-ticket').className = 'stat-value green';
             state.lastTicket = data.ticket;
+            if (state.orderTimeout) { clearTimeout(state.orderTimeout); state.orderTimeout = null; }
             break;
 
         case 'order_rejected':
-            log('❌ Ordre REJETÉ : ' + data.error, 'error');
+            log('❌ ORDRE REJETÉ : ' + data.error, 'error');
+            if (state.orderTimeout) { clearTimeout(state.orderTimeout); state.orderTimeout = null; }
             break;
 
-        case 'account':
-            log('   → Compte : ' + JSON.stringify(data.account || data).slice(0, 200), 'data');
+        // get_account response
+        case 'get_account':
+            log('   → Compte reçu', 'success');
+            if (data.login) {
+                log('      Login : ' + data.login, 'data');
+                log('      Nom : ' + data.name, 'data');
+                log('      Balance : ' + (data.balance || '—'), 'data');
+                log('      Devise : ' + (data.currency || '—'), 'data');
+                log('      Serveur : ' + (data.server || '—'), 'data');
+                log('      Levier : ' + (data.leverage || '—'), 'data');
+            }
             break;
 
-        case 'positions':
-            log('   → Positions : ' + JSON.stringify(data.positions || data).slice(0, 300), 'data');
+        // get_positions response
+        case 'get_positions':
+            log('   → ' + (data.count || 0) + ' position(s)', 'success');
+            if (data.positions && data.positions.length) {
+                for (const p of data.positions) {
+                    log('      #' + p.ticket + ' ' + p.symbol + ' ' + p.type + ' ' + p.volume + ' lots @ ' + p.price_open, 'data');
+                }
+            }
+            break;
+
+        // account_pending / positions_pending
+        case 'account_pending':
+        case 'positions_pending':
+            log('   → En attente de la réponse...', 'warn');
             break;
 
         case 'error':
@@ -471,13 +520,7 @@ function handleMessage(data) {
             break;
 
         default:
-            if (data.status === 'error') {
-                log('❌ Erreur : ' + (data.error || JSON.stringify(data)), 'error');
-            } else if (data.status === 'ok') {
-                log('   → OK : ' + JSON.stringify(data).slice(0, 200), 'success');
-            } else {
-                log('   → ' + JSON.stringify(data).slice(0, 200), 'data');
-            }
+            log('   → ' + JSON.stringify(data).slice(0, 250), 'data');
     }
 }
 
@@ -494,7 +537,7 @@ function sendOrder() {
     const mt5Name = SYMBOL_MAP[derivCode] || derivCode;
 
     if (!SYMBOL_MAP[derivCode]) {
-        log('⚠️ Attention : pas de mapping pour ' + derivCode + ' → envoi brut', 'warn');
+        log('⚠️ Pas de mapping pour ' + derivCode + ' → envoi brut', 'warn');
     }
 
     const requestId = 'req_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
@@ -512,7 +555,16 @@ function sendOrder() {
         }
     };
 
-    log('🚀 Envoi ordre : ' + derivCode + ' → ' + mt5Name + ' ' + msg.order.direction + ' ' + msg.order.lot + ' lots', 'signal');
+    log('🚀 Envoi ordre : ' + derivCode + ' → ' + mt5Name, 'signal');
+    log('   Direction : ' + msg.order.direction + ' | Lot : ' + msg.order.lot, 'data');
+
+    // Timeout de sécurité 15s
+    if (state.orderTimeout) clearTimeout(state.orderTimeout);
+    state.orderTimeout = setTimeout(() => {
+        log('⏱️ Timeout : pas de réponse du bridge (15s)', 'error');
+        state.orderTimeout = null;
+    }, 15000);
+
     sendMessage(msg);
 }
 
