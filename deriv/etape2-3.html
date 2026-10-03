@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Deriv — Liste officielle des symboles</title>
+<title>Deriv — Fallback automatique</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -40,6 +40,31 @@
     button:disabled { opacity: 0.4; cursor: not-allowed; }
     button.primary { background: #16a34a; border-color: #16a34a; color: #fff; }
     button.info { background: #2563eb; border-color: #2563eb; color: #fff; }
+    button.danger { background: #dc2626; border-color: #dc2626; color: #fff; }
+
+    .endpoint-list {
+        background: #0f1419; border-radius: 8px;
+        padding: 0.6rem; margin-bottom: 1rem;
+        font-size: 0.72rem; font-family: ui-monospace, monospace;
+        max-height: 200px; overflow-y: auto;
+    }
+    .endpoint-item {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.3rem 0.5rem;
+        border-radius: 4px;
+        margin-bottom: 0.2rem;
+    }
+    .endpoint-item.current { background: #ea580c22; border: 1px solid #ea580c; }
+    .endpoint-item.success { background: #16a34a22; border: 1px solid #16a34a; }
+    .endpoint-item.failed { background: #dc262622; opacity: 0.5; }
+    .endpoint-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: #6b7280; flex-shrink: 0;
+    }
+    .endpoint-dot.success { background: #16a34a; }
+    .endpoint-dot.failed { background: #dc2626; }
+    .endpoint-dot.current { background: #ea580c; animation: pulse 1s infinite; }
+    .endpoint-url { flex: 1; word-break: break-all; }
 
     .stats {
         display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
@@ -54,6 +79,7 @@
     .stat-value { font-size: 1rem; font-weight: 700; font-family: ui-monospace, monospace; margin-top: 0.2rem; }
     .stat-value.green { color: #16a34a; }
     .stat-value.blue { color: #2563eb; }
+    .stat-value.warn { color: #ea580c; }
 
     .section {
         background: #1a2028; border: 1px solid #2d3744;
@@ -79,7 +105,7 @@
     }
     .symbol-row {
         display: grid;
-        grid-template-columns: 100px 1fr 100px;
+        grid-template-columns: 100px 1fr 120px;
         gap: 0.5rem;
         padding: 0.5rem 0.7rem;
         border-bottom: 1px solid #1a2028;
@@ -105,7 +131,7 @@
         background: #0a0f14; border: 1px solid #2d3744;
         border-radius: 8px; padding: 0.8rem;
         font-family: ui-monospace, monospace; font-size: 0.72rem;
-        max-height: 250px; overflow-y: auto; line-height: 1.6;
+        max-height: 300px; overflow-y: auto; line-height: 1.6;
     }
     .log-line { margin-bottom: 0.2rem; word-break: break-all; }
     .log-time { color: #6b7280; margin-right: 0.4rem; }
@@ -118,8 +144,8 @@
 </head>
 <body>
 
-<h1>📋 Deriv — Liste officielle des symboles</h1>
-<p class="subtitle">Récupération via le WebSocket Legacy (ws.binaryws.com)</p>
+<h1>📋 Deriv — Fallback automatique</h1>
+<p class="subtitle">Essaie chaque endpoint jusqu'à en trouver un qui marche</p>
 
 <div class="status-box">
     <div class="dot" id="status-dot"></div>
@@ -129,13 +155,23 @@
     </div>
 </div>
 
+<div class="section">
+    <div class="section-title">🌐 Endpoints à essayer (dans l'ordre)</div>
+    <div class="endpoint-list" id="endpoint-list"></div>
+</div>
+
 <div class="controls">
-    <button class="primary" id="btn-connect">🔌 Connecter au Legacy</button>
-    <button class="info" id="btn-fetch" disabled>📋 Récupérer TOUS les symboles</button>
+    <button class="primary" id="btn-connect">🔌 Lancer le fallback</button>
+    <button class="info" id="btn-fetch" disabled>📋 Récupérer les symboles</button>
     <button id="btn-export" disabled>💾 Exporter JSON</button>
+    <button class="danger" id="btn-stop" disabled>⏹ Arrêter</button>
 </div>
 
 <div class="stats">
+    <div class="stat">
+        <div class="stat-label">Essai actuel</div>
+        <div class="stat-value warn" id="stat-current">—</div>
+    </div>
     <div class="stat">
         <div class="stat-label">Total symboles</div>
         <div class="stat-value blue" id="stat-total">—</div>
@@ -148,15 +184,11 @@
         <div class="stat-label">Forex</div>
         <div class="stat-value" id="stat-forex">—</div>
     </div>
-    <div class="stat">
-        <div class="stat-label">Crypto</div>
-        <div class="stat-value" id="stat-crypto">—</div>
-    </div>
 </div>
 
 <div class="section" id="results-section" style="display:none;">
-    <div class="section-title">📊 Symboles (filtre : synthétiques)</div>
-    <input type="text" class="search-input" id="search" placeholder="🔍 Rechercher (ex: Step, DEX, Boom, Volatility...)">
+    <div class="section-title">📊 Symboles</div>
+    <input type="text" class="search-input" id="search" placeholder="🔍 Rechercher (Step, DEX, Trek, Boom...)">
     <div style="margin-bottom:0.5rem;font-size:0.7rem;color:#9ca3af;">
         <label><input type="checkbox" id="filter-synthetic" checked> Synthétiques uniquement</label>
     </div>
@@ -167,20 +199,34 @@
 
 <script>
 // ══════════════════════════════════════════════════════════════════
-// WEBSOCKET LEGACY DERIV (ws.binaryws.com)
+// LISTE DES ENDPOINTS À TESTER (dans l'ordre)
 // ══════════════════════════════════════════════════════════════════
-const DERIV_WS_LEGACY = 'wss://ws.binaryws.com/websockets/v3?app_id=1089';
+const ENDPOINTS = [
+    { url: 'wss://ws.derivws.com/websockets/v3?app_id=1089', label: '🆕 ws.derivws.com (Legacy)' },
+    { url: 'wss://green.derivws.com/websockets/v3?app_id=1089', label: '🟢 green.derivws.com' },
+    { url: 'wss://blue.derivws.com/websockets/v3?app_id=1089', label: '🔵 blue.derivws.com' },
+    { url: 'wss://red.derivws.com/websockets/v3?app_id=1089', label: '🔴 red.derivws.com' },
+    { url: 'wss://api.derivws.com/trading/v1/options/ws/public', label: '🆕 api.derivws.com (public)' },
+    { url: 'wss://ws.binaryws.com/websockets/v3?app_id=1089', label: '⚠️ ws.binaryws.com (ancien)' }
+];
+
 const PING_INTERVAL_MS = 30000;
+const CONNECT_TIMEOUT = 5000;  // 5s max par endpoint
 
 const state = {
     ws: null,
     connected: false,
     connecting: false,
     pingInterval: null,
+    connectTimeout: null,
     reqId: 1,
     pendingRequests: new Map(),
     allSymbols: [],
-    filteredSymbols: []
+    currentEndpointIndex: -1,
+    endpointStatus: {}, // index → 'pending' | 'testing' | 'success' | 'failed'
+    fallbackRunning: false,
+    stopRequested: false,
+    succeededEndpoint: null
 };
 
 function $(id) { return document.getElementById(id); }
@@ -196,7 +242,7 @@ function log(msg, type = 'info') {
     line.innerHTML = '<span class="log-time">' + nowTime() + '</span><span class="log-' + type + '">' + escapeHtml(msg) + '</span>';
     logs.appendChild(line);
     logs.scrollTop = logs.scrollHeight;
-    while (logs.children.length > 300) logs.removeChild(logs.firstChild);
+    while (logs.children.length > 400) logs.removeChild(logs.firstChild);
 }
 function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -209,84 +255,203 @@ function setStatus(status, text, detail) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// CONNEXION LEGACY
+// AFFICHAGE DE LA LISTE DES ENDPOINTS
 // ══════════════════════════════════════════════════════════════════
-function connect() {
-    if (state.connected || state.connecting) return;
-    state.connecting = true;
-    setStatus('connecting', 'Connexion…', DERIV_WS_LEGACY);
-    log('🔌 Connexion au WebSocket Legacy Deriv…', 'info');
-    log('   ' + DERIV_WS_LEGACY, 'data');
+function renderEndpointList() {
+    const list = $('endpoint-list');
+    list.innerHTML = ENDPOINTS.map((ep, i) => {
+        const status = state.endpointStatus[i] || 'pending';
+        let dotClass = '';
+        let extraClass = '';
+        if (status === 'testing') { dotClass = 'current'; extraClass = 'current'; }
+        else if (status === 'success') { dotClass = 'success'; extraClass = 'success'; }
+        else if (status === 'failed') { dotClass = 'failed'; extraClass = 'failed'; }
 
-    try {
-        state.ws = new WebSocket(DERIV_WS_LEGACY);
-    } catch (e) {
-        log('❌ Erreur : ' + e.message, 'error');
-        state.connecting = false;
-        setStatus('error', 'Erreur', e.message);
-        return;
-    }
-
-    state.ws.onopen = onOpen;
-    state.ws.onmessage = onMessage;
-    state.ws.onerror = onError;
-    state.ws.onclose = onClose;
+        return '<div class="endpoint-item ' + extraClass + '">' +
+            '<div class="endpoint-dot ' + dotClass + '"></div>' +
+            '<div class="endpoint-url">' + escapeHtml(ep.label) + '<br><span style="color:#6b7280;">' + escapeHtml(ep.url) + '</span></div>' +
+            '</div>';
+    }).join('');
 }
 
-function onOpen() {
-    state.connected = true;
-    state.connecting = false;
-    setStatus('connected', 'Connecté ✓', 'WebSocket Legacy Deriv');
-    log('✅ Connexion Legacy établie', 'success');
-    startPing();
-    $('btn-connect').disabled = true;
-    $('btn-fetch').disabled = false;
-    // Auto-fetch après 500ms
-    setTimeout(() => fetchAllSymbols(), 500);
+// ══════════════════════════════════════════════════════════════════
+// CONNEXION À UN ENDPOINT
+// ══════════════════════════════════════════════════════════════════
+function tryConnect(endpoint, index) {
+    return new Promise((resolve, reject) => {
+        log('🔌 Test endpoint #' + (index + 1) + ' : ' + endpoint.label, 'info');
+
+        state.currentEndpointIndex = index;
+        state.endpointStatus[index] = 'testing';
+        $('stat-current').textContent = (index + 1) + '/' + ENDPOINTS.length;
+        renderEndpointList();
+
+        let resolved = false;
+        let ws;
+        try {
+            ws = new WebSocket(endpoint.url);
+        } catch (e) {
+            log('❌ Erreur création WS : ' + e.message, 'error');
+            resolve(false);
+            return;
+        }
+
+        // Timeout de 5 secondes
+        const timeout = setTimeout(() => {
+            if (!resolved) {
+                resolved = true;
+                log('⏱ Timeout (' + (CONNECT_TIMEOUT/1000) + 's) — endpoint suivant', 'warn');
+                try { ws.close(); } catch (e) {}
+                resolve(false);
+            }
+        }, CONNECT_TIMEOUT);
+
+        ws.onopen = () => {
+            if (resolved) return;
+            resolved = true;
+            clearTimeout(timeout);
+            log('✅ Endpoint #' + (index + 1) + ' CONNECTÉ !', 'success');
+            state.ws = ws;
+            state.connected = true;
+            state.endpointStatus[index] = 'success';
+            state.succeededEndpoint = endpoint;
+            resolve(true);
+        };
+
+        ws.onerror = () => {
+            // onerror est souvent suivi de onclose, on laisse onclose gérer
+        };
+
+        ws.onclose = (event) => {
+            if (resolved) return;
+            resolved = true;
+            clearTimeout(timeout);
+            log('❌ Endpoint #' + (index + 1) + ' échoué (code ' + event.code + ')', 'error');
+            state.endpointStatus[index] = 'failed';
+            resolve(false);
+        };
+    });
 }
 
-function onMessage(event) {
-    let data;
-    try { data = JSON.parse(event.data); } catch (e) { return; }
-
-    if (data.msg_type === 'ping' && data.ping === 'pong') return;
-
-    // Réponse active_symbols
-    if (data.msg_type === 'active_symbols' && data.active_symbols) {
-        onActiveSymbols(data.active_symbols);
-        return;
-    }
-
-    // Résoudre pending
-    if (data.req_id && state.pendingRequests.has(data.req_id)) {
-        const { resolve, reject } = state.pendingRequests.get(data.req_id);
-        state.pendingRequests.delete(data.req_id);
-        if (data.error) reject(new Error(data.error.message || JSON.stringify(data.error)));
-        else resolve(data);
-        return;
-    }
-
-    // Log messages non sollicités
-    if (data.msg_type && data.msg_type !== 'tick') {
-        log('📩 ' + data.msg_type + (data.error ? ' → ' + JSON.stringify(data.error) : ''), data.error ? 'error' : 'info');
-    }
-}
-
-function onError() {
-    log('❌ Erreur WebSocket', 'error');
-    state.connecting = false;
-}
-
-function onClose(event) {
+// ══════════════════════════════════════════════════════════════════
+// FALLBACK AUTOMATIQUE
+// ══════════════════════════════════════════════════════════════════
+async function runFallback() {
+    if (state.fallbackRunning) return;
+    state.fallbackRunning = true;
+    state.stopRequested = false;
     state.connected = false;
-    state.connecting = false;
-    stopPing();
-    log('🔌 Déconnecté (code ' + event.code + ')', 'warn');
-    setStatus('', 'Déconnecté', 'Code ' + event.code);
-    $('btn-connect').disabled = false;
+    state.endpointStatus = {};
+    state.succeededEndpoint = null;
+    state.allSymbols = [];
+
+    $('btn-connect').disabled = true;
+    $('btn-stop').disabled = false;
     $('btn-fetch').disabled = true;
+    $('btn-export').disabled = true;
+    $('results-section').style.display = 'none';
+
+    log('🚀 Début du fallback automatique', 'info');
+    log('📋 ' + ENDPOINTS.length + ' endpoints à tester', 'info');
+
+    renderEndpointList();
+
+    for (let i = 0; i < ENDPOINTS.length; i++) {
+        if (state.stopRequested) {
+            log('⏹ Fallback arrêté par l\'utilisateur', 'warn');
+            break;
+        }
+
+        const success = await tryConnect(ENDPOINTS[i], i);
+        renderEndpointList();
+
+        if (success) {
+            // Attacher les handlers
+            attachHandlers();
+            setStatus('connected', 'Connecté ✓', ENDPOINTS[i].label);
+            startPing();
+            $('btn-fetch').disabled = false;
+            $('btn-export').disabled = false;
+            log('═══════════════════════════════════════', 'success');
+            log('🎯 ENDPOINT FONCTIONNEL : ' + ENDPOINTS[i].label, 'success');
+            log('═══════════════════════════════════════', 'success');
+            // Auto-fetch
+            setTimeout(() => fetchAllSymbols(), 500);
+            state.fallbackRunning = false;
+            $('btn-connect').disabled = false;
+            $('btn-stop').disabled = true;
+            return;
+        }
+
+        // Petit délai avant l'endpoint suivant
+        if (i < ENDPOINTS.length - 1 && !state.stopRequested) {
+            await new Promise(r => setTimeout(r, 500));
+        }
+    }
+
+    // Aucun endpoint n'a marché
+    log('═══════════════════════════════════════', 'error');
+    log('❌ AUCUN ENDPOINT FONCTIONNEL', 'error');
+    log('💡 Cause probable :', 'warn');
+    log('   • FAI (Vodacom/Orange) bloque les WebSocket', 'warn');
+    log('   • Réseau mobile instable', 'warn');
+    log('   • Essayer en WiFi', 'warn');
+    log('   • Essayer avec un VPN', 'warn');
+    log('═══════════════════════════════════════', 'error');
+
+    setStatus('error', 'Échec total', 'Aucun endpoint n\'a répondu');
+    state.fallbackRunning = false;
+    $('btn-connect').disabled = false;
+    $('btn-stop').disabled = true;
 }
 
+// ══════════════════════════════════════════════════════════════════
+// HANDLERS DU WEBSOCKET (attachés après succès)
+// ══════════════════════════════════════════════════════════════════
+function attachHandlers() {
+    if (!state.ws) return;
+
+    state.ws.onmessage = (event) => {
+        let data;
+        try { data = JSON.parse(event.data); } catch (e) { return; }
+
+        if (data.msg_type === 'ping' && data.ping === 'pong') return;
+
+        if (data.msg_type === 'active_symbols' && data.active_symbols) {
+            onActiveSymbols(data.active_symbols);
+            return;
+        }
+
+        if (data.req_id && state.pendingRequests.has(data.req_id)) {
+            const { resolve, reject } = state.pendingRequests.get(data.req_id);
+            state.pendingRequests.delete(data.req_id);
+            if (data.error) reject(new Error(data.error.message || JSON.stringify(data.error)));
+            else resolve(data);
+            return;
+        }
+
+        if (data.msg_type && data.msg_type !== 'tick') {
+            log('📩 ' + data.msg_type, 'info');
+        }
+    };
+
+    state.ws.onclose = (event) => {
+        if (event.code === 1000) return; // fermeture volontaire
+        log('🔌 Connexion perdue (code ' + event.code + ')', 'warn');
+        state.connected = false;
+        stopPing();
+        setStatus('error', 'Déconnecté', 'Code ' + event.code);
+        $('btn-fetch').disabled = true;
+    };
+
+    state.ws.onerror = () => {
+        log('❌ Erreur WebSocket', 'error');
+    };
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PING
+// ══════════════════════════════════════════════════════════════════
 function startPing() {
     stopPing();
     state.pingInterval = setInterval(() => {
@@ -299,7 +464,10 @@ function stopPing() {
     if (state.pingInterval) { clearInterval(state.pingInterval); state.pingInterval = null; }
 }
 
-function sendRequest(payload, timeoutMs = 10000) {
+// ══════════════════════════════════════════════════════════════════
+// REQUÊTES
+// ══════════════════════════════════════════════════════════════════
+function sendRequest(payload, timeoutMs = 15000) {
     if (!state.connected || !state.ws) return Promise.reject(new Error('Non connecté'));
     const reqId = state.reqId++;
     payload.req_id = reqId;
@@ -316,13 +484,10 @@ function sendRequest(payload, timeoutMs = 10000) {
     });
 }
 
-// ══════════════════════════════════════════════════════════════════
-// RÉCUPÉRATION DES SYMBOLES
-// ══════════════════════════════════════════════════════════════════
 async function fetchAllSymbols() {
-    log('📋 Demande active_symbols (full)…', 'info');
+    log('📋 Demande active_symbols…', 'info');
     try {
-        const res = await sendRequest({ active_symbols: 'full' }, 15000);
+        const res = await sendRequest({ active_symbols: 'full' }, 20000);
         if (res.error) {
             log('❌ Erreur API : ' + JSON.stringify(res.error), 'error');
         } else if (res.active_symbols) {
@@ -333,10 +498,13 @@ async function fetchAllSymbols() {
     }
 }
 
+// ══════════════════════════════════════════════════════════════════
+// TRAITEMENT DES SYMBOLES
+// ══════════════════════════════════════════════════════════════════
 function onActiveSymbols(symbols) {
     state.allSymbols = symbols;
+    $('btn-export').disabled = false;
 
-    // Catégoriser
     const synthetics = symbols.filter(s => s.market === 'synthetic_index');
     const forex = symbols.filter(s => s.market === 'forex');
     const crypto = symbols.filter(s => s.market === 'cryptocurrency');
@@ -344,31 +512,28 @@ function onActiveSymbols(symbols) {
     $('stat-total').textContent = symbols.length;
     $('stat-synthetic').textContent = synthetics.length;
     $('stat-forex').textContent = forex.length;
-    $('stat-crypto').textContent = crypto.length;
 
-    log('🎯 ' + synthetics.length + ' synthétiques', 'success');
-    log('═══════════════════════════════════════', 'info');
-    log('📋 LISTE COMPLÈTE DES SYNTHÉTIQUES (code → nom)', 'success');
-    log('═══════════════════════════════════════', 'info');
+    log('═══════════════════════════════════════', 'success');
+    log('🎯 ' + synthetics.length + ' SYNTHÉTIQUES TROUVÉS', 'success');
+    log('═══════════════════════════════════════', 'success');
 
-    // Trier par market → submarket → code
-    synthetics.sort((a, b) => {
-        if (a.submarket !== b.submarket) return (a.submarket || '').localeCompare(b.submarket || '');
-        return a.underlying_symbol.localeCompare(b.underlying_symbol);
-    });
-
-    let currentSubmarket = null;
+    // Grouper par submarket
+    const bySubmarket = {};
     for (const s of synthetics) {
-        if (s.submarket !== currentSubmarket) {
-            currentSubmarket = s.submarket;
-            log('▸ ' + currentSubmarket + ' :', 'info');
-        }
-        const name = s.underlying_symbol_name || s.display_name || '?';
-        log('   ' + s.underlying_symbol + ' → ' + name, 'data');
+        const sub = s.submarket || 'unknown';
+        if (!bySubmarket[sub]) bySubmarket[sub] = [];
+        bySubmarket[sub].push(s);
     }
-    log('═══════════════════════════════════════', 'info');
 
-    // Afficher la table
+    for (const [sub, list] of Object.entries(bySubmarket)) {
+        log('▸ ' + sub + ' (' + list.length + ') :', 'info');
+        for (const s of list) {
+            const name = s.underlying_symbol_name || s.display_name || '?';
+            log('   ' + s.underlying_symbol + ' → ' + name, 'data');
+        }
+    }
+    log('═══════════════════════════════════════', 'success');
+
     $('results-section').style.display = 'block';
     renderSymbols();
 }
@@ -387,13 +552,7 @@ function renderSymbols() {
         );
     }
 
-    // Trier
-    filtered.sort((a, b) => {
-        if (a.market !== b.market) return a.market.localeCompare(b.market);
-        return (a.underlying_symbol || '').localeCompare(b.underlying_symbol || '');
-    });
-
-    state.filteredSymbols = filtered;
+    filtered.sort((a, b) => (a.underlying_symbol || '').localeCompare(b.underlying_symbol || ''));
 
     const table = $('symbol-table');
     if (!filtered.length) {
@@ -417,12 +576,9 @@ function exportJSON() {
     const exportData = synthetics.map(s => ({
         code: s.underlying_symbol,
         name: s.underlying_symbol_name || s.display_name || '?',
-        market: s.market,
         submarket: s.submarket,
-        subgroup: s.subgroup,
-        is_open: s.exchange_is_open
+        subgroup: s.subgroup
     }));
-
     const json = JSON.stringify(exportData, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -432,8 +588,6 @@ function exportJSON() {
     a.click();
     URL.revokeObjectURL(url);
     log('💾 Export JSON : ' + exportData.length + ' symboles', 'success');
-
-    // Afficher aussi dans la console
     console.log('=== SYNTHETICS ===');
     console.log(json);
 }
@@ -442,33 +596,34 @@ function exportJSON() {
 // ÉVÉNEMENTS
 // ══════════════════════════════════════════════════════════════════
 $('btn-connect').addEventListener('click', () => {
-    if (state.connected) return;
-    connect();
+    runFallback();
 });
 $('btn-fetch').addEventListener('click', () => {
-    if (!state.connected) { log('⚠️ Connecte-toi d\'abord', 'warn'); return; }
+    if (!state.connected) { log('⚠️ Non connecté', 'warn'); return; }
     fetchAllSymbols();
 });
 $('btn-export').addEventListener('click', () => {
-    if (!state.allSymbols.length) { log('⚠️ Aucun symbole à exporter', 'warn'); return; }
+    if (!state.allSymbols.length) { log('⚠️ Aucun symbole', 'warn'); return; }
     exportJSON();
 });
-$('search').addEventListener('input', () => {
-    if (state.allSymbols.length) renderSymbols();
+$('btn-stop').addEventListener('click', () => {
+    state.stopRequested = true;
+    log('⏹ Arrêt demandé…', 'warn');
 });
-$('filter-synthetic').addEventListener('change', () => {
-    if (state.allSymbols.length) renderSymbols();
-});
+$('search').addEventListener('input', () => { if (state.allSymbols.length) renderSymbols(); });
+$('filter-synthetic').addEventListener('change', () => { if (state.allSymbols.length) renderSymbols(); });
 
 // ══════════════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════════════
-log('📋 Deriv — Liste officielle des symboles', 'info');
-log('🔌 Endpoint : wss://ws.binaryws.com/websockets/v3 (Legacy)', 'data');
-setStatus('', 'Déconnecté', 'Clique sur Connecter');
+log('📋 Deriv — Fallback automatique', 'info');
+log('🌐 ' + ENDPOINTS.length + ' endpoints configurés', 'info');
+setStatus('', 'Déconnecté', 'Clique sur "Lancer le fallback"');
+renderEndpointList();
 
+// Auto-lancer après 1s
 window.addEventListener('load', () => {
-    setTimeout(() => { connect(); }, 500);
+    setTimeout(() => { runFallback(); }, 1000);
 });
 </script>
 
