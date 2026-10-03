@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SMC Trader Pro v5.9</title>
+<title>SMC Trader Pro V6.0.1 — Audit & Tracking</title>
 <meta name="theme-color" content="#16a34a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -264,8 +264,6 @@
     body.dark .bt-trade-row.win { background: #052e1644; }
     body.dark .bt-trade-row.loss { background: #450a0a44; }
     .ai-response { font-size: 0.78rem; line-height: 1.6; white-space: pre-wrap; padding: 0.8rem; background: var(--panel-2); border-radius: 8px; border-left: 3px solid var(--info); }
-    
-    /* MT5 Section */
     .mt5-status-box { padding: 0.8rem; border-radius: 8px; margin-bottom: 0.7rem; font-size: 0.8rem; }
     .mt5-status-box.connected { background: #dcfce7; color: #15803d; border: 2px solid #86efac; }
     .mt5-status-box.disconnected { background: #fee2e2; color: #b91c1c; border: 2px solid #fca5a5; }
@@ -289,7 +287,7 @@
     </div>
     <button class="theme-toggle" id="theme-toggle">🌙</button>
     <h1>🧠 SMC Trader Pro</h1>
-    <p class="subtitle">v5.9 · Top-Down H4→M5 · EUR/USD · XAU/USD · BTC/USD</p>
+    <p class="subtitle">v6.0.1 · Top-Down H4→M5 strict · EUR/USD · XAU/USD · BTC/USD</p>
     <div class="conn-status" id="conn-status">
         <span class="dot"></span>
         <span id="conn-text">Prêt</span>
@@ -320,8 +318,9 @@
                     <select id="symbol-select"></select>
                 </div>
                 <div style="font-size:0.72rem;color:var(--info);padding:0.5rem;background:var(--panel-2);border-radius:6px;line-height:1.5;">
-                    🎯 <strong>Logique Top-Down v5.9</strong><br>
-                    H4 (biais) → H1 (structure) → M15 (analyse) → M5 (entrée)
+                    🎯 <strong>Logique Top-Down v6.0.1</strong><br>
+                    H4 (biais) → H1 strict → M15 (analyse) → M5 (entrée)<br>
+                    <span style="color:var(--warn);">⚠️ Alignement H1 strict · Chaîne bloquante · Seuil 80</span>
                 </div>
             </div>
         </div>
@@ -546,7 +545,7 @@
                     <input type="range" id="bt-score-min" min="60" max="95" step="5" value="80" style="width:100%;">
                 </div>
                 <div style="font-size:0.72rem;color:var(--info);padding:0.5rem;background:var(--panel-2);border-radius:6px;margin-bottom:0.7rem;line-height:1.5;">
-                    🎯 <strong>Logique Top-Down v5.9</strong> : H4 → H1 → M15 → M5 · D1 retiré · Entrée marché · Priorité SL · Plafonds.
+                    🎯 <strong>Logique Top-Down v6.0.1</strong> : H4 → H1 strict → M15 → M5 · Chaîne bloquante · Seuil 80.
                 </div>
                 <button class="btn-primary" id="bt-run-btn">▶️ Lancer le backtest Top-Down</button>
                 <div class="bt-progress" id="bt-progress" style="display:none;">
@@ -866,7 +865,7 @@
 // SERVICE WORKER
 // ══════════════════════════════════════════════════════════════════
 const SW_CODE = `
-const CACHE_NAME = 'smc-trader-v5';
+const CACHE_NAME = 'smc-trader-v6';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', (event) => {
@@ -921,6 +920,8 @@ const STORAGE = {
     apiCache: 'smc_api_cache_v5',
     analysisBox: 'smc_analysis_box_v5',
     weeklyAudits: 'smc_weekly_audits_v5',
+    decisionJournal: 'smc_decision_journal_v6',
+    setupLifecycle: 'smc_setup_lifecycle_v6',
     mt5WsUrl: 'smc_mt5_ws_url_v5',
     mt5Token: 'smc_mt5_token_v5'
 };
@@ -1018,7 +1019,6 @@ function mt5UpdateUI(status, subText) {
         sub.textContent = subText || 'Configurez URL + Token';
         grid.style.display = 'none';
     }
-    // Header status
     const h = $('mt5-header-status');
     const ht = $('mt5-header-text');
     h.classList.remove('connected', 'disconnected');
@@ -1055,10 +1055,8 @@ function mt5Connect() {
             log('MT5 : WebSocket ouvert');
             state.mt5.connected = true;
             state.mt5.lastPing = Date.now();
-            // Envoyer un ping + demander le statut
             mt5Send({ type: 'get_status' });
             mt5Send({ type: 'get_account' });
-            // Ping toutes les 20s
             if (state.mt5.pingTimer) clearInterval(state.mt5.pingTimer);
             state.mt5.pingTimer = setInterval(() => mt5Send({ type: 'ping' }), 20000);
         };
@@ -1078,7 +1076,6 @@ function mt5Connect() {
             state.mt5.authenticated = false;
             if (state.mt5.pingTimer) clearInterval(state.mt5.pingTimer);
             mt5UpdateUI('disconnected', 'Connexion perdue, reconnexion…');
-            // Reconnexion auto toutes les 5s
             if (state.mt5.reconnectTimer) clearTimeout(state.mt5.reconnectTimer);
             state.mt5.reconnectTimer = setTimeout(mt5Connect, 5000);
         };
@@ -1124,7 +1121,6 @@ function mt5HandleMessage(msg) {
             }
             mt5UpdateUI('connected', 'Bridge connecté (v' + (msg.version || '?') + ')');
             toast('✅ MT5 connecté !', 'success', 3000);
-            // Marquer le bouton "Envoyer vers MT5" comme actif
             if (state.lastAnalysis) $('send-to-mt5-btn').disabled = false;
             break;
         case 'mt5_status':
@@ -1176,7 +1172,6 @@ function mt5SendOrder(order) {
         toast('MT5 non connecté', 'warn');
         return false;
     }
-    // Calculer sl_points et tp_points selon l'instrument
     const specs = getSpecs(order.symbol);
     const point = specs.tickSize;
     const slPoints = Math.round(Math.abs(order.entry - order.sl) / point);
@@ -1186,15 +1181,15 @@ function mt5SendOrder(order) {
         type: 'open_order',
         request_id: requestId,
         order: {
-            symbol: order.symbol.replace('/', ''),  // EURUSD au lieu de EUR/USD
-            direction: order.direction,  // 'buy' ou 'sell'
+            symbol: order.symbol.replace('/', ''),
+            direction: order.direction,
             entry: order.entry,
             sl: order.sl,
             tp: order.tp,
             lot: order.lot || 0.01,
             sl_points: slPoints,
             tp_points: tpPoints,
-            comment: 'SMC v5.9'
+            comment: 'SMC v6.0.1'
         }
     };
     const sent = mt5Send(payload);
@@ -1343,9 +1338,10 @@ function renderAnalysisBoxList() {
         const emoji = a.signal === 'ACHAT' ? '🟢' : a.signal === 'VENTE' ? '🔴' : '⚪';
         const status = a.smcScore >= 85 ? '🟢' : a.smcScore >= 75 ? '🟡' : '🔴';
         const audited = a.audited ? '🤖' : '⏳';
+        const lifecycle = a.lifecycleStatus ? ' <span style="font-size:0.6rem;color:var(--ink-dim);">[' + a.lifecycleStatus + ']</span>' : '';
         return '<div style="padding:0.5rem;background:var(--panel-2);border-radius:6px;margin-bottom:0.4rem;border-left:3px solid ' + (a.signal === 'ACHAT' ? 'var(--success)' : a.signal === 'VENTE' ? 'var(--error)' : 'var(--neutral)') + ';">' +
             '<div style="display:flex;justify-content:space-between;font-size:0.75rem;font-weight:700;">' +
-                '<span>' + emoji + ' ' + esc(a.symbol) + ' ' + a.signal + '</span>' +
+                '<span>' + emoji + ' ' + esc(a.symbol) + ' ' + a.signal + lifecycle + '</span>' +
                 '<span>' + status + ' ' + a.smcScore + '/100 ' + audited + '</span>' +
             '</div>' +
             '<div style="font-size:0.7rem;color:var(--ink-dim);margin-top:0.2rem;">' + date + '</div>' +
@@ -1937,7 +1933,7 @@ async function runBacktest() {
         window._lastBacktestTrades = trades;
         window._lastBacktestStats = stats;
         renderBacktestResults(stats, trades, equityCurve);
-        toast('Backtest v5.9 terminé : ' + trades.length + ' trades', 'success', 4000);
+        toast('Backtest v6.0.1 terminé : ' + trades.length + ' trades', 'success', 4000);
     } catch (e) {
         log('Erreur backtest : ' + e.message);
         toast('Erreur backtest : ' + e.message, 'error', 5000);
@@ -2131,7 +2127,7 @@ function saveDeepSeekKey() {
 async function callDeepSeek(prompt, options = {}) {
     const key = getDeepSeekKey();
     if (!key) throw new Error('Clé DeepSeek non configurée');
-    const systemPrompt = options.systemPrompt || `Tu es un analyste trader senior expert en SMC, 15+ ans d'expérience. Tu analyses en profondeur les setups Top-Down H4→H1→M15→M5. Tu es exigeant, critique et tu proposes des améliorations concrètes. Français professionnel, texte simple SANS markdown.`;
+    const systemPrompt = options.systemPrompt || `Tu es un analyste trader senior expert en SMC, 15+ ans d'expérience. Tu analyses en profondeur les setups Top-Down H4→H1→M15→M5 avec alignement H1 strict. Tu es exigeant, critique et tu proposes des améliorations concrètes. Français professionnel, texte simple SANS markdown.`;
     const res = await fetch(DEEPSEEK_API, {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
@@ -2169,7 +2165,7 @@ async function auditBacktest(stats, trades, symbol) {
     const midScoreTrades = trades.filter(t => t.smcScore >= 75 && t.smcScore < 85);
     const lowScoreTrades = trades.filter(t => t.smcScore < 75);
     const summary = {
-        symbol, strategy: 'Top-Down H4→H1→M15→M5 v5.9',
+        symbol, strategy: 'Top-Down H4→H1 strict→M15→M5 v6.0.1',
         total_trades: stats.total, wins: stats.wins, losses: stats.losses, be: stats.be,
         winrate: stats.winrate, totalR: stats.totalR, avgR: stats.avgR, pnlPct: stats.pnlPct,
         maxDD: stats.maxDD, profitFactor: stats.profitFactor, sharpe: stats.sharpe,
@@ -2215,7 +2211,8 @@ async function runWeeklyAudit() {
     const btn = $('weekly-audit-btn');
     if (btn) { btn.disabled = true; btn.textContent = '🧠 Audit IA en cours… (60-90s)'; }
     try {
-        const summary = { period: 'Cette semaine', total_analyses: thisWeek.length, by_symbol: {}, by_signal: { ACHAT: 0, VENTE: 0, ATTENDRE: 0 }, avg_score: 0, avg_confidence: 0, avg_rr: 0, top_down_compliance: { h4_defined: 0, h1_confirms: 0, m15_zone_ok: 0, m5_confirms: 0, m5_triggers: 0 }, outcomes: { tp: 0, sl: 0, be: 0, pending: 0 }, best_setups: [] };
+        const v6 = (typeof window.getV6WeeklyStats === 'function') ? window.getV6WeeklyStats() : null;
+        const summary = { period: 'Cette semaine', total_analyses: thisWeek.length, by_symbol: {}, by_signal: { ACHAT: 0, VENTE: 0, ATTENDRE: 0 }, avg_score: 0, avg_confidence: 0, avg_rr: 0, top_down_compliance: { h4_defined: 0, h1_confirms: 0, m15_zone_ok: 0, m5_confirms: 0, m5_triggers: 0 }, outcomes: { tp2: 0, sl: 0, be: 0, invalidated: 0, expired: 0, pending: 0 }, best_setups: [] };
         let totalScore = 0, totalConf = 0, totalRR = 0;
         for (const a of thisWeek) {
             if (!summary.by_symbol[a.symbol]) summary.by_symbol[a.symbol] = 0;
@@ -2237,21 +2234,24 @@ async function runWeeklyAudit() {
         summary.avg_confidence = parseFloat((totalConf / thisWeek.length).toFixed(1));
         summary.avg_rr = parseFloat((totalRR / thisWeek.length).toFixed(2));
         summary.best_setups = summary.best_setups.slice(0, 5);
+        if (v6) summary.v6_stats = v6;
         const prompt = `Tu es un analyste trader senior expert en SMC. Voici le résumé de la semaine :
 
 ${JSON.stringify(summary, null, 2)}
 
 CONTEXTE :
-- Top-Down v5.9 : H4 → H1 → M15 → M5
+- Top-Down v6.0.1 : H4 → H1 STRICT (range n'est plus toléré) → M15 → M5
 - ACHAT en Discount de structure haussière, VENTE en Premium de structure baissière
-- Seuil SMC actuel : ${getScanConfig().minScore}/100
+- Chaîne bloquante : H1 doit confirmer STRICTEMENT, M15 doit être aligné, M5 doit confirmer ET trigger
+- Seuil SMC : ${getScanConfig().minScore}/100
+- Journalisation complète des rejets, cycle lifecycle PENDING → ACTIVE → PARTIAL → TP2/SL/BE/INVALIDATED/EXPIRED
 
 MISSION : AUDIT HEBDOMADAIRE + RECOMMANDATIONS CONCRÈTES.
 
 Réponds en français, format texte SANS markdown, en 7 sections numérotées :
 1. SYNTHÈSE DE LA SEMAINE (3-4 phrases)
-2. PERFORMANCE DU SEUIL ACTUEL (2-3 phrases)
-3. COMPLIANCE TOP-DOWN (3 puces avec •)
+2. PERFORMANCE DU SEUIL ACTUEL (2-3 phrases, appuie-toi sur v6_stats si dispo)
+3. COMPLIANCE TOP-DOWN (3 puces avec •, en tenant compte de l'alignement STRICT)
 4. FORCES IDENTIFIÉES (3 puces avec •)
 5. FAIBLESSES IDENTIFIÉES (3 puces avec •)
 6. RECOMMANDATIONS CONCRÈTES (5 puces avec •)
@@ -2322,7 +2322,7 @@ async function autoSendToTelegram(synthesis, levels, results, symbol) {
     if (lastTelegramSent[key] && (now - lastTelegramSent[key]) < 30 * 60 * 1000) return;
     const status = getScoreStatus(smcScore.total);
     const emoji = synthesis.signal === 'ACHAT' ? '🟢' : '🔴';
-    let text = '🚨 *SIGNAL SMC v5.9* 🚨\n\n📊 *' + symbol + '*\n' + emoji + ' Signal : *' + synthesis.signal + '*\n🎯 SMC Score : *' + smcScore.total + '/100* ' + status.label + '\n🧭 ' + (synthesis.orientationReason || '') + '\n\n';
+    let text = '🚨 *SIGNAL SMC v6.0.1* 🚨\n\n📊 *' + symbol + '*\n' + emoji + ' Signal : *' + synthesis.signal + '*\n🎯 SMC Score : *' + smcScore.total + '/100* ' + status.label + '\n🧭 ' + (synthesis.orientationReason || '') + '\n\n';
     if (synthesis.topDown) {
         const td = synthesis.topDown;
         text += '🧭 H4 : ' + td.h4Bias + ' | 🏛️ H1 : ' + (td.h1Confirms ? '✅' : '❌') + ' | 🔍 M15 : ' + td.m15Zone + ' | 🎯 M5 : ' + (td.m5Triggers ? '✅' : '❌') + '\n\n';
@@ -2452,12 +2452,17 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
     if (td) {
         const tdEl = $('topdown-cascade');
         if (tdEl) {
+            const chainIntact = td.h1Confirms && ['discount','premium'].includes(td.m15Zone) && td.m5Confirms && td.m5Triggers;
+            const chainBadge = chainIntact
+                ? '<span class="smc-tag bull">✅ CHAÎNE INTACTE (H1 strict)</span>'
+                : '<span class="smc-tag bear">❌ CHAÎNE INCOMPLÈTE</span>';
             tdEl.innerHTML =
+                '<div style="margin-bottom:0.4rem;">' + chainBadge + '</div>' +
                 '<div style="font-size:0.78rem;line-height:1.8;">' +
                     '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;margin-bottom:0.3rem;"><strong>🧭 H4 Biais :</strong> <span class="smc-tag ' + (td.h4Bias === 'bullish' ? 'bull' : td.h4Bias === 'bearish' ? 'bear' : 'neutral') + '">' + td.h4Bias + '</span> (' + td.h4Strength + '%)</div>' +
-                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;margin-bottom:0.3rem;"><strong>🏛️ H1 Confirme :</strong> ' + (td.h1Confirms ? '<span class="smc-tag bull">✅ OUI</span>' : '<span class="smc-tag bear">❌ NON</span>') + '</div>' +
+                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;margin-bottom:0.3rem;"><strong>🏛️ H1 Direction :</strong> <span class="smc-tag ' + (td.h1Direction === 'bullish' ? 'bull' : td.h1Direction === 'bearish' ? 'bear' : 'neutral') + '">' + td.h1Direction + '</span> ' + (td.h1Confirms ? '<span class="smc-tag bull">✅ aligné strict</span>' : '<span class="smc-tag bear">❌ non aligné</span>') + '</div>' +
                     '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;margin-bottom:0.3rem;"><strong>🔍 M15 Zone :</strong> <span class="smc-tag ' + (td.m15Zone === 'discount' ? 'bull' : td.m15Zone === 'premium' ? 'bear' : 'neutral') + '">' + td.m15Zone + '</span></div>' +
-                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;"><strong>🎯 M5 Trigger :</strong> ' + (td.m5Triggers ? '<span class="smc-tag bull">✅ OUI</span>' : '<span class="smc-tag bear">❌ NON</span>') + '</div>' +
+                    '<div style="padding:0.4rem;background:var(--panel);border-radius:6px;"><strong>🎯 M5 Confirme/Trigger :</strong> ' + (td.m5Confirms ? '<span class="smc-tag bull">✅ confirme</span>' : '<span class="smc-tag bear">❌ pas de confirmation</span>') + ' ' + (td.m5Triggers ? '<span class="smc-tag bull">✅ trigger</span>' : '<span class="smc-tag bear">❌ pas de trigger</span>') + '</div>' +
                 '</div>';
         }
     }
@@ -2483,7 +2488,6 @@ function renderReport(results, synthesis, levels, scenarios, currentPrice, symbo
     $('pd-container').innerHTML = '<p>Range M5 : ' + formatPrice(pd.low) + ' → ' + formatPrice(pd.high) + '</p><p>Zone M5 : <span class="smc-tag ' + (pd.zone === 'discount' ? 'bull' : 'bear') + '">' + (pd.zone === 'discount' ? '💎 Discount' : '🔺 Premium') + ' (' + pd.position + '%)</span></p>';
     $('scenarios-container').innerHTML = scenarios.map(s => '<div class="scenario ' + s.type + '"><div style="font-weight:700;">' + esc(s.title) + '</div><div style="font-size:0.7rem;color:var(--ink-dim);">' + esc(s.prob) + '</div><div>' + esc(s.text) + '</div></div>').join('');
     state.lastAnalysis = { timestamp: Date.now(), symbol, signal: synthesis.signal, levels, results, currentPrice, smcScore: smcScore.total };
-    // Activer le bouton MT5 si connecté
     if (state.mt5.connected) {
         const btn = $('send-to-mt5-btn');
         if (btn) btn.disabled = false;
@@ -2719,7 +2723,7 @@ async function runScan() {
     const config = getScanConfig();
     const instruments = loadScanInstruments();
     if (!instruments.length) { addScanLog('Aucun instrument', 'warn'); return; }
-    addScanLog('🔍 Scan Top-Down v5.9 · ' + instruments.length + ' instruments · seuil ' + config.minScore, 'info');
+    addScanLog('🔍 Scan Top-Down v6.0.1 · ' + instruments.length + ' instruments · seuil ' + config.minScore, 'info');
     let signalsFound = 0;
     for (const inst of instruments) {
         if (!state.scanning) { addScanLog('⏸ Interrompu', 'warn'); return; }
@@ -2797,7 +2801,7 @@ async function runAnalysis() {
         const scenarios = buildScenarios(results, synthesis, levels);
         renderReport(results, synthesis, levels, scenarios, currentPrice, state.symbol);
         setStatus(null);
-        toast('Analyse Top-Down v5.9 complète ✓', 'success');
+        toast('Analyse Top-Down v6.0.1 complète ✓', 'success');
     } catch (e) {
         log('Erreur : ' + e.message);
         setStatus(null);
@@ -2873,7 +2877,6 @@ function initSettings() {
     if (dk) $('deepseek-key').value = dk;
     $('save-deepseek')?.addEventListener('click', saveDeepSeekKey);
     $('test-deepseek')?.addEventListener('click', testDeepSeek);
-    // MT5 buttons
     $('mt5-connect-btn')?.addEventListener('click', () => { mt5SaveConfig(); mt5Connect(); });
     $('mt5-disconnect-btn')?.addEventListener('click', mt5Disconnect);
     $('mt5-refresh-btn')?.addEventListener('click', () => { if (state.mt5.connected) { mt5Send({ type: 'get_account' }); mt5Send({ type: 'get_status' }); toast('Rafraîchissement…', 'success'); } else toast('Non connecté', 'warn'); });
@@ -2887,7 +2890,7 @@ function initSettings() {
         saveTelegramAccounts(accounts); renderTelegramAccounts();
     });
     $('test-all-telegram-btn')?.addEventListener('click', async () => {
-        const sent = await sendToAllTelegram('🧠 *SMC Top-Down v5.9* — Test');
+        const sent = await sendToAllTelegram('🧠 *SMC Top-Down v6.0.1* — Test');
         toast(sent > 0 ? 'Envoyé à ' + sent : 'Aucun actif', sent > 0 ? 'success' : 'warn');
     });
     $('enable-push-btn')?.addEventListener('click', async () => {
@@ -3043,12 +3046,11 @@ async function init() {
             entry: a.levels.entryPrice,
             sl: a.levels.slPrice,
             tp: a.levels.tpPrice,
-            lot: 0.01  // Sera ajusté par l'EA selon le broker
+            lot: 0.01
         });
     });
     await connectTwelveData();
     subscribeTicks(state.symbol);
-    // Auto-connexion MT5 si configurée
     const mt5Url = mt5GetUrl();
     if (mt5Url && mt5GetToken()) {
         setTimeout(mt5Connect, 2000);
@@ -3059,8 +3061,444 @@ async function init() {
     OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({ appId: "86e53477-c701-4251-9f8a-53a737e5f759", notifyButton: { enable: true, position: 'bottom-right', size: 'medium', theme: 'default' } });
     });
-    log('SMC Trader Pro v5.9 prêt — MT5 bridge intégré');
+    log('SMC Trader Pro v6.0.1 prêt — chaîne Top-Down stricte active');
 }
+
+// ══════════════════════════════════════════════════════════════════
+// V6.0.1 — ARCHITECTURE DE VALIDATION, JOURNALISATION ET TRACKING
+// Corrections préalables à la semaine d'observation :
+// 1) Démarrage unique du tracker (protection contre double invocation)
+// 2) Suppression de V6.MIN_SCORE : getScanConfig().minScore = source unique
+// 3) Alignement one-shot du seuil à 80 pour la phase d'observation
+// ══════════════════════════════════════════════════════════════════
+(function V6Architecture(){
+    const V6 = {
+        VERSION: '6.0.1',
+        PENDING_TTL_H: 24,
+        TRACK_MS: 60 * 1000,
+        DUP_TTL_H: 12,
+        MAX_DECISIONS: 3000,
+        MAX_SETUPS: 1000
+    };
+
+    // (3) Alignement one-shot du seuil stocké sur 80 pour la phase d'observation.
+    (function alignThresholdOnce(){
+        try {
+            const raw = localStorage.getItem(STORAGE.scanConfig);
+            const cfg = raw ? JSON.parse(raw) : {};
+            if (cfg.minScore !== 80) {
+                cfg.minScore = 80;
+                cfg.freqMin = cfg.freqMin || 30;
+                cfg.minRR = cfg.minRR || 2;
+                localStorage.setItem(STORAGE.scanConfig, JSON.stringify(cfg));
+                log('V6.0.1 : seuil forcé à 80 pour la phase d\'observation');
+            }
+        } catch(e) { log('V6.0.1 alignThresholdOnce: ' + e.message); }
+    })();
+
+    function safeRead(key, fallback) {
+        try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+        catch(e) { return fallback; }
+    }
+    function safeWrite(key, value) {
+        try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+        catch(e) { log('V6 storage error: ' + e.message); return false; }
+    }
+    function now(){ return Date.now(); }
+    function normSymbol(s){ return String(s || '').toUpperCase().replace(/\s+/g,''); }
+    function n(v, d=0){ const x=Number(v); return Number.isFinite(x) ? x : d; }
+    function round(v,d=5){ const p=10**d; return Math.round(v*p)/p; }
+
+    function loadDecisions(){ return safeRead(STORAGE.decisionJournal, []); }
+    function saveDecisions(a){
+        if(a.length > V6.MAX_DECISIONS) a = a.slice(-V6.MAX_DECISIONS);
+        safeWrite(STORAGE.decisionJournal, a);
+    }
+    function journalDecision(data){
+        const a=loadDecisions();
+        a.push({
+            id: 'DEC-' + now() + '-' + Math.random().toString(36).slice(2,8),
+            timestamp: now(),
+            version: V6.VERSION,
+            ...data
+        });
+        saveDecisions(a);
+        return a[a.length-1];
+    }
+
+    function loadSetups(){ return safeRead(STORAGE.setupLifecycle, []); }
+    function saveSetups(a){
+        if(a.length > V6.MAX_SETUPS) a = a.slice(0,V6.MAX_SETUPS);
+        safeWrite(STORAGE.setupLifecycle, a);
+    }
+    function updateSetup(id, updates){
+        const a=loadSetups(); const i=a.findIndex(x=>x.setupId===id);
+        if(i<0) return null;
+        a[i]={...a[i],...updates,lastUpdate:now()}; saveSetups(a); return a[i];
+    }
+    function getSetup(id){ return loadSetups().find(x=>x.setupId===id) || null; }
+
+    function priceKey(v){ return Number.isFinite(Number(v)) ? Number(v).toFixed(5) : 'NA'; }
+    function makeSetupId(symbol, signal, levels, synthesis){
+        const dir = signal === 'ACHAT' ? 'BUY' : signal === 'VENTE' ? 'SELL' : 'WAIT';
+        const zone = synthesis?.topDown?.m15Zone || 'NA';
+        const entry = priceKey(levels?.entryPrice);
+        const sl = priceKey(levels?.slPrice);
+        const tp = priceKey(levels?.tpPrice);
+        return [normSymbol(symbol),dir,'M15-'+zone,'E'+entry,'SL'+sl,'TP'+tp].join('_');
+    }
+
+    function strictTopDown(results){
+        const H4=results.H4,H1=results.H1,M15=results.M15,M5=results.M5;
+        const h4Bias=H4?.direction || 'range';
+        const h4Strength=H4?.strength || 50;
+        const h1Direction=H1?.direction || 'range';
+        // Alignement STRICT : range H1 n'est plus considéré comme confirmation.
+        const h1Confirms = (h4Bias==='bullish' && h1Direction==='bullish') ||
+                           (h4Bias==='bearish' && h1Direction==='bearish');
+        const m15Zone=M15?.pd?.zone || 'unknown';
+        const m5Events=(M5?.structure?.events || []).slice(-3);
+        const m5HasMSS=m5Events.some(e=>e.type==='MSS');
+        const m5HasSweep=!!(M5?.sweeps?.length);
+        const m5Confirms=m5HasMSS || m5HasSweep;
+        const hasDisplacement=!!(M5?.obs || []).some(o=>o.displacement);
+        const m5Triggers=m5HasSweep || hasDisplacement;
+        let signal='ATTENDRE',signalClass='wait',confidence=0,reason='';
+        if(h4Bias==='bullish' && h1Confirms){
+            if(m15Zone==='discount' && m5Confirms && m5Triggers){
+                signal='ACHAT'; signalClass='buy';
+                confidence=Math.min(95,Math.round((h4Strength+(H1?.strength||50)+(M5?.strength||50))/3));
+                reason='✅ H4 haussier + H1 haussier + M15 Discount + M5 confirmation + trigger';
+            } else if(m15Zone==='premium') reason='⏸ M15 Premium incompatible avec un achat';
+            else if(!m5Confirms) reason='⏸ M5 ne confirme pas (MSS/sweep absent)';
+            else if(!m5Triggers) reason='⏸ M5 trigger absent';
+            else reason='⏸ M15 hors zone';
+        } else if(h4Bias==='bearish' && h1Confirms){
+            if(m15Zone==='premium' && m5Confirms && m5Triggers){
+                signal='VENTE'; signalClass='sell';
+                confidence=Math.min(95,Math.round((h4Strength+(H1?.strength||50)+(M5?.strength||50))/3));
+                reason='✅ H4 baissier + H1 baissier + M15 Premium + M5 confirmation + trigger';
+            } else if(m15Zone==='discount') reason='⏸ M15 Discount incompatible avec une vente';
+            else if(!m5Confirms) reason='⏸ M5 ne confirme pas (MSS/sweep absent)';
+            else if(!m5Triggers) reason='⏸ M5 trigger absent';
+            else reason='⏸ M15 hors zone';
+        } else if(h4Bias==='range') reason='⏸ H4 indéterminé';
+        else reason='⏸ H1 ne confirme pas strictement H4';
+        return {
+            signal,signalClass,confidence,orientationReason:reason,
+            topDown:{h4Bias,h4Strength,h1Direction,h1Confirms,m15Zone,m15Structure:M15?.direction||'range',m5Confirms,m5HasMSS,m5HasSweep,m5Triggers},
+            zone:m15Zone
+        };
+    }
+
+    window.__V6_strictTopDown = strictTopDown;
+    synthesizeTopDown = function(results){ return strictTopDown(results); };
+
+    function rrNumber(levels){
+        const x=String(levels?.riskReward||'').replace('1:','');
+        const r=parseFloat(x); return Number.isFinite(r)?r:0;
+    }
+
+    function duplicateOpen(setupId){
+        const cutoff=now()-V6.DUP_TTL_H*3600000;
+        return loadSetups().some(s => s.setupId===setupId && s.createdAt>=cutoff &&
+            ['PENDING','ACTIVE','PARTIAL','BE'].includes(s.status));
+    }
+
+    function createLifecycle(setup){
+        const setups=loadSetups();
+        if(duplicateOpen(setup.setupId)) return {duplicate:true};
+        setups.unshift(setup);
+        saveSetups(setups);
+        return {duplicate:false,setup};
+    }
+
+    function classifyReject(analysis, minScore, minRR){
+        if(!analysis.ok) return {code:'DATA_ERROR',reason:analysis.error||'Données insuffisantes'};
+        if(analysis.synthesis?.signal==='ATTENDRE'){
+            const td=analysis.synthesis.topDown||{};
+            if(td.h4Bias==='range') return {code:'WAIT_H4',reason:analysis.synthesis.orientationReason||'H4 indéterminé'};
+            if(!td.h1Confirms) return {code:'WAIT_H1',reason:analysis.synthesis.orientationReason||'H1 non aligné'};
+            if(!['discount','premium'].includes(td.m15Zone)) return {code:'WAIT_M15',reason:'Zone M15 non exploitable'};
+            if(!td.m5Confirms) return {code:'WAIT_M5_CONFIRM',reason:'M5 sans MSS/sweep'};
+            if(!td.m5Triggers) return {code:'WAIT_M5_TRIGGER',reason:'M5 sans trigger'};
+            return {code:'WAIT_TOPDOWN',reason:analysis.synthesis.orientationReason||'Top-Down incomplet'};
+        }
+        if(n(analysis.smcScore?.total)<minScore) return {code:'REJECTED_SCORE',reason:'Score '+analysis.smcScore.total+' < '+minScore};
+        if(rrNumber(analysis.levels)<minRR) return {code:'REJECTED_RR',reason:'R/R '+rrNumber(analysis.levels).toFixed(2)+' < '+minRR};
+        return {code:'VALID',reason:'Setup validé'};
+    }
+
+    async function trackOne(setup){
+        if(!setup || !['PENDING','ACTIVE','PARTIAL','BE'].includes(setup.status)) return;
+        const age=now()-setup.createdAt;
+        if(setup.status==='PENDING' && age>V6.PENDING_TTL_H*3600000){
+            updateSetup(setup.setupId,{status:'EXPIRED',exitReason:'TTL_PENDING',closedAt:now()});
+            linkOutcome(setup.setupId,'EXPIRED',null); return;
+        }
+        let price;
+        try { price=await fetchCurrentPrice(setup.symbol); } catch(e){ return; }
+        if(!Number.isFinite(price)) return;
+        const dir=setup.direction==='BUY'?1:-1;
+        const entry=n(setup.entry), sl=n(setup.sl), tp1=n(setup.tp1), tp2=n(setup.tp2 || setup.tp);
+        if(!(entry&&sl&&tp2)) return;
+        const favorable=Math.max(0,(price-entry)*dir);
+        const adverse=Math.max(0,(entry-price)*dir);
+        const risk=Math.abs(entry-sl)||1;
+        const mfe=round(Math.max(n(setup.mfeDistance),favorable)/risk,3);
+        const mae=round(Math.max(n(setup.maeDistance),adverse)/risk,3);
+        let status=setup.status;
+        if(status==='PENDING'){
+            const reachedEntry=dir>0 ? price>=entry : price<=entry;
+            const invalidBeforeEntry=dir>0 ? price<=sl : price>=sl;
+            if(invalidBeforeEntry && !reachedEntry){
+                status='INVALIDATED';
+                updateSetup(setup.setupId,{status,exitPrice:price,exitReason:'SL_BEFORE_ENTRY',closedAt:now(),mfeR:mfe,maeR:mae});
+                linkOutcome(setup.setupId,status,price); return;
+            }
+            if(reachedEntry){ status='ACTIVE'; updateSetup(setup.setupId,{status,activatedAt:now(),entryObserved:price}); }
+            else { updateSetup(setup.setupId,{lastPrice:price,mfeR:mfe,maeR:mae}); return; }
+        }
+        if(status==='ACTIVE' || status==='PARTIAL' || status==='BE'){
+            const current=getSetup(setup.setupId)||setup;
+            const hitTP1=dir>0 ? price>=tp1 : price<=tp1;
+            const hitTP2=dir>0 ? price>=tp2 : price<=tp2;
+            if(hitTP2){
+                updateSetup(setup.setupId,{status:'TP2',exitPrice:price,exitReason:'TP2',closedAt:now(),mfeR:Math.max(mfe,round(Math.abs(tp2-entry)/risk,3)),maeR:mae});
+                linkOutcome(setup.setupId,'TP2',price); return;
+            }
+            if(hitTP1 && current.status==='ACTIVE'){
+                updateSetup(setup.setupId,{status:'PARTIAL',tp1At:now(),tp1Price:price,partialClosed:true,mfeR:Math.max(mfe,1),maeR:mae});
+                status='PARTIAL';
+            }
+            if((status==='PARTIAL'||status==='BE') && current.status!=='BE'){
+                updateSetup(setup.setupId,{status:'BE',activeSL:entry,beAt:now()});
+            }
+            const latest=getSetup(setup.setupId)||current;
+            const slNow=n(latest.activeSL,sl);
+            const hitActiveSL=dir>0 ? price<=slNow : price>=slNow;
+            if(hitActiveSL){
+                const result=(latest.status==='BE'||latest.status==='PARTIAL')?'BE':'SL';
+                const r=(price-entry)*dir/risk;
+                updateSetup(setup.setupId,{status:result,exitPrice:price,exitReason:result,closedAt:now(),rMultiple:round(r,3),mfeR:mfe,maeR:mae});
+                linkOutcome(setup.setupId,result,price); return;
+            }
+            updateSetup(setup.setupId,{lastPrice:price,mfeR:mfe,maeR:mae});
+        }
+    }
+
+    function linkOutcome(setupId,status,price){
+        const s=getSetup(setupId); if(!s) return;
+        let r=null;
+        const risk=Math.abs(n(s.entry)-n(s.sl))||1;
+        if(Number.isFinite(price)) r=round((price-n(s.entry))*(s.direction==='BUY'?1:-1)/risk,3);
+        updateSetup(setupId,{rMultiple:r});
+        journalDecision({type:'OUTCOME',setupId,code:status,rMultiple:r,price:price??null,durationMin:s.closedAt?Math.round((s.closedAt-s.createdAt)/60000):null});
+        try {
+            const box=loadAnalysisBox(); const i=box.findIndex(a=>a.setupId===setupId);
+            if(i>=0){
+                box[i].outcome=status;
+                box[i].outcomeAt=now();
+                box[i].outcomePrice=price??null;
+                box[i].rMultiple=r;
+                box[i].lifecycleStatus=status;
+                box[i].maeR=s.maeR??null;
+                box[i].mfeR=s.mfeR??null;
+                box[i].durationMin=s.closedAt ? Math.round((s.closedAt-s.createdAt)/60000) : null;
+                saveAnalysisBox(box);
+                renderAnalysisBoxStats(); renderAnalysisBoxList();
+            }
+        } catch(e){ log('V6 linkOutcome: '+e.message); }
+    }
+
+    async function trackAll(){
+        const setups=loadSetups().filter(s=>['PENDING','ACTIVE','PARTIAL','BE'].includes(s.status));
+        for(const s of setups){ try { await trackOne(s); } catch(e){ log('Tracking '+s.setupId+' : '+e.message); } }
+        renderTrades(); renderStats();
+    }
+
+    window.V6Tracking={
+        journalDecision,loadDecisions,loadSetups,getSetup,trackAll,makeSetupId,linkOutcome,
+        stats:function(){
+            const d=loadDecisions(); const s=loadSetups();
+            const last7=now()-7*86400000; const week=d.filter(x=>x.timestamp>=last7);
+            const countCode=c=>week.filter(x=>x.code===c).length;
+            const closed=s.filter(x=>['TP2','SL','BE','INVALIDATED','EXPIRED'].includes(x.status));
+            return {decisions:d.length,week:week.length,valid:countCode('VALID'),rejected:week.length-countCode('VALID'),scoreReject:countCode('REJECTED_SCORE'),rrReject:countCode('REJECTED_RR'),waitH4:countCode('WAIT_H4'),waitH1:countCode('WAIT_H1'),waitM15:countCode('WAIT_M15'),waitM5:countCode('WAIT_M5_CONFIRM')+countCode('WAIT_M5_TRIGGER'),setups:s.length,pending:s.filter(x=>x.status==='PENDING').length,active:s.filter(x=>['ACTIVE','PARTIAL','BE'].includes(x.status)).length,closed:closed.length};
+        },
+        render:function(){
+            const el=$('thresholds-display'); if(!el) return;
+            const st=this.stats(); const cfg=getScanConfig();
+            el.innerHTML='<div style="font-size:.75rem;line-height:1.7">'+
+                '<div><strong>Seuil actif : '+cfg.minScore+'/100</strong> — source unique : config scanner.</div>'+
+                '<div>Décisions journalisées : <strong>'+st.week+'</strong></div>'+
+                '<div>Validés : <strong style="color:var(--success)">'+st.valid+'</strong> · Rejetés/WAIT : <strong>'+st.rejected+'</strong></div>'+
+                '<div>Rejets score : '+st.scoreReject+' · R/R : '+st.rrReject+'</div>'+
+                '<div>WAIT H4 : '+st.waitH4+' · H1 : '+st.waitH1+' · M15 : '+st.waitM15+' · M5 : '+st.waitM5+'</div>'+
+                '<div>Lifecycle : PENDING '+st.pending+' · ACTIVE '+st.active+' · Clos '+st.closed+'</div>'+
+                '<div style="margin-top:.4rem;color:var(--ink-dim)">Les statistiques hebdomadaires utilisent toutes les décisions, pas seulement les setups acceptés.</div></div>';
+        }
+    };
+
+    saveAndAuditAnalysis = async function(synthesis, levels, results, symbol, smcScore, telegramSent){
+        const setupId=makeSetupId(symbol,synthesis.signal,levels,synthesis);
+        const direction=synthesis.signal==='ACHAT'?'BUY':'SELL';
+        const entryR=results.M5||results.M15;
+        const created=now();
+        const setup={
+            setupId,version:V6.VERSION,symbol,direction,
+            entry:n(levels.entryPrice),sl:n(levels.slPrice),tp1:n(levels.tp1Price),tp2:n(levels.tp2Price),tp:n(levels.tpPrice),
+            rr:rrNumber(levels),score:n(smcScore.total),confidence:n(synthesis.confidence),
+            zone:synthesis.topDown?.m15Zone||null,createdAt:created,lastUpdate:created,status:'PENDING',
+            activeSL:n(levels.slPrice),mfeR:0,maeR:0,telegramSent:n(telegramSent),
+            h4Bias:synthesis.topDown?.h4Bias||null,h1Direction:synthesis.topDown?.h1Direction||null,
+            h1Confirms:!!synthesis.topDown?.h1Confirms
+        };
+        const createdResult=createLifecycle(setup);
+        if(createdResult.duplicate){
+            journalDecision({type:'SETUP',symbol,signal:synthesis.signal,code:'DUPLICATE',reason:'SetupId déjà PENDING/ACTIVE',setupId});
+            addScanLog('♻️ Doublon bloqué : '+symbol+' '+synthesis.signal,'warn');
+            return null;
+        }
+        const analysis={
+            id:null,setupId,version:V6.VERSION,symbol,signal:synthesis.signal,smcScore:smcScore.total,
+            smcDetails:smcScore.details,confidence:synthesis.confidence,topDown:synthesis.topDown,
+            orientationReason:synthesis.orientationReason,
+            levels:{entry:levels.entry,sl:levels.sl,tp1:levels.tp1,tp2:levels.tp2,rr:levels.riskReward},
+            setup:{obTotal:(entryR.obs||[]).length,obFresh:(entryR.obs||[]).filter(o=>o.freshness==='fresh').length,obDisplaced:(entryR.obs||[]).filter(o=>o.displacement).length,fvgTotal:(entryR.fvgs||[]).length,sweeps:(entryR.sweeps||[]).length},
+            atr:entryR.atr,zone:entryR.pd?.zone,zonePosition:entryR.pd?.position,
+            telegramSent,outcome:'PENDING',lifecycleStatus:'PENDING',auditIA:null
+        };
+        const saved=addToAnalysisBox(analysis);
+        journalDecision({type:'SETUP',symbol,signal:synthesis.signal,code:'VALID',reason:'Setup accepté',setupId,score:smcScore.total,rr:rrNumber(levels)});
+        renderAnalysisBoxStats(); renderAnalysisBoxList();
+        if(getDeepSeekKey()){
+            auditAnalysis(synthesis,levels,results,symbol).then(auditText=>{
+                if(auditText && !auditText.startsWith('Erreur')) updateAnalysisBoxEntry(saved.id,{auditIA:auditText,audited:true,auditedAt:now()});
+            }).catch(e=>log('V6 audit auto: '+e.message));
+        }
+        return saved;
+    };
+
+    async function sendV6TelegramOnly(synthesis, levels, results, symbol, setupId){
+        if(synthesis.signal==='ATTENDRE') return 0;
+        const smcScore=computeSMCScore(results,synthesis,levels);
+        const threshold=getScanConfig().minScore;
+        if(smcScore.total<threshold) return 0;
+        const accounts=loadTelegramAccounts().filter(a=>a.enabled&&a.token&&a.chatId);
+        if(!accounts.length) return 0;
+        const key=normSymbol(symbol)+'_'+synthesis.signal+'_'+setupId;
+        const sentCache=safeRead(STORAGE.lastTgSent,{});
+        const last=sentCache[key]||0;
+        if(last && now()-last<30*60*1000) return 0;
+        const emoji=synthesis.signal==='ACHAT'?'🟢':'🔴';
+        let text='🚨 *SIGNAL SMC v6.0.1* 🚨\n\n'+
+            '📊 *'+symbol+'*\n'+emoji+' Signal : *'+synthesis.signal+'*\n'+
+            '🆔 Setup : `'+setupId+'`\n'+
+            '🎯 Score : *'+smcScore.total+'/100*\n'+
+            '🧭 '+(synthesis.orientationReason||'')+'\n\n';
+        const td=synthesis.topDown||{};
+        text+='🧭 H4 : '+td.h4Bias+' | H1 : '+td.h1Direction+' '+(td.h1Confirms?'✅':'❌')+' | M15 : '+td.m15Zone+' | M5 : '+(td.m5Confirms&&td.m5Triggers?'✅':'❌')+'\n\n';
+        text+='📥 Entrée : `'+levels.entry+'`\n🛑 SL : `'+levels.sl+'`\n🎯 TP1 : `'+levels.tp1+'`\n🎯 TP2 : `'+levels.tp2+'`\n⚖️ R/R : *'+levels.riskReward+'*\n\n🕐 '+new Date().toLocaleString('fr-FR');
+        try{
+            const sent=await sendToAllTelegram(text);
+            if(sent>0){
+                sentCache[key]=now(); safeWrite(STORAGE.lastTgSent,sentCache);
+                sendNotification('🚨 Signal '+synthesis.signal,symbol+' — Score '+smcScore.total+'/100');
+                addScanLog('✅ Telegram V6 envoyé : '+synthesis.signal+' '+symbol,'success');
+                renderAutoSendStats();
+            }
+            return sent;
+        }catch(e){ addScanLog('⚠️ Telegram V6 : '+e.message,'warn'); return 0; }
+    }
+
+    runScan = async function(){
+        const config=getScanConfig(); const instruments=loadScanInstruments();
+        if(!instruments.length){ addScanLog('Aucun instrument','warn'); return; }
+        addScanLog('🔍 Scan V6.0.1 · '+instruments.length+' instruments · seuil '+config.minScore,'info');
+        let signalsFound=0;
+        for(const inst of instruments){
+            if(!state.scanning){ addScanLog('⏸ Interrompu','warn'); return; }
+            try{
+                const analysis=await analyzeInstrumentForScan(inst,config.minScore,config.minRR);
+                if(!analysis.ok){
+                    journalDecision({type:'SCAN',symbol:inst,code:'DATA_ERROR',reason:analysis.error||'Données insuffisantes'});
+                    addScanLog('❌ '+inst+' : '+analysis.error,'error'); continue;
+                }
+                analysis.synthesis=strictTopDown(analysis.results);
+                const verdict=classifyReject(analysis,config.minScore,config.minRR);
+                const setupId=analysis.synthesis.signal!=='ATTENDRE' ? makeSetupId(inst,analysis.synthesis.signal,analysis.levels,analysis.synthesis) : null;
+                journalDecision({type:'SCAN',symbol:inst,signal:analysis.synthesis.signal,code:verdict.code,reason:verdict.reason,setupId,score:analysis.smcScore.total,rr:rrNumber(analysis.levels),h4:analysis.synthesis.topDown?.h4Bias,h1:analysis.synthesis.topDown?.h1Direction,m15:analysis.synthesis.topDown?.m15Zone,m5Confirm:!!analysis.synthesis.topDown?.m5Confirms,m5Trigger:!!analysis.synthesis.topDown?.m5Triggers});
+                if(verdict.code!=='VALID'){
+                    addScanLog('⏭ '+inst+' : '+verdict.code+' — '+verdict.reason,'info'); continue;
+                }
+                if(duplicateOpen(setupId)){
+                    journalDecision({type:'SCAN',symbol:inst,signal:analysis.synthesis.signal,code:'DUPLICATE',reason:'Même setup encore actif',setupId,score:analysis.smcScore.total,rr:rrNumber(analysis.levels)});
+                    addScanLog('♻️ '+inst+' : doublon bloqué','warn'); continue;
+                }
+                signalsFound++;
+                addScanLog('🚨 '+analysis.synthesis.signal+' '+inst+' · Score '+analysis.smcScore.total+' · '+analysis.levels.riskReward,'success');
+                const saved=await saveAndAuditAnalysis(analysis.synthesis,analysis.levels,analysis.results,inst,analysis.smcScore,0);
+                if(saved) await sendV6TelegramOnly(analysis.synthesis,analysis.levels,analysis.results,inst,saved.setupId);
+                await sleep(700);
+            }catch(e){
+                journalDecision({type:'SCAN',symbol:inst,code:'EXCEPTION',reason:e.message});
+                addScanLog('❌ '+inst+' : '+e.message,'error');
+            }
+        }
+        addScanLog(signalsFound?'✅ '+signalsFound+' setup(s) validé(s)':'✅ Aucun setup validé','info');
+        V6Tracking.render(); renderAutoSendStats(); renderAnalysisBoxStats(); renderAnalysisBoxList();
+        await trackAll();
+    };
+
+    renderAnalysisBoxStats=function(){
+        const el=$('analysis-box-stats'); if(!el) return;
+        const s=getAnalysisBoxStats(); const ts=V6Tracking.stats();
+        el.innerHTML='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.4rem">'+
+            '<div class="stat-card"><div class="st-label">Analyses</div><div class="st-value neutral">'+s.total+'</div></div>'+
+            '<div class="stat-card"><div class="st-label">Décisions 7j</div><div class="st-value neutral">'+ts.week+'</div></div>'+
+            '<div class="stat-card"><div class="st-label">PENDING/ACTIVE</div><div class="st-value neutral">'+(ts.pending+ts.active)+'</div></div>'+
+            '<div class="stat-card"><div class="st-label">Clos</div><div class="st-value '+(ts.closed?'win':'neutral')+'">'+ts.closed+'</div></div></div>';
+    };
+
+    window.getV6WeeklyStats=function(){
+        const d=loadDecisions().filter(x=>x.timestamp>=now()-7*86400000);
+        const s=loadSetups().filter(x=>x.createdAt>=now()-7*86400000);
+        const valid=d.filter(x=>x.code==='VALID').length;
+        const closed=s.filter(x=>['TP2','SL','BE','INVALIDATED','EXPIRED'].includes(x.status));
+        const outcomes=closed.filter(x=>['TP2','SL','BE'].includes(x.status));
+        const wins=outcomes.filter(x=>x.status==='TP2').length;
+        const losses=outcomes.filter(x=>x.status==='SL').length;
+        const be=outcomes.filter(x=>x.status==='BE').length;
+        const avgR=outcomes.length?round(outcomes.reduce((a,x)=>a+n(x.rMultiple),0)/outcomes.length,3):0;
+        const scores=valid?d.filter(x=>x.code==='VALID').map(x=>n(x.score)).filter(Number.isFinite):[];
+        const avgScore=scores.length?round(scores.reduce((a,x)=>a+x,0)/scores.length,2):0;
+        return {decisions:d.length,valid,rejected:d.length-valid,setups:s.length,closed:closed.length,wins,losses,be,winrate:(wins+losses)?round(wins/(wins+losses)*100,1):0,avgR,avgScore};
+    };
+
+    // (1) Démarrage unique du tracker — protégé contre double invocation
+    let trackerStarted = false;
+    let trackerInterval = null;
+
+    function startTrackerOnce(){
+        if(trackerStarted) return;
+        trackerStarted = true;
+        log('V6.0.1 : tracker démarré (unique)');
+        V6Tracking.render();
+        trackAll();
+        trackerInterval = setInterval(trackAll, V6.TRACK_MS);
+    }
+
+    window.addEventListener('load', startTrackerOnce);
+    setTimeout(startTrackerOnce, 5000);
+
+    window.exportV6Journal=function(){
+        const payload={version:V6.VERSION,exportedAt:new Date().toISOString(),decisions:loadDecisions(),setups:loadSetups(),analyses:loadAnalysisBox()};
+        const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+        const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='SMC_V6_Journal_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    };
+})();
+
 init();
 </script>
 </body>
