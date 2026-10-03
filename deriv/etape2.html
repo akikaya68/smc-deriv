@@ -51,14 +51,12 @@
         margin-bottom: 0.8rem;
     }
 
-    .family-select, .index-select {
+    .family-select {
         width: 100%; padding: 0.7rem 0.9rem; border-radius: 8px;
         border: 1px solid #2d3744; background: #0f1419; color: #e8eaed;
         font-size: 0.85rem; font-family: inherit; margin-bottom: 0.7rem;
     }
-    .family-select:focus, .index-select:focus {
-        outline: none; border-color: #16a34a;
-    }
+    .family-select:focus { outline: none; border-color: #16a34a; }
 
     .badge {
         display: inline-block; padding: 0.15rem 0.5rem;
@@ -140,7 +138,6 @@
 <h1>🧪 Deriv WebSocket — Étape 2</h1>
 <p class="subtitle">Liste complète des synthétiques + test dynamique + ticks en temps réel</p>
 
-<!-- STATUT -->
 <div class="status-box">
     <div class="dot" id="status-dot"></div>
     <div style="flex:1;">
@@ -149,7 +146,6 @@
     </div>
 </div>
 
-<!-- STATS -->
 <div class="stats">
     <div class="stat">
         <div class="stat-label">État</div>
@@ -167,9 +163,12 @@
         <div class="stat-label">Inactifs</div>
         <div class="stat-value red" id="stat-inactive">0</div>
     </div>
+    <div class="stat">
+        <div class="stat-label">Testés</div>
+        <div class="stat-value" id="stat-tested">0</div>
+    </div>
 </div>
 
-<!-- SÉLECTEUR FAMILLE -->
 <div class="section">
     <div class="section-title">📂 Famille d'indices</div>
     <select class="family-select" id="family-select">
@@ -178,7 +177,6 @@
     <div class="family-info" id="family-info" style="display:none;"></div>
 </div>
 
-<!-- SÉLECTEUR INDICE -->
 <div class="section" id="index-section" style="display:none;">
     <div class="section-title">📊 Indices disponibles</div>
     <div style="margin-bottom:0.7rem;">
@@ -187,13 +185,11 @@
     <div class="index-list" id="index-list"></div>
 </div>
 
-<!-- TICKS -->
 <div class="ticks-box" id="ticks-box">
     <div class="ticks-title" id="ticks-title">📈 Ticks temps réel</div>
     <div id="ticks-list"></div>
 </div>
 
-<!-- LOGS -->
 <div class="logs" id="logs"></div>
 
 <script>
@@ -202,10 +198,12 @@
 // ══════════════════════════════════════════════════════════════════
 const DERIV_WS_PUBLIC = 'wss://api.derivws.com/trading/v1/options/ws/public';
 const PING_INTERVAL_MS = 30000;
+const TEST_TIMEOUT_MS = 2500;
+const TEST_BATCH_SIZE = 3;
+const TEST_BATCH_DELAY = 400;
 
 // ══════════════════════════════════════════════════════════════════
 // LISTE COMPLÈTE DES INDICES SYNTHÉTIQUES DERIV
-// (code Deriv + nom lisible + famille)
 // ══════════════════════════════════════════════════════════════════
 const SYNTHETIC_FAMILIES = {
     'volatility': {
@@ -227,9 +225,7 @@ const SYNTHETIC_FAMILIES = {
             { code: '1HZ25V', name: 'Volatility 25 (1s) Index' },
             { code: '1HZ50V', name: 'Volatility 50 (1s) Index' },
             { code: '1HZ75V', name: 'Volatility 75 (1s) Index' },
-            { code: '1HZ100V', name: 'Volatility 100 (1s) Index' },
-            { code: '1HZ150V', name: 'Volatility 150 (1s) Index' },
-            { code: '1HZ250V', name: 'Volatility 250 (1s) Index' }
+            { code: '1HZ100V', name: 'Volatility 100 (1s) Index' }
         ]
     },
     'hf_volatility': {
@@ -391,9 +387,11 @@ const state = {
     pendingRequests: new Map(),
     selectedFamily: null,
     selectedIndex: null,
-    activeIndices: {}, // code → { active: bool, lastQuote: number, lastTime: number }
+    activeIndices: {},
     ticksSubscriptionId: null,
-    testTimeouts: new Map()
+    testTimeouts: new Map(),
+    testedCount: 0,
+    testingInProgress: false
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -434,10 +432,11 @@ function updateStats() {
     let active = 0, inactive = 0;
     for (const code in state.activeIndices) {
         if (state.activeIndices[code].active) active++;
-        else inactive++;
+        else if (state.activeIndices[code].tested) inactive++;
     }
     $('stat-active').textContent = active;
     $('stat-inactive').textContent = inactive;
+    $('stat-tested').textContent = state.testedCount;
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -471,7 +470,8 @@ function onOpen() {
     setStatus('connected', 'Connecté ✓', 'WebSocket public Deriv');
     log('✅ Connexion établie', 'success');
     startPing();
-    testAllIndices(); // Tester tous les indices après connexion
+    // Lancer le test auto après 1s
+    setTimeout(() => testAllIndices(), 1000);
 }
 
 function onMessage(event) {
@@ -487,18 +487,34 @@ function onMessage(event) {
         return;
     }
 
+    // Tick → mettre à jour l'état de l'indice + afficher
+    if (data.msg_type === 'tick' && data.tick) {
+        markIndexActive(data.tick.symbol);
+        if (state.selectedIndex && state.selectedIndex.code === data.tick.symbol) {
+            showTick(data.tick);
+        }
+    }
+
     // Résoudre pending
     if (data.req_id && state.pendingRequests.has(data.req_id)) {
         const { resolve, reject } = state.pendingRequests.get(data.req_id);
         state.pendingRequests.delete(data.req_id);
-        if (data.error) reject(new Error(data.error.message || JSON.stringify(data.error)));
-        else resolve(data);
+        if (data.error) {
+            // Si erreur "Symbol not found" → marquer inactif
+            if (data.error.code === 'InvalidSymbol' || data.error.message?.includes('not found')) {
+                if (data.req_id && data.echo_req?.ticks) {
+                    markIndexTested(data.echo_req.ticks, false);
+                }
+            }
+            reject(new Error(data.error.message || JSON.stringify(data.error)));
+        } else {
+            // Si la réponse contient déjà un tick → marquer actif
+            if (data.tick && data.tick.symbol) {
+                markIndexActive(data.tick.symbol);
+            }
+            resolve(data);
+        }
         return;
-    }
-
-    // Tick
-    if (data.msg_type === 'tick' && data.tick) {
-        onTick(data.tick);
     }
 }
 
@@ -540,7 +556,7 @@ function sendPing() {
     try { state.ws.send(JSON.stringify({ ping: 1 })); } catch (e) {}
 }
 
-function sendRequest(payload, timeoutMs = 5000) {
+function sendRequest(payload, timeoutMs = 8000) {
     if (!state.connected || !state.ws) return Promise.reject(new Error('Non connecté'));
     const reqId = state.reqId++;
     payload.req_id = reqId;
@@ -558,107 +574,101 @@ function sendRequest(payload, timeoutMs = 5000) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// TICKS
+// GESTION DE L'ÉTAT DES INDICES
 // ══════════════════════════════════════════════════════════════════
-function onTick(tick) {
-    const code = tick.symbol;
-    if (!code) return;
-
-    // Mettre à jour l'état de l'indice
-    state.activeIndices[code] = {
-        active: true,
-        lastQuote: tick.quote,
-        lastTime: tick.epoch
-    };
-    updateStats();
-
-    // Mettre à jour le badge dans la liste si visible
+function markIndexActive(code) {
+    if (!state.activeIndices[code]) state.activeIndices[code] = {};
+    if (!state.activeIndices[code].active) {
+        state.activeIndices[code].active = true;
+        state.activeIndices[code].tested = true;
+        state.testedCount++;
+    }
+    state.activeIndices[code].lastSeenAt = Date.now();
     updateIndexBadge(code);
-
-    // Afficher le tick si c'est l'indice sélectionné
-    if (state.selectedIndex && state.selectedIndex.code === code) {
-        showTick(tick);
-    }
-
-    // Annuler le timeout de test
-    if (state.testTimeouts.has(code)) {
-        clearTimeout(state.testTimeouts.get(code));
-        state.testTimeouts.delete(code);
-    }
+    updateStats();
+    updateFamilySelectCounts();
 }
 
-function showTick(tick) {
-    const box = $('ticks-box');
-    box.classList.add('visible');
-    const list = $('ticks-list');
-
-    const row = document.createElement('div');
-    row.className = 'tick-row';
-    const time = new Date(tick.epoch * 1000).toLocaleTimeString('fr-FR');
-    row.innerHTML =
-        '<span class="tick-quote">' + tick.quote + '</span>' +
-        '<span class="tick-time">' + time + '</span>';
-    list.insertBefore(row, list.firstChild);
-    while (list.children.length > 15) list.removeChild(list.lastChild);
+function markIndexTested(code, active) {
+    if (!state.activeIndices[code]) state.activeIndices[code] = {};
+    state.activeIndices[code].active = !!active;
+    if (!state.activeIndices[code].tested) {
+        state.activeIndices[code].tested = true;
+        state.testedCount++;
+    }
+    updateIndexBadge(code);
+    updateStats();
+    updateFamilySelectCounts();
 }
 
 // ══════════════════════════════════════════════════════════════════
-// TEST D'ACTIVITÉ DES INDICES
+// TEST D'ACTIVITÉ
 // ══════════════════════════════════════════════════════════════════
 async function testIndex(code) {
-    if (state.activeIndices[code]?.active) return; // déjà actif
-
-    state.activeIndices[code] = { active: false, testing: true };
+    // Déjà testé et actif → skip
+    if (state.activeIndices[code]?.active) return;
+    // Marquer comme en test
+    if (!state.activeIndices[code]) state.activeIndices[code] = {};
+    state.activeIndices[code].testing = true;
     updateIndexBadge(code);
 
     try {
-        // Envoyer une demande de tick unique
-        await sendRequest({ ticks: code, subscribe: 0 }, 4000);
+        // Utiliser subscribe: 1 → Deriv envoie un tick immédiatement
+        const res = await sendRequest({ ticks: code, subscribe: 1 }, TEST_TIMEOUT_MS + 2000);
 
-        // Attendre le tick (le handler onTick mettra à jour)
-        // Si pas de tick dans 3s → inactif
-        state.testTimeouts.set(code, setTimeout(() => {
+        // Le tick arrive dans la réponse OU dans onMessage → on devrait déjà l'avoir marqué
+        // Si pas de tick dans la réponse, on regarde quand même
+        if (res.tick && res.tick.symbol) {
+            markIndexActive(res.tick.symbol);
+        }
+
+        // Se désabonner immédiatement (on ne veut pas garder le flux)
+        if (res.subscription && res.subscription.id) {
+            try { state.ws.send(JSON.stringify({ forget: res.subscription.id })); } catch (e) {}
+        }
+
+        // Si toujours pas marqué actif après 2.5s → inactif
+        setTimeout(() => {
             if (!state.activeIndices[code]?.active) {
-                state.activeIndices[code] = { active: false, testing: false };
-                updateIndexBadge(code);
-                updateStats();
+                markIndexTested(code, false);
             }
-        }, 3000));
+        }, TEST_TIMEOUT_MS);
     } catch (e) {
-        state.activeIndices[code] = { active: false, testing: false, error: e.message };
-        updateIndexBadge(code);
-        updateStats();
+        // Erreur → inactif
+        markIndexTested(code, false);
     }
 }
 
 async function testAllIndices() {
     if (!state.connected) return;
-    log('🧪 Test de tous les indices (en arrière-plan)…', 'info');
+    if (state.testingInProgress) return;
+    state.testingInProgress = true;
 
-    // Tester par lots de 5 pour ne pas surcharger
     const allCodes = [];
     for (const fam of Object.values(SYNTHETIC_FAMILIES)) {
         for (const idx of fam.indices) allCodes.push(idx.code);
     }
 
+    log('🧪 Test auto de ' + allCodes.length + ' indices (en arrière-plan)…', 'info');
+
     let tested = 0;
-    for (let i = 0; i < allCodes.length; i += 5) {
-        const batch = allCodes.slice(i, i + 5);
-        for (const code of batch) {
-            testIndex(code); // pas await, on lance en parallèle
-        }
-        await new Promise(r => setTimeout(r, 500));
+    for (let i = 0; i < allCodes.length; i += TEST_BATCH_SIZE) {
+        if (!state.connected) break;
+        const batch = allCodes.slice(i, i + TEST_BATCH_SIZE);
+        for (const code of batch) testIndex(code);
+        await new Promise(r => setTimeout(r, TEST_BATCH_DELAY));
         tested += batch.length;
+        // Log tous les 12 tests
+        if (tested % 12 === 0) {
+            const act = Object.values(state.activeIndices).filter(x => x.active).length;
+            log('  → ' + tested + '/' + allCodes.length + ' testés · ' + act + ' actifs', 'data');
+        }
     }
 
-    log('🧪 Test lancé sur ' + allCodes.length + ' indices', 'info');
-    // Mettre à jour les badges après un délai
-    setTimeout(() => {
-        renderFamilySelect();
-        if (state.selectedFamily) {
-            renderIndexList(state.selectedFamily);
-        }
-    }, 5000);
+    log('🧪 Test auto terminé · ' + Object.values(state.activeIndices).filter(x => x.active).length + ' actifs', 'success');
+    state.testingInProgress = false;
+    renderFamilySelect();
+    if (state.selectedFamily) renderIndexList(state.selectedFamily);
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -666,6 +676,7 @@ async function testAllIndices() {
 // ══════════════════════════════════════════════════════════════════
 function renderFamilySelect() {
     const sel = $('family-select');
+    const current = sel.value;
     sel.innerHTML = '<option value="">— Choisir une famille —</option>';
     for (const [key, fam] of Object.entries(SYNTHETIC_FAMILIES)) {
         const activeCount = fam.indices.filter(i => state.activeIndices[i.code]?.active).length;
@@ -675,12 +686,24 @@ function renderFamilySelect() {
         opt.textContent = fam.icon + ' ' + fam.name + ' (' + activeCount + '/' + totalCount + ' actifs)';
         sel.appendChild(opt);
     }
+    if (current) sel.value = current;
+}
+
+function updateFamilySelectCounts() {
+    const sel = $('family-select');
+    for (let i = 0; i < sel.options.length; i++) {
+        const opt = sel.options[i];
+        if (!opt.value) continue;
+        const fam = SYNTHETIC_FAMILIES[opt.value];
+        if (!fam) continue;
+        const activeCount = fam.indices.filter(x => state.activeIndices[x.code]?.active).length;
+        opt.textContent = fam.icon + ' ' + fam.name + ' (' + activeCount + '/' + fam.indices.length + ' actifs)';
+    }
 }
 
 function renderIndexList(familyKey) {
     const fam = SYNTHETIC_FAMILIES[familyKey];
     if (!fam) return;
-
     const list = $('index-list');
     list.innerHTML = '';
 
@@ -688,11 +711,13 @@ function renderIndexList(familyKey) {
         const item = document.createElement('div');
         item.className = 'index-item';
         item.dataset.code = idx.code;
-
+        if (state.selectedIndex && state.selectedIndex.code === idx.code) {
+            item.classList.add('selected');
+        }
         const info = state.activeIndices[idx.code];
         let badge = '';
-        if (!info) badge = '<span class="badge unknown">⏳</span>';
-        else if (info.testing) badge = '<span class="badge testing">⏳</span>';
+        if (!info || !info.tested) badge = '<span class="badge unknown">⏳</span>';
+        else if (info.testing && !info.active) badge = '<span class="badge testing">⏳</span>';
         else if (info.active) badge = '<span class="badge active">✅</span>';
         else badge = '<span class="badge inactive">❌</span>';
 
@@ -715,14 +740,13 @@ function updateIndexBadge(code) {
     const badge = item.querySelector('.badge');
     if (!badge) return;
     badge.className = 'badge';
-    if (!info) badge.classList.add('unknown'), badge.textContent = '⏳';
-    else if (info.testing) badge.classList.add('testing'), badge.textContent = '⏳';
-    else if (info.active) badge.classList.add('active'), badge.textContent = '✅';
-    else badge.classList.add('inactive'), badge.textContent = '❌';
+    if (!info || !info.tested) { badge.classList.add('unknown'); badge.textContent = '⏳'; }
+    else if (info.testing && !info.active) { badge.classList.add('testing'); badge.textContent = '⏳'; }
+    else if (info.active) { badge.classList.add('active'); badge.textContent = '✅'; }
+    else { badge.classList.add('inactive'); badge.textContent = '❌'; }
 }
 
 async function selectIndex(idx) {
-    // Marquer visuellement
     document.querySelectorAll('.index-item').forEach(el => el.classList.remove('selected'));
     const item = document.querySelector('.index-item[data-code="' + idx.code + '"]');
     if (item) item.classList.add('selected');
@@ -738,7 +762,7 @@ async function selectIndex(idx) {
     $('ticks-title').textContent = '📈 ' + idx.name + ' (' + idx.code + ') — Ticks temps réel';
     $('ticks-list').innerHTML = '';
 
-    log('📈 Abonnement aux ticks de ' + idx.name + '…', 'info');
+    log('📈 Abonnement à ' + idx.name + '…', 'info');
 
     try {
         const res = await sendRequest({ ticks: idx.code, subscribe: 1 });
@@ -746,9 +770,29 @@ async function selectIndex(idx) {
             state.ticksSubscriptionId = res.subscription.id;
             log('✅ Abonné à ' + idx.name, 'success');
         }
+        if (res.tick && res.tick.symbol) {
+            markIndexActive(res.tick.symbol);
+            showTick(res.tick);
+        }
     } catch (e) {
-        log('❌ Erreur abonnement : ' + e.message, 'error');
+        log('❌ Erreur : ' + e.message, 'error');
+        markIndexTested(idx.code, false);
     }
+}
+
+function showTick(tick) {
+    const box = $('ticks-box');
+    box.classList.add('visible');
+    const list = $('ticks-list');
+
+    const row = document.createElement('div');
+    row.className = 'tick-row';
+    const time = new Date(tick.epoch * 1000).toLocaleTimeString('fr-FR');
+    row.innerHTML =
+        '<span class="tick-quote">' + tick.quote + '</span>' +
+        '<span class="tick-time">' + time + '</span>';
+    list.insertBefore(row, list.firstChild);
+    while (list.children.length > 15) list.removeChild(list.lastChild);
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -772,16 +816,16 @@ $('family-select').addEventListener('change', (e) => {
 $('btn-test-all').addEventListener('click', () => {
     if (!state.selectedFamily) return;
     const fam = SYNTHETIC_FAMILIES[state.selectedFamily];
-    log('🧪 Test de la famille ' + fam.name + '…', 'info');
+    log('🧪 Test manuel : ' + fam.name, 'info');
     for (const idx of fam.indices) {
-        testIndex(idx.code);
+        if (!state.activeIndices[idx.code]?.active) testIndex(idx.code);
     }
 });
 
 // ══════════════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════════════
-log('🧪 Deriv WebSocket Étape 2 — Prêt', 'info');
+log('🧪 Deriv WebSocket Étape 2 (v2) — Prêt', 'info');
 log('📋 ' + Object.keys(SYNTHETIC_FAMILIES).length + ' familles chargées', 'info');
 setStatus('', 'Déconnecté', 'Clique sur Connecter');
 renderFamilySelect();
