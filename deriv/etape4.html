@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Deriv — Étape 4 : Backtest 5 Stratégies</title>
+<title>Deriv — Étape 4 : Backtest 5 Stratégies (3 ans)</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -38,7 +38,6 @@
     button:hover { background: #232b36; }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
     button.primary { background: #16a34a; border-color: #16a34a; color: #fff; }
-    button.info { background: #2563eb; border-color: #2563eb; color: #fff; }
 
     .controls { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
 
@@ -96,12 +95,35 @@
     .strategy-wr.orange { color: #ea580c; }
     .strategy-wr.red { color: #dc2626; }
 
-    .strategy-stats {
+    .stats-grid {
         display: grid; grid-template-columns: repeat(4, 1fr);
-        gap: 0.5rem; font-size: 0.7rem;
-        font-family: ui-monospace, monospace; color: #9ca3af;
+        gap: 0.4rem;
     }
-    .strategy-stats span strong { color: #e8eaed; }
+    .stat-item {
+        background: #1a2028; border-radius: 6px;
+        padding: 0.4rem 0.5rem;
+        text-align: center;
+    }
+    .stat-label {
+        font-size: 0.58rem; color: #9ca3af;
+        text-transform: uppercase; font-weight: 700;
+    }
+    .stat-value {
+        font-size: 0.8rem; font-weight: 700;
+        font-family: ui-monospace, monospace;
+        margin-top: 0.1rem;
+    }
+    .stat-value.green { color: #16a34a; }
+    .stat-value.red { color: #dc2626; }
+    .stat-value.blue { color: #2563eb; }
+    .stat-value.orange { color: #ea580c; }
+
+    .stats-section-title {
+        font-size: 0.6rem; text-transform: uppercase;
+        color: #6b7280; font-weight: 700;
+        margin: 0.7rem 0 0.3rem;
+        letter-spacing: 0.06em;
+    }
 
     .best-badge {
         display: inline-block; padding: 0.15rem 0.6rem;
@@ -135,7 +157,7 @@
 <body>
 
 <h1>🧠 Deriv — Étape 4 : Backtest 5 Stratégies</h1>
-<p class="subtitle">Indice · Famille · Tous · M1 → H4</p>
+<p class="subtitle">Backtest jusqu'à 3 ans · Toutes TF · Métriques complètes</p>
 
 <div class="status-box">
     <div class="dot" id="status-dot"></div>
@@ -196,24 +218,29 @@
                 <option value="900">M15 (15 min)</option>
                 <option value="1800">M30 (30 min)</option>
                 <option value="3600">H1 (1 heure)</option>
-                <option value="10800">H3 (3 heures)</option>
                 <option value="14400">H4 (4 heures)</option>
                 <option value="86400">D1 (1 jour)</option>
             </select>
         </div>
         <div>
-            <label>Nb bougies</label>
+            <label>Bougies cible</label>
             <select id="count">
-                <option value="200">200</option>
-                <option value="500" selected>500</option>
-                <option value="1000">1000</option>
-                <option value="2000">2000</option>
+                <option value="500">500</option>
+                <option value="1000" selected>1000</option>
+                <option value="5000">5 000</option>
+                <option value="10000">10 000</option>
+                <option value="20000">20 000</option>
+                <option value="50000">50 000</option>
             </select>
         </div>
         <div>
             <label>Risque/trade (%)</label>
             <input type="number" id="risk" value="1" step="0.1" min="0.1" max="5">
         </div>
+    </div>
+
+    <div style="font-size:0.7rem;color:#6b7280;text-align:center;">
+        ⓘ L'app fera plusieurs requêtes de 5000 bougies pour atteindre la cible
     </div>
 </div>
 
@@ -240,9 +267,6 @@
 <div class="logs" id="logs"></div>
 
 <script>
-// ══════════════════════════════════════════════════════════════════
-// CONFIG
-// ══════════════════════════════════════════════════════════════════
 const ENDPOINTS = [
     'wss://api.derivws.com/trading/v1/options/ws/public',
     'wss://ws.derivws.com/websockets/v3?app_id=1089',
@@ -252,6 +276,7 @@ const ENDPOINTS = [
 ];
 const PING_INTERVAL_MS = 30000;
 const CONNECT_TIMEOUT = 6000;
+const MAX_CANDLES_PER_REQUEST = 5000;
 
 const FAMILIES = {
     'volatility': { name: '📊 Volatility', indices: ['R_10', 'R_25', 'R_50', 'R_75', 'R_100'] },
@@ -296,9 +321,6 @@ function setStatus(status, text, detail) {
     $('status-detail').textContent = detail || '';
 }
 
-// ══════════════════════════════════════════════════════════════════
-// WEBSOCKET
-// ══════════════════════════════════════════════════════════════════
 async function connect() {
     if (state.connected || state.connecting) return;
     state.connecting = true;
@@ -374,7 +396,7 @@ function stopPing() {
     if (state.pingInterval) { clearInterval(state.pingInterval); state.pingInterval = null; }
 }
 
-function sendRequest(payload, timeoutMs = 25000) {
+function sendRequest(payload, timeoutMs = 30000) {
     if (!state.connected || !state.ws) return Promise.reject(new Error('Non connecté'));
     const reqId = state.reqId++;
     payload.req_id = reqId;
@@ -391,23 +413,62 @@ function sendRequest(payload, timeoutMs = 25000) {
     });
 }
 
-async function fetchCandles(symbol, granularity, count) {
-    const payload = {
-        ticks_history: symbol,
-        adjust_start_time: 1, count: count,
-        end: 'latest', start: 1,
-        style: 'candles', granularity: granularity
-    };
-    const res = await sendRequest(payload, 30000);
-    if (res.error) throw new Error(res.error.message || JSON.stringify(res.error));
-    if (!res.candles) throw new Error('Pas de candles');
-    return res.candles.map(c => ({
-        epoch: c.epoch,
-        open: parseFloat(c.open),
-        high: parseFloat(c.high),
-        low: parseFloat(c.low),
-        close: parseFloat(c.close)
-    }));
+// ══════════════════════════════════════════════════════════════════
+// RÉCUPÉRATION MULTI-REQUÊTES (jusqu'à 3 ans)
+// ══════════════════════════════════════════════════════════════════
+async function fetchCandlesMulti(symbol, granularity, targetCount, onProgress) {
+    let allCandles = [];
+    let end = 'latest';
+    let requestNum = 0;
+
+    while (allCandles.length < targetCount && requestNum < 20) {
+        requestNum++;
+        const remaining = targetCount - allCandles.length;
+        const count = Math.min(MAX_CANDLES_PER_REQUEST, remaining);
+
+        const payload = {
+            ticks_history: symbol,
+            adjust_start_time: 1,
+            count: count,
+            end: end,
+            start: 1,
+            style: 'candles',
+            granularity: granularity
+        };
+
+        try {
+            const res = await sendRequest(payload, 40000);
+            if (res.error) throw new Error(res.error.message);
+            if (!res.candles || !res.candles.length) break;
+
+            const batch = res.candles.map(c => ({
+                epoch: c.epoch,
+                open: parseFloat(c.open),
+                high: parseFloat(c.high),
+                low: parseFloat(c.low),
+                close: parseFloat(c.close)
+            }));
+
+            // Préfixer (les plus anciennes en premier)
+            allCandles = batch.concat(allCandles);
+            if (onProgress) onProgress(allCandles.length, targetCount);
+
+            // Si on a reçu moins que demandé → fin de l'historique
+            if (batch.length < count) break;
+
+            // Prochain end = timestamp de la plus ancienne bougie - 1
+            end = batch[0].epoch - 1;
+        } catch (e) {
+            log('  ⚠️ Requête ' + requestNum + ' échouée : ' + e.message, 'warn');
+            break;
+        }
+
+        await new Promise(r => setTimeout(r, 250));
+    }
+
+    // Tri par epoch (au cas où)
+    allCandles.sort((a, b) => a.epoch - b.epoch);
+    return allCandles;
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -434,17 +495,29 @@ function calculateATR(candles, period = 14) {
     return atrs;
 }
 
-function calculateEMA(candles, period) {
-    if (candles.length < period) return [];
-    const k = 2 / (period + 1);
-    const emas = [];
-    let sum = 0;
-    for (let i = 0; i < period; i++) sum += candles[i].close;
-    emas[period - 1] = sum / period;
-    for (let i = period; i < candles.length; i++) {
-        emas[i] = candles[i].close * k + emas[i-1] * (1 - k);
+function calculateSMA(candles, period) {
+    const smas = [];
+    for (let i = period - 1; i < candles.length; i++) {
+        let sum = 0;
+        for (let j = 0; j < period; j++) sum += candles[i - j].close;
+        smas[i] = sum / period;
     }
-    return emas;
+    return smas;
+}
+
+function calculateStdDev(candles, period, smas) {
+    const stds = [];
+    for (let i = period - 1; i < candles.length; i++) {
+        const mean = smas[i];
+        if (mean === undefined) continue;
+        let sumSq = 0;
+        for (let j = 0; j < period; j++) {
+            const diff = candles[i - j].close - mean;
+            sumSq += diff * diff;
+        }
+        stds[i] = Math.sqrt(sumSq / period);
+    }
+    return stds;
 }
 
 function calculateRSI(candles, period = 14) {
@@ -469,44 +542,116 @@ function calculateRSI(candles, period = 14) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// SIMULATION
+// SIMULATION + MÉTRIQUES COMPLÈTES
 // ══════════════════════════════════════════════════════════════════
 function simulateTrade(candles, startIdx, direction, entry, sl, tp) {
     for (let i = startIdx; i < candles.length; i++) {
         const c = candles[i];
         if (direction === 'buy') {
-            if (c.low <= sl) return { result: 'loss', pips: entry - sl };
-            if (c.high >= tp) return { result: 'win', pips: tp - entry };
+            if (c.low <= sl) return { result: 'loss', exitReason: 'sl', pips: entry - sl, duration: i - startIdx, entry, sl, tp };
+            if (c.high >= tp) return { result: 'win', exitReason: 'tp', pips: tp - entry, duration: i - startIdx, entry, sl, tp };
         } else {
-            if (c.high >= sl) return { result: 'loss', pips: sl - entry };
-            if (c.low <= tp) return { result: 'win', pips: entry - tp };
+            if (c.high >= sl) return { result: 'loss', exitReason: 'sl', pips: sl - entry, duration: i - startIdx, entry, sl, tp };
+            if (c.low <= tp) return { result: 'win', exitReason: 'tp', pips: entry - tp, duration: i - startIdx, entry, sl, tp };
         }
     }
+    // Trade ouvert
     const last = candles[candles.length - 1].close;
     const pips = direction === 'buy' ? last - entry : entry - last;
-    return { result: pips > 0 ? 'win' : 'loss', pips };
+    return {
+        result: pips > 0 ? 'win' : 'loss',
+        exitReason: 'open',
+        pips, duration: candles.length - 1 - startIdx,
+        entry, sl, tp, stillOpen: true
+    };
 }
 
 function calculateStats(trades) {
-    if (!trades.length) return { total: 0, wins: 0, losses: 0, winrate: 0, avgWin: 0, avgLoss: 0, totalPips: 0 };
-    const wins = trades.filter(t => t.result === 'win');
-    const losses = trades.filter(t => t.result === 'loss');
-    const totalPips = trades.reduce((s, t) => s + (t.result === 'win' ? t.pips : -t.pips), 0);
-    const avgWin = wins.length ? wins.reduce((s, t) => s + t.pips, 0) / wins.length : 0;
-    const avgLoss = losses.length ? losses.reduce((s, t) => s + t.pips, 0) / losses.length : 0;
+    if (!trades.length) return emptyStats();
+
+    const wins = trades.filter(t => t.result === 'win' && !t.stillOpen);
+    const losses = trades.filter(t => t.result === 'loss' && !t.stillOpen);
+    const open = trades.filter(t => t.stillOpen);
+
+    // Séparer TP vs SL vs Open
+    const tpTrades = trades.filter(t => t.exitReason === 'tp');
+    const slTrades = trades.filter(t => t.exitReason === 'sl');
+    const openTrades = trades.filter(t => t.exitReason === 'open');
+
+    const pipsWon = wins.reduce((s, t) => s + t.pips, 0);
+    const pipsLost = losses.reduce((s, t) => s + Math.abs(t.pips), 0);
+    const totalPips = pipsWon - pipsLost;
+    const avgWin = wins.length ? pipsWon / wins.length : 0;
+    const avgLoss = losses.length ? pipsLost / losses.length : 0;
+
+    const closedTrades = wins.length + losses.length;
+    const winrate = closedTrades > 0 ? Math.round(wins.length / closedTrades * 100) : 0;
+    const lossrate = 100 - winrate;
+
+    const profitFactor = pipsLost > 0 ? pipsWon / pipsLost : (pipsWon > 0 ? 99 : 0);
+    const expectancy = (winrate / 100) * avgWin - (lossrate / 100) * avgLoss;
+    const payoffRatio = avgLoss > 0 ? avgWin / avgLoss : 0;
+
+    // Drawdown max
+    let peak = 0, equity = 0, maxDD = 0;
+    for (const t of trades) {
+        equity += (t.result === 'win' ? t.pips : -Math.abs(t.pips));
+        if (equity > peak) peak = equity;
+        const dd = peak - equity;
+        if (dd > maxDD) maxDD = dd;
+    }
+
+    // Streaks
+    let maxWinStreak = 0, maxLossStreak = 0, curWin = 0, curLoss = 0;
+    for (const t of trades) {
+        if (t.result === 'win') { curWin++; curLoss = 0; maxWinStreak = Math.max(maxWinStreak, curWin); }
+        else { curLoss++; curWin = 0; maxLossStreak = Math.max(maxLossStreak, curLoss); }
+    }
+
+    // Durées
+    const durations = trades.map(t => t.duration || 0);
+    const avgDuration = durations.length ? durations.reduce((s, d) => s + d, 0) / durations.length : 0;
+    const maxDuration = durations.length ? Math.max(...durations) : 0;
+    const minDuration = durations.length ? Math.min(...durations) : 0;
+
     return {
-        total: trades.length, wins: wins.length, losses: losses.length,
-        winrate: trades.length > 0 ? Math.round(wins.length / trades.length * 100) : 0,
-        avgWin: avgWin.toFixed(2), avgLoss: avgLoss.toFixed(2),
-        totalPips: totalPips.toFixed(2)
+        total: trades.length,
+        wins: wins.length,
+        losses: losses.length,
+        openCount: open.length,
+        tpCount: tpTrades.length,
+        slCount: slTrades.length,
+        winrate, lossrate,
+        avgWin: avgWin.toFixed(2),
+        avgLoss: avgLoss.toFixed(2),
+        totalPips: totalPips.toFixed(2),
+        pipsWon: pipsWon.toFixed(2),
+        pipsLost: pipsLost.toFixed(2),
+        profitFactor: profitFactor.toFixed(2),
+        expectancy: expectancy.toFixed(2),
+        payoffRatio: payoffRatio.toFixed(2),
+        maxDD: maxDD.toFixed(2),
+        maxWinStreak, maxLossStreak,
+        avgDuration: avgDuration.toFixed(1),
+        maxDuration, minDuration
+    };
+}
+
+function emptyStats() {
+    return {
+        total: 0, wins: 0, losses: 0, openCount: 0, tpCount: 0, slCount: 0,
+        winrate: 0, lossrate: 0, avgWin: '0', avgLoss: '0',
+        totalPips: '0', pipsWon: '0', pipsLost: '0',
+        profitFactor: '0', expectancy: '0', payoffRatio: '0',
+        maxDD: '0', maxWinStreak: 0, maxLossStreak: 0,
+        avgDuration: '0', maxDuration: 0, minDuration: 0
     };
 }
 
 // ══════════════════════════════════════════════════════════════════
 // STRATÉGIE 1 — Range Reversion
-// Achat en bas de range, vente en haut, retour à la moyenne
 // ══════════════════════════════════════════════════════════════════
-function strategy1(candles, params = {}) {
+function strategy1(candles) {
     const rangeBars = 50, atrPeriod = 14, slMult = 1.5;
     const atrs = calculateATR(candles, atrPeriod);
     const trades = [];
@@ -533,7 +678,6 @@ function strategy1(candles, params = {}) {
 
 // ══════════════════════════════════════════════════════════════════
 // STRATÉGIE 2 — Boom/Crash Trend
-// Détecte la direction dominante selon le symbole (Boom → vente, Crash → achat)
 // ══════════════════════════════════════════════════════════════════
 function strategy2(candles, params = {}) {
     const atrPeriod = 14, slMult = 0.8, tpMult = 2.0;
@@ -556,26 +700,53 @@ function strategy2(candles, params = {}) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// STRATÉGIE 3 — Momentum EMA + RSI
+// STRATÉGIE 3 (NOUVELLE) — Bollinger Bands + RSI
+// Achat si Close < BB_lower ET RSI < 35
+// Vente si Close > BB_upper ET RSI > 65
+// TP = Bande médiane (SMA 20)
+// SL = ATR × 1.5
 // ══════════════════════════════════════════════════════════════════
 function strategy3(candles) {
-    const emasFast = calculateEMA(candles, 9);
-    const emasSlow = calculateEMA(candles, 21);
-    const rsis = calculateRSI(candles, 14);
-    const atrs = calculateATR(candles, 14);
+    const bbPeriod = 20, bbMult = 2, rsiPeriod = 14, atrPeriod = 14;
+    const smas = calculateSMA(candles, bbPeriod);
+    const stds = calculateStdDev(candles, bbPeriod, smas);
+    const rsis = calculateRSI(candles, rsiPeriod);
+    const atrs = calculateATR(candles, atrPeriod);
     const trades = [];
-    for (let i = 30; i < candles.length - 1; i++) {
-        const ef = emasFast[i], es = emasSlow[i], rsi = rsis[i];
-        if (!ef || !es || !rsi) continue;
-        const entry = candles[i + 1].open;
+
+    const startIdx = Math.max(bbPeriod, rsiPeriod, atrPeriod) + 1;
+
+    for (let i = startIdx; i < candles.length - 1; i++) {
+        const sma = smas[i];
+        const std = stds[i];
+        const rsi = rsis[i];
+        const atr = atrs[i - 1 - atrPeriod];
+        if (!sma || !std || !rsi || !atr || atr <= 0) continue;
+
+        const upper = sma + bbMult * std;
+        const lower = sma - bbMult * std;
+        const close = candles[i].close;
+
         let direction = null;
-        if (ef > es && rsi < 30) direction = 'buy';
-        else if (ef < es && rsi > 70) direction = 'sell';
+        // ACHAT : prix sous la bande inférieure + RSI en survente
+        if (close < lower && rsi < 35) direction = 'buy';
+        // VENTE : prix au-dessus de la bande supérieure + RSI en surachat
+        else if (close > upper && rsi > 65) direction = 'sell';
+
         if (!direction) continue;
-        const atr = atrs[i - 1 - 14] || (candles[i].high - candles[i].low);
-        if (!atr || atr <= 0) continue;
-        const sl = direction === 'buy' ? entry - atr * 1.2 : entry + atr * 1.2;
-        const tp = direction === 'buy' ? entry + atr * 1.8 : entry - atr * 1.8;
+
+        const entry = candles[i + 1].open;
+        let sl, tp;
+        if (direction === 'buy') {
+            sl = entry - atr * 1.5;
+            tp = sma; // Retour à la moyenne
+            if (tp <= entry) continue;
+        } else {
+            sl = entry + atr * 1.5;
+            tp = sma;
+            if (tp >= entry) continue;
+        }
+
         trades.push(simulateTrade(candles, i + 1, direction, entry, sl, tp));
     }
     return calculateStats(trades);
@@ -583,7 +754,6 @@ function strategy3(candles) {
 
 // ══════════════════════════════════════════════════════════════════
 // STRATÉGIE 4 — Breakout
-// Cassure de range avec momentum
 // ══════════════════════════════════════════════════════════════════
 function strategy4(candles) {
     const rangeBars = 100, atrPeriod = 14, slMult = 1.2, tpMult = 2.5;
@@ -615,20 +785,12 @@ function strategy4(candles) {
 
 // ══════════════════════════════════════════════════════════════════
 // STRATÉGIE 5 — SMC (Smart Money Concepts)
-// Structure BOS/CHoCH + OB + FVG + Sweeps + Premium/Discount
 // ══════════════════════════════════════════════════════════════════
 function strategy5(candles, params = {}) {
-    const lookback = 3;
-    const atrPeriod = 14;
-    const rangeBars = 50;
-    const slMult = 1.5;
-    const tpMult = 2.5;
-    const minRR = 2;
-
+    const lookback = 3, atrPeriod = 14, rangeBars = 50, slMult = 1.5, tpMult = 2.5, minRR = 2;
     const atrs = calculateATR(candles, atrPeriod);
     const trades = [];
 
-    // Détection des swings
     function findSwings(start, end) {
         const swings = [];
         for (let i = start + lookback; i < end - lookback; i++) {
@@ -643,7 +805,6 @@ function strategy5(candles, params = {}) {
         return swings;
     }
 
-    // Détection Order Block avant un événement
     function findOrderBlock(eventIdx, direction) {
         if (direction === 'bull') {
             for (let i = eventIdx - 1; i >= Math.max(0, eventIdx - 10); i--) {
@@ -661,51 +822,40 @@ function strategy5(candles, params = {}) {
         return null;
     }
 
-    // Boucle principale
     const minStart = Math.max(rangeBars, atrPeriod + lookback * 2) + 1;
     for (let i = minStart; i < candles.length - 2; i++) {
         const atr = atrs[i - 1 - atrPeriod];
         if (!atr || atr <= 0) continue;
-
-        // Swings passés (non-repaint)
         const swings = findSwings(i - rangeBars, i);
         if (swings.length < 4) continue;
 
-        // Structure : BOS = cassure d'un swing
-        let lastHigh = null, lastLow = null;
-        let trend = 'range';
-        let lastBOS = null;
+        let lastHigh = null, lastLow = null, trend = 'range', lastBOS = null;
         for (const s of swings) {
             if (s.type === 'high') {
                 if (lastHigh && s.price > lastHigh.price) {
-                    lastBOS = { type: 'BOS', direction: 'bull', index: s.index, price: s.price };
+                    lastBOS = { direction: 'bull', index: s.index, price: s.price };
                     trend = 'bullish';
                 }
                 lastHigh = s;
             } else {
                 if (lastLow && s.price < lastLow.price) {
-                    lastBOS = { type: 'BOS', direction: 'bear', index: s.index, price: s.price };
+                    lastBOS = { direction: 'bear', index: s.index, price: s.price };
                     trend = 'bearish';
                 }
                 lastLow = s;
             }
         }
+        if (!lastBOS || lastBOS.index > i - 3) continue;
 
-        if (!lastBOS) continue;
-        if (lastBOS.index > i - 3) continue; // BOS trop récent
-
-        // Order Block associé au BOS
         const ob = findOrderBlock(lastBOS.index, lastBOS.direction);
         if (!ob) continue;
 
-        // Vérifier que le prix revient sur l'OB
         const current = candles[i];
         const priceInOB = (lastBOS.direction === 'bull') ?
             (current.low <= ob.top && current.low >= ob.bottom) :
             (current.high >= ob.bottom && current.high <= ob.top);
         if (!priceInOB) continue;
 
-        // Premium/Discount : acheter en discount, vendre en premium
         const rangeWindow = candles.slice(i - rangeBars, i);
         const rangeHigh = Math.max(...rangeWindow.map(c => c.high));
         const rangeLow = Math.min(...rangeWindow.map(c => c.low));
@@ -717,7 +867,6 @@ function strategy5(candles, params = {}) {
         else if (lastBOS.direction === 'bear' && zone === 'premium') direction = 'sell';
         else continue;
 
-        // Entry, SL, TP
         const entry = candles[i + 1].open;
         let sl, tp;
         if (direction === 'buy') {
@@ -725,7 +874,6 @@ function strategy5(candles, params = {}) {
             if (entry - sl < atr * slMult) sl = entry - atr * slMult;
             const risk = entry - sl;
             tp = entry + risk * tpMult;
-            // Vérifier RR min
             if (risk > 0 && (tp - entry) / risk < minRR) continue;
         } else {
             sl = ob.top + atr * 0.3;
@@ -737,13 +885,9 @@ function strategy5(candles, params = {}) {
 
         trades.push(simulateTrade(candles, i + 1, direction, entry, sl, tp));
     }
-
     return calculateStats(trades);
 }
 
-// ══════════════════════════════════════════════════════════════════
-// REGISTRE DES STRATÉGIES
-// ══════════════════════════════════════════════════════════════════
 const STRATEGIES = [
     { id: 's1', name: 'Stratégie 1', fn: strategy1 },
     { id: 's2', name: 'Stratégie 2', fn: strategy2 },
@@ -758,19 +902,12 @@ const STRATEGIES = [
 async function runBacktest() {
     const mode = state.currentMode;
     const granularity = parseInt($('granularity').value);
-    const count = parseInt($('count').value);
+    const targetCount = parseInt($('count').value);
 
     let symbols = [];
-    if (mode === 'single') {
-        symbols = [$('symbol-select').value];
-    } else if (mode === 'family') {
-        const famKey = $('family-select').value;
-        symbols = [...FAMILIES[famKey].indices];
-    } else {
-        for (const fam of Object.values(FAMILIES)) {
-            for (const s of fam.indices) symbols.push(s);
-        }
-    }
+    if (mode === 'single') symbols = [$('symbol-select').value];
+    else if (mode === 'family') symbols = [...FAMILIES[$('family-select').value].indices];
+    else for (const fam of Object.values(FAMILIES)) symbols.push(...fam.indices);
 
     $('btn-run').disabled = true;
     state.running = true;
@@ -779,8 +916,8 @@ async function runBacktest() {
     $('progress-bar').classList.add('visible');
 
     log('═══════════════════════════════════════', 'info');
-    log('🚀 Backtest : ' + symbols.length + ' indice(s) · ' + STRATEGIES.length + ' stratégies', 'info');
-    log('⏱ Granularité : ' + granularity + 's · ' + count + ' bougies', 'info');
+    log('🚀 Backtest : ' + symbols.length + ' indice(s) · 5 stratégies', 'info');
+    log('⏱ Granularité : ' + granularity + 's · cible ' + targetCount + ' bougies', 'info');
     log('═══════════════════════════════════════', 'info');
 
     const allResults = [];
@@ -788,12 +925,13 @@ async function runBacktest() {
 
     for (const symbol of symbols) {
         if (!state.running) break;
-
         $('progress-text').textContent = 'Test ' + (processed + 1) + '/' + symbols.length + ' : ' + symbol;
         $('progress-fill').style.width = ((processed / symbols.length) * 100) + '%';
 
         try {
-            const candles = await fetchCandles(symbol, granularity, count);
+            const candles = await fetchCandlesMulti(symbol, granularity, targetCount, (got, target) => {
+                $('progress-text').textContent = symbol + ' : ' + got + '/' + target + ' bougies';
+            });
             log('📊 ' + symbol + ' → ' + candles.length + ' bougies', 'data');
 
             const symbolResults = { symbol, strategies: [] };
@@ -806,13 +944,13 @@ async function runBacktest() {
             const best = symbolResults.strategies.reduce((a, b) =>
                 a.stats.winrate > b.stats.winrate ? a : b
             );
-            log('   🏆 Meilleure : ' + best.name + ' (' + best.stats.winrate + '%)', 'success');
+            log('   🏆 ' + best.name + ' (' + best.stats.winrate + '%) · ' + best.stats.total + ' trades', 'success');
         } catch (e) {
             log('   ❌ ' + e.message, 'error');
         }
 
         processed++;
-        await new Promise(r => setTimeout(r, 300));
+        await new Promise(r => setTimeout(r, 200));
     }
 
     $('progress-fill').style.width = '100%';
@@ -823,20 +961,18 @@ async function runBacktest() {
     $('btn-run').disabled = false;
 }
 
+// ══════════════════════════════════════════════════════════════════
+// AFFICHAGE
+// ══════════════════════════════════════════════════════════════════
 function displayResults(allResults) {
     const container = $('results-container');
 
     if (allResults.length === 1) {
-        // Mode indice unique : afficher les 5 stratégies
         const r = allResults[0];
-        const best = r.strategies.reduce((a, b) =>
-            (a.stats.winrate >= 60 && a.stats.winrate <= 90 && a.stats.winrate > b.stats.winrate) ? a : b
-        );
+        const best = r.strategies.reduce((a, b) => a.stats.winrate > b.stats.winrate ? a : b);
         $('summary-best').textContent = best.name + ' → ' + best.stats.winrate + '%';
-
         container.innerHTML = r.strategies.map(s => renderStrategyCard(s, best.name)).join('');
     } else {
-        // Mode multi : tableau résumé
         let bestCombo = { symbol: '—', strategy: '—', wr: 0 };
         let html = '<table class="matrix-table"><thead><tr><th>Indice</th>';
         for (const strat of STRATEGIES) html += '<th>' + strat.name + '</th>';
@@ -871,23 +1007,46 @@ function renderStrategyCard(s, bestName) {
     const isBest = s.name === bestName;
     const bestBadge = isBest ? '<span class="best-badge">MEILLEURE</span>' : '';
 
+    const st = s.stats;
+    const pfColor = parseFloat(st.profitFactor) >= 1.5 ? 'green' : parseFloat(st.profitFactor) >= 1 ? 'blue' : 'red';
+    const expColor = parseFloat(st.expectancy) > 0 ? 'green' : 'red';
+
     return '<div class="strategy-card ' + boxClass + '">' +
         '<div class="strategy-header">' +
             '<span class="strategy-name">' + s.name + bestBadge + '</span>' +
             '<span class="strategy-wr ' + colorClass + '">' + wr + '%</span>' +
         '</div>' +
-        '<div class="strategy-stats">' +
-            '<span>Trades: <strong>' + s.stats.total + '</strong></span>' +
-            '<span>Gains: <strong style="color:#16a34a;">' + s.stats.wins + '</strong></span>' +
-            '<span>Pertes: <strong style="color:#dc2626;">' + s.stats.losses + '</strong></span>' +
-            '<span>Pips: <strong>' + s.stats.totalPips + '</strong></span>' +
+        '<div class="stats-section-title">📊 Trades</div>' +
+        '<div class="stats-grid">' +
+            '<div class="stat-item"><div class="stat-label">Total</div><div class="stat-value">' + st.total + '</div></div>' +
+            '<div class="stat-item"><div class="stat-label">TP</div><div class="stat-value green">' + st.tpCount + '</div></div>' +
+            '<div class="stat-item"><div class="stat-label">SL</div><div class="stat-value red">' + st.slCount + '</div></div>' +
+            '<div class="stat-item"><div class="stat-label">Ouverts</div><div class="stat-value blue">' + st.openCount + '</div></div>' +
+        '</div>' +
+        '<div class="stats-section-title">💰 Pips</div>' +
+        '<div class="stats-grid">' +
+            '<div class="stat-item"><div class="stat-label">Gagnés</div><div class="stat-value green">+' + st.pipsWon + '</div></div>' +
+            '<div class="stat-item"><div class="stat-label">Perdus</div><div class="stat-value red">-' + st.pipsLost + '</div></div>' +
+            '<div class="stat-item"><div class="stat-label">Nets</div><div class="stat-value ' + (parseFloat(st.totalPips) >= 0 ? 'green' : 'red') + '">' + (parseFloat(st.totalPips) >= 0 ? '+' : '') + st.totalPips + '</div></div>' +
+            '<div class="stat-item"><div class="stat-label">Avg Win</div><div class="stat-value">' + st.avgWin + '</div></div>' +
+        '</div>' +
+        '<div class="stats-section-title">📈 Performance</div>' +
+        '<div class="stats-grid">' +
+            '<div class="stat-item"><div class="stat-label">Profit Factor</div><div class="stat-value ' + pfColor + '">' + st.profitFactor + '</div></div>' +
+            '<div class="stat-item"><div class="stat-label">Expectancy</div><div class="stat-value ' + expColor + '">' + st.expectancy + '</div></div>' +
+            '<div class="stat-item"><div class="stat-label">Payoff</div><div class="stat-value">' + st.payoffRatio + '</div></div>' +
+            '<div class="stat-item"><div class="stat-label">Max DD</div><div class="stat-value red">-' + st.maxDD + '</div></div>' +
+        '</div>' +
+        '<div class="stats-section-title">⏱ Streaks & Durées</div>' +
+        '<div class="stats-grid">' +
+            '<div class="stat-item"><div class="stat-label">Win Streak</div><div class="stat-value green">' + st.maxWinStreak + '</div></div>' +
+            '<div class="stat-item"><div class="stat-label">Loss Streak</div><div class="stat-value red">' + st.maxLossStreak + '</div></div>' +
+            '<div class="stat-item"><div class="stat-label">Durée moy.</div><div class="stat-value">' + st.avgDuration + ' bougies</div></div>' +
+            '<div class="stat-item"><div class="stat-label">Durée max</div><div class="stat-value">' + st.maxDuration + '</div></div>' +
         '</div>' +
     '</div>';
 }
 
-// ══════════════════════════════════════════════════════════════════
-// TABS MODE
-// ══════════════════════════════════════════════════════════════════
 document.querySelectorAll('.mode-tab').forEach(tab => {
     tab.addEventListener('click', () => {
         document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
@@ -900,11 +1059,8 @@ document.querySelectorAll('.mode-tab').forEach(tab => {
 
 $('btn-run').addEventListener('click', runBacktest);
 
-// ══════════════════════════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════════════════════════
-log('🧠 Étape 4 : 5 stratégies', 'info');
-log('📋 1=Range Reversion, 2=Boom/Crash, 3=Momentum, 4=Breakout, 5=SMC', 'info');
+log('🧠 Étape 4 : 5 stratégies · 3 ans · métriques complètes', 'info');
+log('📋 S1=Range, S2=Boom/Crash, S3=Bollinger+RSI, S4=Breakout, S5=SMC', 'info');
 setStatus('', 'Déconnecté', 'Connexion auto…');
 $('btn-run').disabled = true;
 
