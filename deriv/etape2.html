@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Deriv WebSocket — Étape 2</title>
+<title>Deriv — Étape 3 : Bougies</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -39,7 +39,7 @@
     button:hover { background: #232b36; }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
     button.primary { background: #16a34a; border-color: #16a34a; color: #fff; }
-    button.danger { background: #dc2626; border-color: #dc2626; color: #fff; }
+    button.info { background: #2563eb; border-color: #2563eb; color: #fff; }
 
     .section {
         background: #1a2028; border: 1px solid #2d3744;
@@ -50,49 +50,17 @@
         color: #9ca3af; font-weight: 700; letter-spacing: 0.06em;
         margin-bottom: 0.8rem;
     }
-
-    .family-select {
+    label { display: block; font-size: 0.68rem; color: #9ca3af; margin-bottom: 0.3rem; text-transform: uppercase; font-weight: 700; }
+    select, input {
         width: 100%; padding: 0.7rem 0.9rem; border-radius: 8px;
         border: 1px solid #2d3744; background: #0f1419; color: #e8eaed;
-        font-size: 0.85rem; font-family: inherit; margin-bottom: 0.7rem;
+        font-size: 0.85rem; margin-bottom: 0.7rem; font-family: inherit;
     }
-    .family-select:focus { outline: none; border-color: #16a34a; }
+    select:focus, input:focus { outline: none; border-color: #16a34a; }
+    .control-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; }
 
-    .badge {
-        display: inline-block; padding: 0.15rem 0.5rem;
-        border-radius: 6px; font-size: 0.68rem; font-weight: 700;
-        margin-left: 0.4rem;
-    }
-    .badge.active { background: #16a34a; color: #fff; }
-    .badge.inactive { background: #dc2626; color: #fff; }
-    .badge.testing { background: #ea580c; color: #fff; }
-    .badge.unknown { background: #4b5563; color: #d1d5db; }
-
-    .family-info {
-        padding: 0.6rem 0.8rem; border-radius: 8px;
-        background: #0f1419; font-size: 0.75rem;
-        color: #9ca3af; margin-bottom: 0.7rem;
-    }
-    .family-info strong { color: #e8eaed; }
-
-    .index-list {
-        max-height: 300px; overflow-y: auto;
-        background: #0f1419; border-radius: 8px;
-        padding: 0.4rem; margin-bottom: 0.7rem;
-    }
-    .index-item {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 0.6rem 0.8rem; border-radius: 6px;
-        cursor: pointer; margin-bottom: 0.2rem;
-        transition: background 0.15s;
-    }
-    .index-item:hover { background: #1a2028; }
-    .index-item.selected { background: #16a34a22; border: 1px solid #16a34a; }
-    .index-name { font-size: 0.8rem; font-family: ui-monospace, monospace; }
-    .index-code { font-size: 0.65rem; color: #6b7280; margin-left: 0.4rem; }
-
-    .stats {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    .candle-stats {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
         gap: 0.5rem; margin-bottom: 1rem;
     }
     .stat {
@@ -102,27 +70,38 @@
     }
     .stat-label { font-size: 0.62rem; color: #9ca3af; text-transform: uppercase; font-weight: 700; }
     .stat-value { font-size: 1rem; font-weight: 700; font-family: ui-monospace, monospace; margin-top: 0.2rem; }
-    .stat-value.green { color: #16a34a; }
-    .stat-value.red { color: #dc2626; }
-    .stat-value.blue { color: #2563eb; }
 
-    .ticks-box {
-        background: #1a2028; border: 1px solid #2d3744;
-        border-radius: 8px; padding: 0.8rem; margin-bottom: 1rem;
-        display: none;
+    .candles-container {
+        background: #0a0f14; border-radius: 8px;
+        padding: 0.5rem; height: 300px;
+        position: relative; margin-bottom: 1rem;
     }
-    .ticks-box.visible { display: block; }
-    .ticks-title { font-size: 0.7rem; color: #9ca3af; text-transform: uppercase; font-weight: 700; margin-bottom: 0.5rem; }
-    .tick-row { display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid #2d3744; font-family: ui-monospace, monospace; font-size: 0.8rem; }
-    .tick-row:last-child { border-bottom: none; }
-    .tick-quote { font-weight: 700; color: #86efac; }
-    .tick-time { color: #6b7280; font-size: 0.7rem; }
+    .candles-container canvas { width: 100%; height: 100%; display: block; }
+
+    .candle-list {
+        max-height: 300px; overflow-y: auto;
+        background: #0a0f14; border-radius: 8px;
+        padding: 0.4rem;
+    }
+    .candle-row {
+        display: grid; grid-template-columns: 120px 1fr 1fr 1fr 1fr;
+        gap: 0.5rem; padding: 0.4rem 0.6rem;
+        font-size: 0.7rem; font-family: ui-monospace, monospace;
+        border-bottom: 1px solid #1a2028;
+    }
+    .candle-row:last-child { border-bottom: none; }
+    .candle-row.bull { border-left: 3px solid #16a34a; }
+    .candle-row.bear { border-left: 3px solid #dc2626; }
+    .c-open { color: #93c5fd; }
+    .c-high { color: #86efac; }
+    .c-low { color: #fca5a5; }
+    .c-close { color: #e8eaed; font-weight: 700; }
 
     .logs {
         background: #0a0f14; border: 1px solid #2d3744;
         border-radius: 8px; padding: 0.8rem;
         font-family: ui-monospace, monospace; font-size: 0.72rem;
-        max-height: 300px; overflow-y: auto; line-height: 1.6;
+        max-height: 250px; overflow-y: auto; line-height: 1.6;
     }
     .log-line { margin-bottom: 0.2rem; word-break: break-all; }
     .log-time { color: #6b7280; margin-right: 0.4rem; }
@@ -135,8 +114,8 @@
 </head>
 <body>
 
-<h1>🧪 Deriv WebSocket — Étape 2</h1>
-<p class="subtitle">Liste complète des synthétiques + test dynamique + ticks en temps réel</p>
+<h1>📈 Deriv — Étape 3 : Bougies</h1>
+<p class="subtitle">Récupération des bougies historiques (ticks_history en mode candles)</p>
 
 <div class="status-box">
     <div class="dot" id="status-dot"></div>
@@ -146,265 +125,113 @@
     </div>
 </div>
 
-<div class="stats">
-    <div class="stat">
-        <div class="stat-label">État</div>
-        <div class="stat-value" id="stat-state">—</div>
-    </div>
-    <div class="stat">
-        <div class="stat-label">Ping (ms)</div>
-        <div class="stat-value blue" id="stat-ping">—</div>
-    </div>
-    <div class="stat">
-        <div class="stat-label">Actifs</div>
-        <div class="stat-value green" id="stat-active">0</div>
-    </div>
-    <div class="stat">
-        <div class="stat-label">Inactifs</div>
-        <div class="stat-value red" id="stat-inactive">0</div>
-    </div>
-    <div class="stat">
-        <div class="stat-label">Testés</div>
-        <div class="stat-value" id="stat-tested">0</div>
-    </div>
-</div>
-
 <div class="section">
-    <div class="section-title">📂 Famille d'indices</div>
-    <select class="family-select" id="family-select">
-        <option value="">— Choisir une famille —</option>
+    <div class="section-title">⚙️ Paramètres</div>
+    <label>Indice</label>
+    <select id="symbol-select">
+        <option value="R_75" selected>Volatility 75 Index (R_75)</option>
+        <option value="R_10">Volatility 10 Index (R_10)</option>
+        <option value="R_25">Volatility 25 Index (R_25)</option>
+        <option value="R_50">Volatility 50 Index (R_50)</option>
+        <option value="R_100">Volatility 100 Index (R_100)</option>
+        <option value="BOOM500">Boom 500 Index</option>
+        <option value="CRASH500">Crash 500 Index</option>
+        <option value="JD10">Jump 10 Index</option>
+        <option value="stpRNG">Step Index 100</option>
+        <option value="RB100">Range Break 100 Index</option>
     </select>
-    <div class="family-info" id="family-info" style="display:none;"></div>
-</div>
 
-<div class="section" id="index-section" style="display:none;">
-    <div class="section-title">📊 Indices disponibles</div>
-    <div style="margin-bottom:0.7rem;">
-        <button id="btn-test-all" style="font-size:0.72rem;padding:0.5rem 0.8rem;">🧪 Tester tous les indices de cette famille</button>
+    <div class="control-grid">
+        <div>
+            <label>Granularité</label>
+            <select id="granularity">
+                <option value="60">1 min (M1)</option>
+                <option value="300" selected>5 min (M5)</option>
+                <option value="900">15 min (M15)</option>
+                <option value="3600">1 heure (H1)</option>
+                <option value="14400">4 heures (H4)</option>
+                <option value="86400">1 jour (D1)</option>
+            </select>
+        </div>
+        <div>
+            <label>Nombre de bougies</label>
+            <input type="number" id="count" value="200" min="10" max="5000">
+        </div>
+        <div>
+            <label>Style</label>
+            <select id="style">
+                <option value="candles" selected>Candles (OHLC)</option>
+                <option value="ticks">Ticks bruts</option>
+            </select>
+        </div>
     </div>
-    <div class="index-list" id="index-list"></div>
 </div>
 
-<div class="ticks-box" id="ticks-box">
-    <div class="ticks-title" id="ticks-title">📈 Ticks temps réel</div>
-    <div id="ticks-list"></div>
+<div class="controls">
+    <button class="primary" id="btn-fetch">📥 Récupérer les bougies</button>
+    <button class="info" id="btn-test">🧪 Test rapide (10 bougies)</button>
+</div>
+
+<div class="candle-stats" id="candle-stats" style="display:none;">
+    <div class="stat">
+        <div class="stat-label">Bougies</div>
+        <div class="stat-value" id="stat-count">—</div>
+    </div>
+    <div class="stat">
+        <div class="stat-label">Plus haut</div>
+        <div class="stat-value" id="stat-high">—</div>
+    </div>
+    <div class="stat">
+        <div class="stat-label">Plus bas</div>
+        <div class="stat-value" id="stat-low">—</div>
+    </div>
+    <div class="stat">
+        <div class="stat-label">Range</div>
+        <div class="stat-value" id="stat-range">—</div>
+    </div>
+</div>
+
+<div class="section" id="chart-section" style="display:none;">
+    <div class="section-title">📈 Graphique</div>
+    <div class="candles-container">
+        <canvas id="candles-canvas"></canvas>
+    </div>
+</div>
+
+<div class="section" id="list-section" style="display:none;">
+    <div class="section-title">📋 Détail des bougies (dernières 20)</div>
+    <div class="candle-list" id="candle-list"></div>
 </div>
 
 <div class="logs" id="logs"></div>
 
 <script>
-// ══════════════════════════════════════════════════════════════════
-// CONFIG
-// ══════════════════════════════════════════════════════════════════
-const DERIV_WS_PUBLIC = 'wss://api.derivws.com/trading/v1/options/ws/public';
+const ENDPOINTS = [
+    'wss://api.derivws.com/trading/v1/options/ws/public',
+    'wss://ws.derivws.com/websockets/v3?app_id=1089',
+    'wss://green.derivws.com/websockets/v3?app_id=1089',
+    'wss://blue.derivws.com/websockets/v3?app_id=1089',
+    'wss://red.derivws.com/websockets/v3?app_id=1089'
+];
 const PING_INTERVAL_MS = 30000;
-const TEST_TIMEOUT_MS = 2500;
-const TEST_BATCH_SIZE = 3;
-const TEST_BATCH_DELAY = 400;
+const CONNECT_TIMEOUT = 6000;
 
-// ══════════════════════════════════════════════════════════════════
-// LISTE COMPLÈTE DES INDICES SYNTHÉTIQUES DERIV
-// ══════════════════════════════════════════════════════════════════
-const SYNTHETIC_FAMILIES = {
-    'volatility': {
-        name: 'Volatility',
-        icon: '📊',
-        indices: [
-            { code: 'R_10', name: 'Volatility 10 Index' },
-            { code: 'R_25', name: 'Volatility 25 Index' },
-            { code: 'R_50', name: 'Volatility 50 Index' },
-            { code: 'R_75', name: 'Volatility 75 Index' },
-            { code: 'R_100', name: 'Volatility 100 Index' }
-        ]
-    },
-    'volatility_1s': {
-        name: 'Volatility 1s',
-        icon: '⚡',
-        indices: [
-            { code: '1HZ10V', name: 'Volatility 10 (1s) Index' },
-            { code: '1HZ25V', name: 'Volatility 25 (1s) Index' },
-            { code: '1HZ50V', name: 'Volatility 50 (1s) Index' },
-            { code: '1HZ75V', name: 'Volatility 75 (1s) Index' },
-            { code: '1HZ100V', name: 'Volatility 100 (1s) Index' }
-        ]
-    },
-    'hf_volatility': {
-        name: 'High Frequency Volatility',
-        icon: '🚀',
-        indices: [
-            { code: 'JD10', name: 'High Frequency Vol 10 Index' },
-            { code: 'JD25', name: 'High Frequency Vol 25 Index' },
-            { code: 'JD50', name: 'High Frequency Vol 50 Index' },
-            { code: 'JD75', name: 'High Frequency Vol 75 Index' },
-            { code: 'JD100', name: 'High Frequency Vol 100 Index' }
-        ]
-    },
-    'boom': {
-        name: 'Boom',
-        icon: '💥',
-        indices: [
-            { code: 'BOOM300N', name: 'Boom 300 Index' },
-            { code: 'BOOM500', name: 'Boom 500 Index' },
-            { code: 'BOOM1000', name: 'Boom 1000 Index' }
-        ]
-    },
-    'crash': {
-        name: 'Crash',
-        icon: '📉',
-        indices: [
-            { code: 'CRASH300N', name: 'Crash 300 Index' },
-            { code: 'CRASH500', name: 'Crash 500 Index' },
-            { code: 'CRASH1000', name: 'Crash 1000 Index' }
-        ]
-    },
-    'jump': {
-        name: 'Jump',
-        icon: '⤴️',
-        indices: [
-            { code: 'JD10', name: 'Jump 10 Index' },
-            { code: 'JD25', name: 'Jump 25 Index' },
-            { code: 'JD50', name: 'Jump 50 Index' },
-            { code: 'JD75', name: 'Jump 75 Index' },
-            { code: 'JD100', name: 'Jump 100 Index' }
-        ]
-    },
-    'step': {
-        name: 'Step',
-        icon: '🪜',
-        indices: [
-            { code: 'STPRNG', name: 'Step Index' },
-            { code: 'STPRNG2', name: 'Step Index 200' },
-            { code: 'STPRNG3', name: 'Step Index 300' },
-            { code: 'STPRNG4', name: 'Step Index 400' },
-            { code: 'STPRNG5', name: 'Step Index 500' }
-        ]
-    },
-    'range_break': {
-        name: 'Range Break',
-        icon: '📏',
-        indices: [
-            { code: 'RB100', name: 'Range Break 100' },
-            { code: 'RB200', name: 'Range Break 200' }
-        ]
-    },
-    'drift_switch': {
-        name: 'Drift Switch',
-        icon: '🔄',
-        indices: [
-            { code: 'DSI10', name: 'Drift Switch Index 10' },
-            { code: 'DSI20', name: 'Drift Switch Index 20' },
-            { code: 'DSI30', name: 'Drift Switch Index 30' }
-        ]
-    },
-    'dex': {
-        name: 'DEX',
-        icon: '🎯',
-        indices: [
-            { code: 'DEX600U', name: 'DEX 600 UP' },
-            { code: 'DEX600D', name: 'DEX 600 DOWN' },
-            { code: 'DEX900U', name: 'DEX 900 UP' },
-            { code: 'DEX900D', name: 'DEX 900 DOWN' },
-            { code: 'DEX1500U', name: 'DEX 1500 UP' },
-            { code: 'DEX1500D', name: 'DEX 1500 DOWN' }
-        ]
-    },
-    'multi_step': {
-        name: 'Multi Step',
-        icon: '🪜',
-        indices: [
-            { code: 'MSC2', name: 'Multi Step 2' },
-            { code: 'MSC3', name: 'Multi Step 3' },
-            { code: 'MSC4', name: 'Multi Step 4' }
-        ]
-    },
-    'vol_over_boom': {
-        name: 'Vol over Boom',
-        icon: '🌊',
-        indices: [
-            { code: 'VOB400', name: 'Vol over Boom 400' },
-            { code: 'VOB550', name: 'Vol over Boom 550' },
-            { code: 'VOB750', name: 'Vol over Boom 750' }
-        ]
-    },
-    'vol_over_crash': {
-        name: 'Vol over Crash',
-        icon: '🌊',
-        indices: [
-            { code: 'VOC400', name: 'Vol over Crash 400' },
-            { code: 'VOC550', name: 'Vol over Crash 550' },
-            { code: 'VOC750', name: 'Vol over Crash 750' }
-        ]
-    },
-    'skew_step': {
-        name: 'Skew Step',
-        icon: '📐',
-        indices: [
-            { code: 'SS4U', name: 'Skew Step Index 4 Up' },
-            { code: 'SS4D', name: 'Skew Step Index 4 Down' },
-            { code: 'SS5U', name: 'Skew Step Index 5 Up' },
-            { code: 'SS5D', name: 'Skew Step Index 5 Down' }
-        ]
-    },
-    'trek': {
-        name: 'Trek',
-        icon: '🏔️',
-        indices: [
-            { code: 'TRKUP', name: 'Trek Up' },
-            { code: 'TRKDOWN', name: 'Trek Down' }
-        ]
-    },
-    'daily_reset': {
-        name: 'Daily Reset',
-        icon: '🌅',
-        indices: [
-            { code: 'RDBULL', name: 'Daily Reset Bull' },
-            { code: 'RDBEAR', name: 'Daily Reset Bear' }
-        ]
-    },
-    'vol_switch': {
-        name: 'Volatility Switch',
-        icon: '🔀',
-        indices: [
-            { code: 'VSLOW', name: 'VolSwitch Low Vol Index' },
-            { code: 'VSMED', name: 'VolSwitch Medium Vol Index' },
-            { code: 'VSHIGH', name: 'VolSwitch High Vol Index' }
-        ]
-    }
-};
-
-// ══════════════════════════════════════════════════════════════════
-// ÉTAT
-// ══════════════════════════════════════════════════════════════════
 const state = {
     ws: null,
     connected: false,
     connecting: false,
     pingInterval: null,
-    reconnectAttempts: 0,
-    reconnectTimer: null,
-    lastPingSentAt: null,
     reqId: 1,
     pendingRequests: new Map(),
-    selectedFamily: null,
-    selectedIndex: null,
-    activeIndices: {},
-    ticksSubscriptionId: null,
-    testTimeouts: new Map(),
-    testedCount: 0,
-    testingInProgress: false
+    candles: []
 };
 
-// ══════════════════════════════════════════════════════════════════
-// UTILITAIRES
-// ══════════════════════════════════════════════════════════════════
 function $(id) { return document.getElementById(id); }
-
 function nowTime() {
     const d = new Date();
     const pad = n => String(n).padStart(2, '0');
     return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
 }
-
 function log(msg, type = 'info') {
     const logs = $('logs');
     const line = document.createElement('div');
@@ -412,151 +239,100 @@ function log(msg, type = 'info') {
     line.innerHTML = '<span class="log-time">' + nowTime() + '</span><span class="log-' + type + '">' + escapeHtml(msg) + '</span>';
     logs.appendChild(line);
     logs.scrollTop = logs.scrollHeight;
-    while (logs.children.length > 200) logs.removeChild(logs.firstChild);
+    while (logs.children.length > 300) logs.removeChild(logs.firstChild);
 }
-
 function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-
 function setStatus(status, text, detail) {
     const dot = $('status-dot');
     dot.className = 'dot ' + (status || '');
     $('status-text').textContent = text;
     $('status-detail').textContent = detail || '';
-    $('stat-state').textContent = status === 'connected' ? '🟢 ON' : status === 'connecting' ? '🟠 …' : status === 'error' ? '🔴 ERR' : '⚪ OFF';
-    $('stat-state').className = 'stat-value ' + (status === 'connected' ? 'green' : status === 'error' ? 'red' : '');
 }
 
-function updateStats() {
-    let active = 0, inactive = 0;
-    for (const code in state.activeIndices) {
-        if (state.activeIndices[code].active) active++;
-        else if (state.activeIndices[code].tested) inactive++;
-    }
-    $('stat-active').textContent = active;
-    $('stat-inactive').textContent = inactive;
-    $('stat-tested').textContent = state.testedCount;
-}
-
-// ══════════════════════════════════════════════════════════════════
-// WEBSOCKET
-// ══════════════════════════════════════════════════════════════════
-function connect() {
+async function connect() {
     if (state.connected || state.connecting) return;
     state.connecting = true;
-    setStatus('connecting', 'Connexion…', DERIV_WS_PUBLIC);
-    log('🔌 Connexion à ' + DERIV_WS_PUBLIC, 'info');
-
-    try {
-        state.ws = new WebSocket(DERIV_WS_PUBLIC);
-    } catch (e) {
-        log('❌ Erreur : ' + e.message, 'error');
-        state.connecting = false;
-        setStatus('error', 'Erreur', e.message);
-        return;
-    }
-
-    state.ws.onopen = onOpen;
-    state.ws.onmessage = onMessage;
-    state.ws.onerror = onError;
-    state.ws.onclose = onClose;
-}
-
-function onOpen() {
-    state.connected = true;
-    state.connecting = false;
-    state.reconnectAttempts = 0;
-    setStatus('connected', 'Connecté ✓', 'WebSocket public Deriv');
-    log('✅ Connexion établie', 'success');
-    startPing();
-    // Lancer le test auto après 1s
-    setTimeout(() => testAllIndices(), 1000);
-}
-
-function onMessage(event) {
-    let data;
-    try { data = JSON.parse(event.data); } catch (e) { return; }
-
-    // Pong
-    if (data.msg_type === 'ping' && data.ping === 'pong') {
-        if (state.lastPingSentAt) {
-            $('stat-ping').textContent = Date.now() - state.lastPingSentAt;
-            state.lastPingSentAt = null;
-        }
-        return;
-    }
-
-    // Tick → mettre à jour l'état de l'indice + afficher
-    if (data.msg_type === 'tick' && data.tick) {
-        markIndexActive(data.tick.symbol);
-        if (state.selectedIndex && state.selectedIndex.code === data.tick.symbol) {
-            showTick(data.tick);
+    setStatus('connecting', 'Connexion…', 'Test endpoints');
+    for (let i = 0; i < ENDPOINTS.length; i++) {
+        const ok = await tryEndpoint(ENDPOINTS[i], i);
+        if (ok) {
+            state.connected = true;
+            state.connecting = false;
+            setStatus('connected', 'Connecté ✓', ENDPOINTS[i]);
+            log('✅ ' + ENDPOINTS[i], 'success');
+            startPing();
+            return;
         }
     }
+    state.connecting = false;
+    setStatus('error', 'Échec', 'Aucun endpoint');
+}
 
-    // Résoudre pending
-    if (data.req_id && state.pendingRequests.has(data.req_id)) {
-        const { resolve, reject } = state.pendingRequests.get(data.req_id);
-        state.pendingRequests.delete(data.req_id);
-        if (data.error) {
-            // Si erreur "Symbol not found" → marquer inactif
-            if (data.error.code === 'InvalidSymbol' || data.error.message?.includes('not found')) {
-                if (data.req_id && data.echo_req?.ticks) {
-                    markIndexTested(data.echo_req.ticks, false);
-                }
-            }
-            reject(new Error(data.error.message || JSON.stringify(data.error)));
-        } else {
-            // Si la réponse contient déjà un tick → marquer actif
-            if (data.tick && data.tick.symbol) {
-                markIndexActive(data.tick.symbol);
-            }
-            resolve(data);
+function tryEndpoint(url, index) {
+    return new Promise(resolve => {
+        log('🔌 Test ' + (index + 1) + '/' + ENDPOINTS.length, 'info');
+        let ws;
+        try { ws = new WebSocket(url); } catch (e) { resolve(false); return; }
+        let resolved = false;
+        const timeout = setTimeout(() => {
+            if (!resolved) { resolved = true; try { ws.close(); } catch (e) {} resolve(false); }
+        }, CONNECT_TIMEOUT);
+        ws.onopen = () => {
+            if (resolved) return;
+            resolved = true;
+            clearTimeout(timeout);
+            state.ws = ws;
+            attachHandlers();
+            resolve(true);
+        };
+        ws.onerror = () => {};
+        ws.onclose = () => {
+            if (resolved) return;
+            resolved = true;
+            clearTimeout(timeout);
+            resolve(false);
+        };
+    });
+}
+
+function attachHandlers() {
+    state.ws.onmessage = (event) => {
+        let data;
+        try { data = JSON.parse(event.data); } catch (e) { return; }
+        if (data.msg_type === 'ping' && data.ping === 'pong') return;
+        if (data.req_id && state.pendingRequests.has(data.req_id)) {
+            const { resolve, reject } = state.pendingRequests.get(data.req_id);
+            state.pendingRequests.delete(data.req_id);
+            if (data.error) reject(new Error(data.error.message || JSON.stringify(data.error)));
+            else resolve(data);
+            return;
         }
-        return;
-    }
-}
-
-function onError() {
-    log('❌ Erreur WebSocket', 'error');
-    state.connecting = false;
-}
-
-function onClose(event) {
-    const wasConnected = state.connected;
-    state.connected = false;
-    state.connecting = false;
-    stopPing();
-    log('🔌 Déconnecté (code ' + event.code + ')', wasConnected ? 'warn' : 'info');
-
-    if (wasConnected && event.code !== 1000 && state.reconnectAttempts < 10) {
-        state.reconnectAttempts++;
-        const delay = Math.min(1000 * Math.pow(2, state.reconnectAttempts - 1), 30000);
-        log('🔄 Reconnexion dans ' + (delay/1000).toFixed(1) + 's', 'warn');
-        state.reconnectTimer = setTimeout(connect, delay);
-    } else {
-        setStatus('', 'Déconnecté', 'Clique sur Connecter');
-    }
+    };
+    state.ws.onclose = (event) => {
+        if (event.code === 1000) return;
+        log('🔌 Déconnecté (code ' + event.code + ')', 'warn');
+        state.connected = false;
+        stopPing();
+        setStatus('error', 'Déconnecté', 'Code ' + event.code);
+    };
+    state.ws.onerror = () => {};
 }
 
 function startPing() {
     stopPing();
-    sendPing();
-    state.pingInterval = setInterval(sendPing, PING_INTERVAL_MS);
+    state.pingInterval = setInterval(() => {
+        if (state.connected && state.ws) {
+            try { state.ws.send(JSON.stringify({ ping: 1 })); } catch (e) {}
+        }
+    }, PING_INTERVAL_MS);
 }
-
 function stopPing() {
     if (state.pingInterval) { clearInterval(state.pingInterval); state.pingInterval = null; }
 }
 
-function sendPing() {
-    if (!state.connected || !state.ws) return;
-    state.lastPingSentAt = Date.now();
-    try { state.ws.send(JSON.stringify({ ping: 1 })); } catch (e) {}
-}
-
-function sendRequest(payload, timeoutMs = 8000) {
+function sendRequest(payload, timeoutMs = 15000) {
     if (!state.connected || !state.ws) return Promise.reject(new Error('Non connecté'));
     const reqId = state.reqId++;
     payload.req_id = reqId;
@@ -574,261 +350,213 @@ function sendRequest(payload, timeoutMs = 8000) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// GESTION DE L'ÉTAT DES INDICES
+// RÉCUPÉRATION DES BOUGIES
 // ══════════════════════════════════════════════════════════════════
-function markIndexActive(code) {
-    if (!state.activeIndices[code]) state.activeIndices[code] = {};
-    if (!state.activeIndices[code].active) {
-        state.activeIndices[code].active = true;
-        state.activeIndices[code].tested = true;
-        state.testedCount++;
+async function fetchCandles(symbol, granularity, count, style) {
+    log('📥 Récupération : ' + symbol + ' · granularité ' + granularity + 's · ' + count + ' bougies · ' + style, 'info');
+
+    const payload = {
+        ticks_history: symbol,
+        adjust_start_time: 1,
+        count: count,
+        end: 'latest',
+        start: 1,
+        style: style,
+        subscribe: 0
+    };
+
+    if (style === 'candles') {
+        payload.granularity = granularity;
     }
-    state.activeIndices[code].lastSeenAt = Date.now();
-    updateIndexBadge(code);
-    updateStats();
-    updateFamilySelectCounts();
+
+    const res = await sendRequest(payload, 20000);
+
+    if (res.error) {
+        throw new Error(res.error.message || JSON.stringify(res.error));
+    }
+
+    if (style === 'candles' && res.candles) {
+        return res.candles.map(c => ({
+            epoch: c.epoch,
+            open: parseFloat(c.open),
+            high: parseFloat(c.high),
+            low: parseFloat(c.low),
+            close: parseFloat(c.close)
+        }));
+    }
+
+    if (style === 'ticks' && res.history) {
+        // Convertir les ticks en bougies
+        const times = res.history.times || [];
+        const prices = res.history.prices || [];
+        return times.map((t, i) => ({
+            epoch: t,
+            open: prices[i],
+            high: prices[i],
+            low: prices[i],
+            close: prices[i]
+        }));
+    }
+
+    throw new Error('Format de réponse inattendu : ' + JSON.stringify(Object.keys(res)));
 }
 
-function markIndexTested(code, active) {
-    if (!state.activeIndices[code]) state.activeIndices[code] = {};
-    state.activeIndices[code].active = !!active;
-    if (!state.activeIndices[code].tested) {
-        state.activeIndices[code].tested = true;
-        state.testedCount++;
-    }
-    updateIndexBadge(code);
-    updateStats();
-    updateFamilySelectCounts();
-}
+async function doFetch() {
+    const symbol = $('symbol-select').value;
+    const granularity = parseInt($('granularity').value);
+    const count = parseInt($('count').value);
+    const style = $('style').value;
 
-// ══════════════════════════════════════════════════════════════════
-// TEST D'ACTIVITÉ
-// ══════════════════════════════════════════════════════════════════
-async function testIndex(code) {
-    // Déjà testé et actif → skip
-    if (state.activeIndices[code]?.active) return;
-    // Marquer comme en test
-    if (!state.activeIndices[code]) state.activeIndices[code] = {};
-    state.activeIndices[code].testing = true;
-    updateIndexBadge(code);
-
+    $('btn-fetch').disabled = true;
     try {
-        // Utiliser subscribe: 1 → Deriv envoie un tick immédiatement
-        const res = await sendRequest({ ticks: code, subscribe: 1 }, TEST_TIMEOUT_MS + 2000);
-
-        // Le tick arrive dans la réponse OU dans onMessage → on devrait déjà l'avoir marqué
-        // Si pas de tick dans la réponse, on regarde quand même
-        if (res.tick && res.tick.symbol) {
-            markIndexActive(res.tick.symbol);
-        }
-
-        // Se désabonner immédiatement (on ne veut pas garder le flux)
-        if (res.subscription && res.subscription.id) {
-            try { state.ws.send(JSON.stringify({ forget: res.subscription.id })); } catch (e) {}
-        }
-
-        // Si toujours pas marqué actif après 2.5s → inactif
-        setTimeout(() => {
-            if (!state.activeIndices[code]?.active) {
-                markIndexTested(code, false);
-            }
-        }, TEST_TIMEOUT_MS);
+        const candles = await fetchCandles(symbol, granularity, count, style);
+        state.candles = candles;
+        log('✅ ' + candles.length + ' bougies reçues', 'success');
+        displayCandles(candles);
     } catch (e) {
-        // Erreur → inactif
-        markIndexTested(code, false);
+        log('❌ ' + e.message, 'error');
+    } finally {
+        $('btn-fetch').disabled = false;
     }
 }
 
-async function testAllIndices() {
-    if (!state.connected) return;
-    if (state.testingInProgress) return;
-    state.testingInProgress = true;
-
-    const allCodes = [];
-    for (const fam of Object.values(SYNTHETIC_FAMILIES)) {
-        for (const idx of fam.indices) allCodes.push(idx.code);
-    }
-
-    log('🧪 Test auto de ' + allCodes.length + ' indices (en arrière-plan)…', 'info');
-
-    let tested = 0;
-    for (let i = 0; i < allCodes.length; i += TEST_BATCH_SIZE) {
-        if (!state.connected) break;
-        const batch = allCodes.slice(i, i + TEST_BATCH_SIZE);
-        for (const code of batch) testIndex(code);
-        await new Promise(r => setTimeout(r, TEST_BATCH_DELAY));
-        tested += batch.length;
-        // Log tous les 12 tests
-        if (tested % 12 === 0) {
-            const act = Object.values(state.activeIndices).filter(x => x.active).length;
-            log('  → ' + tested + '/' + allCodes.length + ' testés · ' + act + ' actifs', 'data');
-        }
-    }
-
-    log('🧪 Test auto terminé · ' + Object.values(state.activeIndices).filter(x => x.active).length + ' actifs', 'success');
-    state.testingInProgress = false;
-    renderFamilySelect();
-    if (state.selectedFamily) renderIndexList(state.selectedFamily);
+async function doQuickTest() {
+    $('symbol-select').value = 'R_75';
+    $('granularity').value = '300';
+    $('count').value = '10';
+    $('style').value = 'candles';
+    await doFetch();
 }
 
 // ══════════════════════════════════════════════════════════════════
-// UI
+// AFFICHAGE
 // ══════════════════════════════════════════════════════════════════
-function renderFamilySelect() {
-    const sel = $('family-select');
-    const current = sel.value;
-    sel.innerHTML = '<option value="">— Choisir une famille —</option>';
-    for (const [key, fam] of Object.entries(SYNTHETIC_FAMILIES)) {
-        const activeCount = fam.indices.filter(i => state.activeIndices[i.code]?.active).length;
-        const totalCount = fam.indices.length;
-        const opt = document.createElement('option');
-        opt.value = key;
-        opt.textContent = fam.icon + ' ' + fam.name + ' (' + activeCount + '/' + totalCount + ' actifs)';
-        sel.appendChild(opt);
-    }
-    if (current) sel.value = current;
-}
-
-function updateFamilySelectCounts() {
-    const sel = $('family-select');
-    for (let i = 0; i < sel.options.length; i++) {
-        const opt = sel.options[i];
-        if (!opt.value) continue;
-        const fam = SYNTHETIC_FAMILIES[opt.value];
-        if (!fam) continue;
-        const activeCount = fam.indices.filter(x => state.activeIndices[x.code]?.active).length;
-        opt.textContent = fam.icon + ' ' + fam.name + ' (' + activeCount + '/' + fam.indices.length + ' actifs)';
-    }
-}
-
-function renderIndexList(familyKey) {
-    const fam = SYNTHETIC_FAMILIES[familyKey];
-    if (!fam) return;
-    const list = $('index-list');
-    list.innerHTML = '';
-
-    for (const idx of fam.indices) {
-        const item = document.createElement('div');
-        item.className = 'index-item';
-        item.dataset.code = idx.code;
-        if (state.selectedIndex && state.selectedIndex.code === idx.code) {
-            item.classList.add('selected');
-        }
-        const info = state.activeIndices[idx.code];
-        let badge = '';
-        if (!info || !info.tested) badge = '<span class="badge unknown">⏳</span>';
-        else if (info.testing && !info.active) badge = '<span class="badge testing">⏳</span>';
-        else if (info.active) badge = '<span class="badge active">✅</span>';
-        else badge = '<span class="badge inactive">❌</span>';
-
-        item.innerHTML =
-            '<div>' +
-                '<span class="index-name">' + escapeHtml(idx.name) + '</span>' +
-                '<span class="index-code">' + escapeHtml(idx.code) + '</span>' +
-            '</div>' +
-            badge;
-
-        item.addEventListener('click', () => selectIndex(idx));
-        list.appendChild(item);
-    }
-}
-
-function updateIndexBadge(code) {
-    const item = document.querySelector('.index-item[data-code="' + code + '"]');
-    if (!item) return;
-    const info = state.activeIndices[code];
-    const badge = item.querySelector('.badge');
-    if (!badge) return;
-    badge.className = 'badge';
-    if (!info || !info.tested) { badge.classList.add('unknown'); badge.textContent = '⏳'; }
-    else if (info.testing && !info.active) { badge.classList.add('testing'); badge.textContent = '⏳'; }
-    else if (info.active) { badge.classList.add('active'); badge.textContent = '✅'; }
-    else { badge.classList.add('inactive'); badge.textContent = '❌'; }
-}
-
-async function selectIndex(idx) {
-    document.querySelectorAll('.index-item').forEach(el => el.classList.remove('selected'));
-    const item = document.querySelector('.index-item[data-code="' + idx.code + '"]');
-    if (item) item.classList.add('selected');
-
-    // Se désabonner de l'ancien
-    if (state.ticksSubscriptionId) {
-        try { state.ws.send(JSON.stringify({ forget: state.ticksSubscriptionId })); } catch (e) {}
-        state.ticksSubscriptionId = null;
+function displayCandles(candles) {
+    if (!candles.length) {
+        log('⚠️ Aucune bougie', 'warn');
+        return;
     }
 
-    state.selectedIndex = idx;
-    $('ticks-box').classList.add('visible');
-    $('ticks-title').textContent = '📈 ' + idx.name + ' (' + idx.code + ') — Ticks temps réel';
-    $('ticks-list').innerHTML = '';
+    // Stats
+    const highs = candles.map(c => c.high);
+    const lows = candles.map(c => c.low);
+    const maxHigh = Math.max(...highs);
+    const minLow = Math.min(...lows);
 
-    log('📈 Abonnement à ' + idx.name + '…', 'info');
+    $('candle-stats').style.display = 'grid';
+    $('stat-count').textContent = candles.length;
+    $('stat-high').textContent = maxHigh.toFixed(4);
+    $('stat-low').textContent = minLow.toFixed(4);
+    $('stat-range').textContent = (maxHigh - minLow).toFixed(4);
 
-    try {
-        const res = await sendRequest({ ticks: idx.code, subscribe: 1 });
-        if (res.subscription) {
-            state.ticksSubscriptionId = res.subscription.id;
-            log('✅ Abonné à ' + idx.name, 'success');
-        }
-        if (res.tick && res.tick.symbol) {
-            markIndexActive(res.tick.symbol);
-            showTick(res.tick);
-        }
-    } catch (e) {
-        log('❌ Erreur : ' + e.message, 'error');
-        markIndexTested(idx.code, false);
-    }
+    // Graphique
+    $('chart-section').style.display = 'block';
+    drawCandles(candles);
+
+    // Liste
+    $('list-section').style.display = 'block';
+    renderCandleList(candles.slice(-20).reverse());
 }
 
-function showTick(tick) {
-    const box = $('ticks-box');
-    box.classList.add('visible');
-    const list = $('ticks-list');
+function drawCandles(candles) {
+    const canvas = $('candles-canvas');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const W = rect.width, H = rect.height;
 
-    const row = document.createElement('div');
-    row.className = 'tick-row';
-    const time = new Date(tick.epoch * 1000).toLocaleTimeString('fr-FR');
-    row.innerHTML =
-        '<span class="tick-quote">' + tick.quote + '</span>' +
-        '<span class="tick-time">' + time + '</span>';
-    list.insertBefore(row, list.firstChild);
-    while (list.children.length > 15) list.removeChild(list.lastChild);
+    ctx.clearRect(0, 0, W, H);
+
+    const visible = candles.slice(-100);
+    const margin = { top: 10, right: 70, bottom: 20, left: 10 };
+    const plotW = W - margin.left - margin.right;
+    const plotH = H - margin.top - margin.bottom;
+
+    const allHigh = Math.max(...visible.map(c => c.high));
+    const allLow = Math.min(...visible.map(c => c.low));
+    const padding = (allHigh - allLow) * 0.05 || 1;
+    const yMax = allHigh + padding;
+    const yMin = allLow - padding;
+
+    const candleWidth = plotW / visible.length;
+    const bodyWidth = candleWidth * 0.7;
+    const xScale = i => margin.left + i * candleWidth + candleWidth / 2;
+    const yScale = p => margin.top + plotH - ((p - yMin) / (yMax - yMin)) * plotH;
+
+    // Grille
+    ctx.strokeStyle = '#2d3744';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i <= 4; i++) {
+        const y = margin.top + i * plotH / 4;
+        ctx.moveTo(margin.left, y);
+        ctx.lineTo(margin.left + plotW, y);
+    }
+    ctx.stroke();
+
+    // Labels
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '9px -apple-system, sans-serif';
+    ctx.textAlign = 'left';
+    for (let i = 0; i <= 4; i++) {
+        const price = yMax - (i * (yMax - yMin) / 4);
+        const y = margin.top + i * plotH / 4;
+        ctx.fillText(price.toFixed(4), margin.left + plotW + 4, y + 3);
+    }
+
+    // Bougies
+    visible.forEach((c, i) => {
+        const x = xScale(i);
+        const bullish = c.close >= c.open;
+        const color = bullish ? '#16a34a' : '#dc2626';
+        const openY = yScale(c.open);
+        const closeY = yScale(c.close);
+        const highY = yScale(c.high);
+        const lowY = yScale(c.low);
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, highY);
+        ctx.lineTo(x, lowY);
+        ctx.stroke();
+
+        ctx.fillStyle = color;
+        const bodyTop = Math.min(openY, closeY);
+        const bodyHeight = Math.max(1, Math.abs(closeY - openY));
+        ctx.fillRect(x - bodyWidth / 2, bodyTop, bodyWidth, bodyHeight);
+    });
+}
+
+function renderCandleList(candles) {
+    const list = $('candle-list');
+    list.innerHTML = candles.map(c => {
+        const bullish = c.close >= c.open;
+        const time = new Date(c.epoch * 1000).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        return '<div class="candle-row ' + (bullish ? 'bull' : 'bear') + '">' +
+            '<span>' + time + '</span>' +
+            '<span class="c-open">O ' + c.open.toFixed(4) + '</span>' +
+            '<span class="c-high">H ' + c.high.toFixed(4) + '</span>' +
+            '<span class="c-low">L ' + c.low.toFixed(4) + '</span>' +
+            '<span class="c-close">C ' + c.close.toFixed(4) + '</span>' +
+            '</div>';
+    }).join('');
 }
 
 // ══════════════════════════════════════════════════════════════════
 // ÉVÉNEMENTS
 // ══════════════════════════════════════════════════════════════════
-$('family-select').addEventListener('change', (e) => {
-    const key = e.target.value;
-    if (!key) {
-        $('family-info').style.display = 'none';
-        $('index-section').style.display = 'none';
-        return;
-    }
-    state.selectedFamily = key;
-    const fam = SYNTHETIC_FAMILIES[key];
-    $('family-info').style.display = 'block';
-    $('family-info').innerHTML = '<strong>' + fam.icon + ' ' + fam.name + '</strong> — ' + fam.indices.length + ' indices';
-    $('index-section').style.display = 'block';
-    renderIndexList(key);
-});
-
-$('btn-test-all').addEventListener('click', () => {
-    if (!state.selectedFamily) return;
-    const fam = SYNTHETIC_FAMILIES[state.selectedFamily];
-    log('🧪 Test manuel : ' + fam.name, 'info');
-    for (const idx of fam.indices) {
-        if (!state.activeIndices[idx.code]?.active) testIndex(idx.code);
-    }
-});
+$('btn-fetch').addEventListener('click', doFetch);
+$('btn-test').addEventListener('click', doQuickTest);
 
 // ══════════════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════════════
-log('🧪 Deriv WebSocket Étape 2 (v2) — Prêt', 'info');
-log('📋 ' + Object.keys(SYNTHETIC_FAMILIES).length + ' familles chargées', 'info');
-setStatus('', 'Déconnecté', 'Clique sur Connecter');
-renderFamilySelect();
+log('📈 Étape 3 : Bougies historiques', 'info');
+setStatus('', 'Déconnecté', 'Connexion auto…');
 
 window.addEventListener('load', () => {
     setTimeout(() => { connect(); }, 500);
