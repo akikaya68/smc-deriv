@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deriv — Étape 5.1 : Diagnostic Bridge</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #0f1419; color: #e8eaed;
+        padding: 1rem; font-size: 14px; line-height: 1.5;
+        max-width: 900px; margin: 0 auto;
+    }
+    h1 { font-size: 1.2rem; margin-bottom: 0.3rem; }
+    .subtitle { font-size: 0.75rem; color: #9ca3af; margin-bottom: 1rem; }
+
+    .section {
+        background: #1a2028; border: 1px solid #2d3744;
+        border-radius: 10px; padding: 1rem; margin-bottom: 1rem;
+    }
+    .section-title {
+        font-size: 0.72rem; text-transform: uppercase;
+        color: #9ca3af; font-weight: 700; letter-spacing: 0.06em;
+        margin-bottom: 0.8rem;
+    }
+
+    label { display: block; font-size: 0.68rem; color: #9ca3af; margin-bottom: 0.3rem; text-transform: uppercase; font-weight: 700; }
+    input, textarea {
+        width: 100%; padding: 0.7rem 0.9rem; border-radius: 8px;
+        border: 1px solid #2d3744; background: #0f1419; color: #e8eaed;
+        font-size: 0.85rem; margin-bottom: 0.7rem; font-family: ui-monospace, monospace;
+    }
+    textarea { min-height: 100px; resize: vertical; }
+
+    button {
+        padding: 0.7rem 1.1rem; border-radius: 8px;
+        border: 1px solid #2d3744; background: #1a2028;
+        color: #e8eaed; font-size: 0.82rem; font-weight: 600;
+        cursor: pointer; font-family: inherit;
+        margin-right: 0.3rem; margin-bottom: 0.3rem;
+    }
+    button:hover { background: #232b36; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.primary { background: #16a34a; border-color: #16a34a; color: #fff; }
+    button.info { background: #2563eb; border-color: #2563eb; color: #fff; }
+    button.warn { background: #ea580c; border-color: #ea580c; color: #fff; }
+
+    .test-result {
+        background: #0a0f14; border-radius: 8px;
+        padding: 0.8rem; margin-bottom: 0.5rem;
+        font-family: ui-monospace, monospace; font-size: 0.72rem;
+        border-left: 4px solid #4b5563;
+    }
+    .test-result.success { border-left-color: #16a34a; background: #052e1633; }
+    .test-result.error { border-left-color: #dc2626; background: #450a0a33; }
+    .test-result.pending { border-left-color: #ea580c; background: #451a0333; }
+    .test-title { font-weight: 700; margin-bottom: 0.3rem; }
+    .test-detail { color: #9ca3af; word-break: break-all; }
+    .test-data { color: #86efac; word-break: break-all; margin-top: 0.3rem; }
+
+    .logs {
+        background: #0a0f14; border: 1px solid #2d3744;
+        border-radius: 8px; padding: 0.8rem;
+        font-family: ui-monospace, monospace; font-size: 0.72rem;
+        max-height: 300px; overflow-y: auto; line-height: 1.6;
+    }
+    .log-line { margin-bottom: 0.2rem; word-break: break-all; }
+    .log-time { color: #6b7280; margin-right: 0.4rem; }
+    .log-info { color: #9ca3af; }
+    .log-success { color: #86efac; }
+    .log-error { color: #fca5a5; }
+    .log-warn { color: #fde68a; }
+    .log-data { color: #93c5fd; }
+
+    .preset-urls {
+        display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.7rem;
+    }
+    .preset-urls button {
+        font-size: 0.68rem; padding: 0.4rem 0.7rem;
+        background: #0a0f14;
+    }
+</style>
+</head>
+<body>
+
+<h1>🔌 Étape 5.1 — Diagnostic Bridge MT5</h1>
+<p class="subtitle">Vérifier la connexion au bridge Node.js</p>
+
+<div class="section">
+    <div class="section-title">1️⃣ URL du bridge</div>
+    <label>URL complète (avec https://)</label>
+    <input type="text" id="bridge-url" placeholder="https://xxx.trycloudflare.com" value="">
+    <div class="preset-urls">
+        <button data-url="https://pod-shore-extend-owned.trycloudflare.com">pod-shore-extend-owned</button>
+    </div>
+    <div style="font-size:0.68rem;color:#6b7280;">
+        ⓘ Colle l'URL de ton tunnel Cloudflare (visible dans le terminal Node.js du VPS)
+    </div>
+</div>
+
+<div class="section">
+    <div class="section-title">2️⃣ Tests automatiques</div>
+    <button class="primary" id="btn-test-health">🏥 Test /health</button>
+    <button class="info" id="btn-test-root">🏠 Test /</button>
+    <button class="info" id="btn-test-status">📊 Test /status</button>
+    <button class="warn" id="btn-test-all">🧪 Tester tout</button>
+    <div id="test-results" style="margin-top:0.7rem;"></div>
+</div>
+
+<div class="section">
+    <div class="section-title">3️⃣ Test manuel</div>
+    <label>Méthode HTTP</label>
+    <select id="http-method">
+        <option value="GET">GET</option>
+        <option value="POST">POST</option>
+    </select>
+    <label>Endpoint (ex: /health, /order, /positions)</label>
+    <input type="text" id="http-path" placeholder="/health" value="/health">
+    <label>Body (JSON, uniquement pour POST)</label>
+    <textarea id="http-body" placeholder='{"action":"buy","symbol":"R_75","volume":0.01}'></textarea>
+    <button class="info" id="btn-test-manual">🚀 Envoyer la requête</button>
+</div>
+
+<div class="section">
+    <div class="section-title">📋 Logs</div>
+    <div class="logs" id="logs"></div>
+</div>
+
+<script>
+function $(id) { return document.getElementById(id); }
+function nowTime() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+}
+function log(msg, type = 'info') {
+    const logs = $('logs');
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.innerHTML = '<span class="log-time">' + nowTime() + '</span><span class="log-' + type + '">' + escapeHtml(msg) + '</span>';
+    logs.appendChild(line);
+    logs.scrollTop = logs.scrollHeight;
+    while (logs.children.length > 200) logs.removeChild(logs.firstChild);
+}
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function getUrl() {
+    return $('bridge-url').value.trim().replace(/\/$/, '');
+}
+
+function showResult(id, status, title, detail, data) {
+    const container = $('test-results');
+    let el = document.getElementById('result-' + id);
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'result-' + id;
+        container.appendChild(el);
+    }
+    el.className = 'test-result ' + status;
+    el.innerHTML =
+        '<div class="test-title">' + escapeHtml(title) + '</div>' +
+        '<div class="test-detail">' + escapeHtml(detail) + '</div>' +
+        (data ? '<div class="test-data">' + escapeHtml(data) + '</div>' : '');
+}
+
+async function testEndpoint(id, method, path, body) {
+    const baseUrl = getUrl();
+    if (!baseUrl) {
+        log('❌ URL du bridge manquante', 'error');
+        return;
+    }
+
+    const url = baseUrl + path;
+    log('🔍 ' + method + ' ' + url, 'info');
+    showResult(id, 'pending', method + ' ' + path, 'En cours…');
+
+    const startTime = Date.now();
+    try {
+        const options = {
+            method: method,
+            headers: { 'Accept': 'application/json' }
+        };
+        if (method === 'POST' && body) {
+            options.headers['Content-Type'] = 'application/json';
+            options.body = body;
+        }
+
+        const res = await fetch(url, options);
+        const elapsed = Date.now() - startTime;
+        const text = await res.text();
+
+        log('✅ HTTP ' + res.status + ' (' + elapsed + 'ms)', res.ok ? 'success' : 'warn');
+
+        showResult(id, res.ok ? 'success' : 'error',
+            method + ' ' + path + ' → HTTP ' + res.status,
+            'Temps : ' + elapsed + 'ms · Content-Type : ' + (res.headers.get('content-type') || '?'),
+            text.slice(0, 500)
+        );
+        log('📩 Réponse : ' + text.slice(0, 300), 'data');
+    } catch (e) {
+        const elapsed = Date.now() - startTime;
+        log('❌ Erreur : ' + e.message, 'error');
+
+        let detail = e.message;
+        if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+            detail = '❌ Impossible de joindre le bridge. Causes possibles :\n' +
+                     '• URL incorrecte\n' +
+                     '• Bridge hors ligne\n' +
+                     '• CORS non activé (le navigateur bloque)\n' +
+                     '• Cloudflare Tunnel arrêté';
+        }
+
+        showResult(id, 'error', method + ' ' + path + ' → ÉCHEC', detail);
+    }
+}
+
+function testHealth() { testEndpoint('health', 'GET', '/health'); }
+function testRoot() { testEndpoint('root', 'GET', '/'); }
+function testStatus() { testEndpoint('status', 'GET', '/status'); }
+
+async function testAll() {
+    log('═══════════════════════════════════════', 'info');
+    log('🧪 Test complet du bridge', 'info');
+    log('═══════════════════════════════════════', 'info');
+    $('test-results').innerHTML = '';
+    await testHealth();
+    await new Promise(r => setTimeout(r, 500));
+    await testRoot();
+    await new Promise(r => setTimeout(r, 500));
+    await testStatus();
+    await new Promise(r => setTimeout(r, 500));
+    testEndpoint('positions', 'GET', '/positions');
+}
+
+$('btn-test-health').addEventListener('click', testHealth);
+$('btn-test-root').addEventListener('click', testRoot);
+$('btn-test-status').addEventListener('click', testStatus);
+$('btn-test-all').addEventListener('click', testAll);
+
+$('btn-test-manual').addEventListener('click', () => {
+    const method = $('http-method').value;
+    const path = $('http-path').value.trim();
+    const body = $('http-body').value.trim();
+    testEndpoint('manual', method, path, body);
+});
+
+document.querySelectorAll('.preset-urls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        $('bridge-url').value = btn.dataset.url;
+        log('📍 URL présélectionnée : ' + btn.dataset.url, 'info');
+    });
+});
+
+// Charger l'URL depuis localStorage
+try {
+    const saved = localStorage.getItem('deriv_bridge_url');
+    if (saved) $('bridge-url').value = saved;
+} catch (e) {}
+
+$('bridge-url').addEventListener('input', () => {
+    try { localStorage.setItem('deriv_bridge_url', $('bridge-url').value.trim()); } catch (e) {}
+});
+
+log('🔌 Étape 5.1 — Diagnostic Bridge', 'info');
+log('👉 Colle l\'URL du bridge, puis clique "🧪 Tester tout"', 'info');
+</script>
+
+</body>
+</html>
