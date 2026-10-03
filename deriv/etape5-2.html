@@ -94,12 +94,24 @@
         display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;
     }
     .order-form .full { grid-column: 1 / -1; }
+
+    .mapping-preview {
+        padding: 0.6rem 0.8rem;
+        background: #0a0f14;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-family: ui-monospace, monospace;
+        margin-bottom: 0.7rem;
+    }
+    .mapping-preview .arrow { color: #fbbf24; margin: 0 0.4rem; }
+    .mapping-preview .src { color: #93c5fd; }
+    .mapping-preview .dst { color: #86efac; font-weight: 700; }
 </style>
 </head>
 <body>
 
 <h1>🔌 Étape 5.2 — Envoi MT5</h1>
-<p class="subtitle">Bridge WebSocket → EA MT5 → Exécution</p>
+<p class="subtitle">Bridge WebSocket → EA MT5 → Exécution (avec mapping automatique)</p>
 
 <!-- STATUT BRIDGE -->
 <div class="status-box">
@@ -148,22 +160,41 @@
 <!-- TEST ORDRE -->
 <div class="section">
     <div class="section-title">📤 Test d'envoi d'ordre</div>
+
+    <div class="mapping-preview" id="mapping-preview">
+        <span class="src">R_75</span>
+        <span class="arrow">→</span>
+        <span class="dst">Volatility 75 Index</span>
+    </div>
+
     <div class="order-form">
         <div>
             <label>Symbole Deriv</label>
             <select id="order-symbol">
-                <option value="R_75">R_75 — Volatility 75</option>
                 <option value="R_10">R_10 — Volatility 10</option>
                 <option value="R_25">R_25 — Volatility 25</option>
                 <option value="R_50">R_50 — Volatility 50</option>
+                <option value="R_75" selected>R_75 — Volatility 75</option>
                 <option value="R_100">R_100 — Volatility 100</option>
+                <option value="1HZ10V">1HZ10V — Vol 10 (1s)</option>
+                <option value="1HZ25V">1HZ25V — Vol 25 (1s)</option>
+                <option value="1HZ50V">1HZ50V — Vol 50 (1s)</option>
+                <option value="1HZ75V">1HZ75V — Vol 75 (1s)</option>
+                <option value="1HZ100V">1HZ100V — Vol 100 (1s)</option>
                 <option value="BOOM500">BOOM500 — Boom 500</option>
                 <option value="BOOM1000">BOOM1000 — Boom 1000</option>
                 <option value="CRASH500">CRASH500 — Crash 500</option>
                 <option value="CRASH1000">CRASH1000 — Crash 1000</option>
                 <option value="JD10">JD10 — Jump 10</option>
-                <option value="stpRNG">stpRNG — Step Index 100</option>
+                <option value="JD25">JD25 — Jump 25</option>
+                <option value="JD50">JD50 — Jump 50</option>
+                <option value="JD75">JD75 — Jump 75</option>
+                <option value="JD100">JD100 — Jump 100</option>
+                <option value="stpRNG">stpRNG — Step Index</option>
+                <option value="stpRNG2">stpRNG2 — Step 200</option>
+                <option value="stpRNG3">stpRNG3 — Step 300</option>
                 <option value="RB100">RB100 — Range Break 100</option>
+                <option value="RB200">RB200 — Range Break 200</option>
             </select>
         </div>
         <div>
@@ -199,16 +230,70 @@
 </div>
 
 <script>
+// ══════════════════════════════════════════════════════════════════
+// MAPPING DERIV API → MT5 SYMBOL NAMES
+// ══════════════════════════════════════════════════════════════════
+const SYMBOL_MAP = {
+    // Volatility
+    'R_10': 'Volatility 10 Index',
+    'R_25': 'Volatility 25 Index',
+    'R_50': 'Volatility 50 Index',
+    'R_75': 'Volatility 75 Index',
+    'R_100': 'Volatility 100 Index',
+    // Volatility 1s
+    '1HZ10V': 'Volatility 10 (1s) Index',
+    '1HZ15V': 'Volatility 15 (1s) Index',
+    '1HZ25V': 'Volatility 25 (1s) Index',
+    '1HZ30V': 'Volatility 30 (1s) Index',
+    '1HZ50V': 'Volatility 50 (1s) Index',
+    '1HZ75V': 'Volatility 75 (1s) Index',
+    '1HZ90V': 'Volatility 90 (1s) Index',
+    '1HZ100V': 'Volatility 100 (1s) Index',
+    // Boom
+    'BOOM50': 'Boom 50 Index',
+    'BOOM150N': 'Boom 150 Index',
+    'BOOM300N': 'Boom 300 Index',
+    'BOOM500': 'Boom 500 Index',
+    'BOOM600': 'Boom 600 Index',
+    'BOOM900': 'Boom 900 Index',
+    'BOOM1000': 'Boom 1000 Index',
+    // Crash
+    'CRASH50': 'Crash 50 Index',
+    'CRASH150N': 'Crash 150 Index',
+    'CRASH300N': 'Crash 300 Index',
+    'CRASH500': 'Crash 500 Index',
+    'CRASH600': 'Crash 600 Index',
+    'CRASH900': 'Crash 900 Index',
+    'CRASH1000': 'Crash 1000 Index',
+    // Jump
+    'JD10': 'Jump 10 Index',
+    'JD25': 'Jump 25 Index',
+    'JD50': 'Jump 50 Index',
+    'JD75': 'Jump 75 Index',
+    'JD100': 'Jump 100 Index',
+    // Step
+    'stpRNG': 'Step Index',
+    'stpRNG2': 'Step Index 200',
+    'stpRNG3': 'Step Index 300',
+    'stpRNG4': 'Step Index 400',
+    'stpRNG5': 'Step Index 500',
+    // Range Break
+    'RB100': 'Range Break 100 Index',
+    'RB200': 'Range Break 200 Index'
+};
+
+// ══════════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════════
 const STORAGE = {
-    wsUrl: 'deriv_bridge_ws_url_v1',
-    wsToken: 'deriv_bridge_ws_token_v1'
+    wsUrl: 'deriv_bridge_ws_url_v2',
+    wsToken: 'deriv_bridge_ws_token_v2'
 };
 
 const state = {
     ws: null,
     connected: false,
     reqId: 1,
-    pendingOrders: new Map(),
     lastTicket: null
 };
 
@@ -236,6 +321,18 @@ function setWsStatus(status, text, detail) {
     $('ws-status').textContent = text;
     $('ws-detail').textContent = detail || '';
     $('stat-ws').textContent = status === 'connected' ? '🟢' : status === 'connecting' ? '🟠' : status === 'error' ? '🔴' : '⚪';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MAPPING PREVIEW
+// ══════════════════════════════════════════════════════════════════
+function updateMappingPreview() {
+    const derivCode = $('order-symbol').value;
+    const mt5Name = SYMBOL_MAP[derivCode] || derivCode;
+    $('mapping-preview').innerHTML =
+        '<span class="src">' + escapeHtml(derivCode) + '</span>' +
+        '<span class="arrow">→</span>' +
+        '<span class="dst">' + escapeHtml(mt5Name) + '</span>';
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -272,7 +369,6 @@ function connect() {
         log('✅ Bridge connecté', 'success');
         $('btn-connect').disabled = true;
         $('btn-disconnect').disabled = false;
-        // Demander le statut immédiatement
         setTimeout(() => sendMessage({ type: 'get_status' }), 500);
     };
 
@@ -331,7 +427,6 @@ function handleMessage(data) {
             break;
 
         case 'pong':
-            log('   → Pong', 'info');
             break;
 
         case 'status':
@@ -364,7 +459,7 @@ function handleMessage(data) {
             break;
 
         case 'account':
-            log('   → Compte : ' + JSON.stringify(data.account || data), 'data');
+            log('   → Compte : ' + JSON.stringify(data.account || data).slice(0, 200), 'data');
             break;
 
         case 'positions':
@@ -376,17 +471,30 @@ function handleMessage(data) {
             break;
 
         default:
-            log('   → ' + JSON.stringify(data).slice(0, 200), 'data');
+            if (data.status === 'error') {
+                log('❌ Erreur : ' + (data.error || JSON.stringify(data)), 'error');
+            } else if (data.status === 'ok') {
+                log('   → OK : ' + JSON.stringify(data).slice(0, 200), 'success');
+            } else {
+                log('   → ' + JSON.stringify(data).slice(0, 200), 'data');
+            }
     }
 }
 
 // ══════════════════════════════════════════════════════════════════
-// ENVOI D'ORDRE
+// ENVOI D'ORDRE (avec mapping automatique)
 // ══════════════════════════════════════════════════════════════════
 function sendOrder() {
     if (!state.connected) {
         log('⚠️ Bridge non connecté', 'warn');
         return;
+    }
+
+    const derivCode = $('order-symbol').value;
+    const mt5Name = SYMBOL_MAP[derivCode] || derivCode;
+
+    if (!SYMBOL_MAP[derivCode]) {
+        log('⚠️ Attention : pas de mapping pour ' + derivCode + ' → envoi brut', 'warn');
     }
 
     const requestId = 'req_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
@@ -395,16 +503,16 @@ function sendOrder() {
         type: 'open_order',
         request_id: requestId,
         order: {
-            symbol: $('order-symbol').value,
+            symbol: mt5Name,
             direction: $('order-direction').value,
             lot: parseFloat($('order-volume').value) || 0.01,
-            sl_points: 0,    // On mettra plus tard
+            sl_points: 0,
             tp_points: 0,
             comment: $('order-comment').value || 'SMC Trader'
         }
     };
 
-    log('🚀 Envoi ordre : ' + msg.order.symbol + ' ' + msg.order.direction + ' ' + msg.order.lot + ' lots', 'signal');
+    log('🚀 Envoi ordre : ' + derivCode + ' → ' + mt5Name + ' ' + msg.order.direction + ' ' + msg.order.lot + ' lots', 'signal');
     sendMessage(msg);
 }
 
@@ -417,6 +525,7 @@ $('btn-send-order').addEventListener('click', sendOrder);
 $('btn-test-status').addEventListener('click', () => sendMessage({ type: 'get_status' }));
 $('btn-test-account').addEventListener('click', () => sendMessage({ type: 'get_account' }));
 $('btn-test-positions').addEventListener('click', () => sendMessage({ type: 'get_positions' }));
+$('order-symbol').addEventListener('change', updateMappingPreview);
 
 // Charger la config sauvegardée
 try {
@@ -435,9 +544,11 @@ if (!$('ws-url').value) {
 // ══════════════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════════════
-log('🔌 Étape 5.2 — Envoi MT5', 'info');
+log('🔌 Étape 5.2 — Envoi MT5 (avec mapping)', 'info');
+log('📋 ' + Object.keys(SYMBOL_MAP).length + ' symboles mappés', 'info');
 log('👉 Vérifie l\'URL WebSocket puis clique "Connecter"', 'info');
 setWsStatus('', 'Déconnecté', 'Prêt à se connecter');
+updateMappingPreview();
 
 // Auto-connexion
 window.addEventListener('load', () => {
