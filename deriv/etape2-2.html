@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deriv — Chasse aux codes v2</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #0f1419; color: #e8eaed;
+        padding: 1rem; font-size: 14px; line-height: 1.5;
+        max-width: 900px; margin: 0 auto;
+    }
+    h1 { font-size: 1.2rem; margin-bottom: 0.3rem; }
+    .subtitle { font-size: 0.75rem; color: #9ca3af; margin-bottom: 1rem; }
+
+    .status-box {
+        display: flex; align-items: center; gap: 0.6rem;
+        padding: 0.9rem 1rem; border-radius: 10px;
+        background: #1a2028; border: 1px solid #2d3744;
+        margin-bottom: 1rem;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; background: #6b7280; flex-shrink: 0; }
+    .dot.connected { background: #16a34a; animation: pulse 2s infinite; }
+    .dot.connecting { background: #ea580c; animation: pulse 1s infinite; }
+    .dot.error { background: #dc2626; }
+    @keyframes pulse { 50% { opacity: 0.4; } }
+    .status-text { flex: 1; font-weight: 600; }
+    .status-detail { font-size: 0.7rem; color: #9ca3af; }
+
+    .controls { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    button {
+        padding: 0.7rem 1.1rem; border-radius: 8px;
+        border: 1px solid #2d3744; background: #1a2028;
+        color: #e8eaed; font-size: 0.82rem; font-weight: 600;
+        cursor: pointer; font-family: inherit;
+    }
+    button:hover { background: #232b36; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.primary { background: #16a34a; border-color: #16a34a; color: #fff; }
+    button.warn { background: #ea580c; border-color: #ea580c; color: #fff; }
+    button.info { background: #2563eb; border-color: #2563eb; color: #fff; }
+
+    .section {
+        background: #1a2028; border: 1px solid #2d3744;
+        border-radius: 10px; padding: 1rem; margin-bottom: 1rem;
+    }
+    .section-title {
+        font-size: 0.72rem; text-transform: uppercase;
+        color: #9ca3af; font-weight: 700; letter-spacing: 0.06em;
+        margin-bottom: 0.8rem;
+    }
+
+    .test-group {
+        background: #0f1419; border-radius: 8px;
+        padding: 0.8rem; margin-bottom: 0.8rem;
+    }
+    .test-group-title {
+        font-size: 0.75rem; font-weight: 700;
+        color: #e8eaed; margin-bottom: 0.5rem;
+        display: flex; justify-content: space-between;
+    }
+    .candidate-row {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 0.5rem 0.7rem; margin-bottom: 0.3rem;
+        background: #1a2028; border-radius: 6px;
+        font-family: ui-monospace, monospace; font-size: 0.78rem;
+    }
+    .candidate-row.found { background: #16a34a22; border: 1px solid #16a34a; }
+    .candidate-row.failed { background: #dc262622; border: 1px solid #dc2626; opacity: 0.6; }
+    .candidate-row.testing { background: #ea580c22; border: 1px solid #ea580c; }
+    .candidate-code { font-weight: 700; }
+    .candidate-badge { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 6px; font-weight: 700; }
+    .candidate-badge.active { background: #16a34a; color: #fff; }
+    .candidate-badge.inactive { background: #dc2626; color: #fff; }
+    .candidate-badge.testing { background: #ea580c; color: #fff; }
+    .candidate-badge.unknown { background: #4b5563; color: #d1d5db; }
+
+    .found-badge {
+        background: #16a34a; color: #fff;
+        padding: 0.15rem 0.6rem; border-radius: 10px;
+        font-size: 0.68rem; font-weight: 700;
+    }
+    .notfound-badge {
+        background: #4b5563; color: #d1d5db;
+        padding: 0.15rem 0.6rem; border-radius: 10px;
+        font-size: 0.68rem; font-weight: 700;
+    }
+
+    .logs {
+        background: #0a0f14; border: 1px solid #2d3744;
+        border-radius: 8px; padding: 0.8rem;
+        font-family: ui-monospace, monospace; font-size: 0.72rem;
+        max-height: 250px; overflow-y: auto; line-height: 1.6;
+    }
+    .log-line { margin-bottom: 0.2rem; word-break: break-all; }
+    .log-time { color: #6b7280; margin-right: 0.4rem; }
+    .log-info { color: #9ca3af; }
+    .log-success { color: #86efac; }
+    .log-error { color: #fca5a5; }
+    .log-warn { color: #fde68a; }
+    .log-data { color: #93c5fd; }
+</style>
+</head>
+<body>
+
+<h1>🔍 Deriv — Chasse aux codes v2</h1>
+<p class="subtitle">Test étendu + import de la liste complète des symboles actifs</p>
+
+<div class="status-box">
+    <div class="dot" id="status-dot"></div>
+    <div style="flex:1;">
+        <div class="status-text" id="status-text">Déconnecté</div>
+        <div class="status-detail" id="status-detail">Prêt à se connecter</div>
+    </div>
+</div>
+
+<div class="controls">
+    <button class="info" id="btn-active-symbols">📋 Tenter active_symbols</button>
+    <button class="primary" id="btn-hunt">🚀 Chasse v2 (codes élargis)</button>
+    <button class="warn" id="btn-stop" disabled>⏹ Arrêter</button>
+</div>
+
+<div class="section" id="results-section" style="display:none;">
+    <div class="section-title">📊 Résultats par famille</div>
+    <div id="results-container"></div>
+</div>
+
+<div class="logs" id="logs"></div>
+
+<script>
+const DERIV_WS_PUBLIC = 'wss://api.derivws.com/trading/v1/options/ws/public';
+const PING_INTERVAL_MS = 30000;
+const TEST_TIMEOUT_MS = 2000;
+
+// ══════════════════════════════════════════════════════════════════
+// CODES ÉLARGIS — Basé sur la nomenclature Deriv officielle
+// Sources: documentation Deriv, deriv-api, deriv-com/deriv-api
+// ══════════════════════════════════════════════════════════════════
+const HUNT_LIST = [
+    {
+        label: '🪜 Step Index',
+        candidates: [
+            'stp', 'STP', 'stprng', 'STPRNG',
+            'step', 'STEP', 'stepidx', 'STEPIDX',
+            'step_index', 'StepIndex', 'Step_Index',
+            'stp100', 'STP100', 'stp200', 'STP200', 'stp500', 'STP500',
+            'STEP100', 'STEP200', 'STEP500',
+            'stpind', 'STPIND', 'stpidx', 'STPIDX',
+            'stp_id', 'stp_ind'
+        ]
+    },
+    {
+        label: '🚀 High Frequency Volatility',
+        candidates: [
+            'JD10', 'JD25', 'JD50', 'JD75', 'JD100',
+            'jdc10', 'jdc25', 'jdc50', 'jdc75', 'jdc100',
+            'JDC10', 'JDC25', 'JDC50', 'JDC75', 'JDC100',
+            'HF10', 'HF25', 'HF50', 'HF75', 'HF100',
+            'hf10', 'hf25', 'hf50', 'hf75', 'hf100',
+            'HFV10', 'HFV25', 'HFV50', 'HFV75', 'HFV100',
+            'hfvol10', 'hfvol25', 'hfvol50', 'hfvol75', 'hfvol100'
+        ]
+    },
+    {
+        label: '🔄 Drift Switch',
+        candidates: [
+            'DSI10', 'DSI20', 'DSI30',
+            'dsi10', 'dsi20', 'dsi30',
+            'ds10', 'ds20', 'ds30',
+            'DS10', 'DS20', 'DS30',
+            'drift10', 'drift20', 'drift30',
+            'DRIFT10', 'DRIFT20', 'DRIFT30',
+            'dsw10', 'dsw20', 'dsw30',
+            'DSW10', 'DSW20', 'DSW30'
+        ]
+    },
+    {
+        label: '🎯 DEX',
+        candidates: [
+            'dex600u', 'dex600d', 'dex900u', 'dex900d', 'dex1500u', 'dex1500d',
+            'DEX_600_U', 'DEX_600_D', 'DEX_900_U', 'DEX_900_D', 'DEX_1500_U', 'DEX_1500_D',
+            'dex_600u', 'dex_600d', 'dex_900u', 'dex_900d', 'dex_1500u', 'dex_1500d',
+            'D600U', 'D600D', 'D900U', 'D900D', 'D1500U', 'D1500D',
+            'dex600up', 'dex600down', 'dex900up', 'dex900down'
+        ]
+    },
+    {
+        label: '🪜 Multi Step',
+        candidates: [
+            'ms2', 'ms3', 'ms4', 'MS2', 'MS3', 'MS4',
+            'mstep2', 'mstep3', 'mstep4',
+            'MSTEP2', 'MSTEP3', 'MSTEP4',
+            'mstep_2', 'mstep_3', 'mstep_4',
+            'multistep2', 'multistep3', 'multistep4',
+            'MULTISTEP2', 'MULTISTEP3', 'MULTISTEP4',
+            'msc2', 'msc3', 'msc4', 'MSC2', 'MSC3', 'MSC4'
+        ]
+    },
+    {
+        label: '🌊 Vol over Boom',
+        candidates: [
+            'vob400', 'vob550', 'vob750',
+            'VOB_400', 'VOB_550', 'VOB_750',
+            'vob_400', 'vob_550', 'vob_750',
+            'voloverboom400', 'voloverboom550', 'voloverboom750',
+            'VOLOVERBOOM400', 'VOLOVERBOOM550', 'VOLOVERBOOM750',
+            'vol_boom400', 'vol_boom550', 'vol_boom750',
+            'VOB400N', 'VOB550N', 'VOB750N'
+        ]
+    },
+    {
+        label: '🌊 Vol over Crash',
+        candidates: [
+            'voc400', 'voc550', 'voc750',
+            'VOC_400', 'VOC_550', 'VOC_750',
+            'voc_400', 'voc_550', 'voc_750',
+            'volovercrash400', 'volovercrash550', 'volovercrash750',
+            'VOLOVERCRASH400', 'VOLOVERCRASH550', 'VOLOVERCRASH750',
+            'vol_crash400', 'vol_crash550', 'vol_crash750',
+            'VOC400N', 'VOC550N', 'VOC750N'
+        ]
+    },
+    {
+        label: '📐 Skew Step',
+        candidates: [
+            'ss4u', 'ss4d', 'ss5u', 'ss5d',
+            'SS_4_U', 'SS_4_D', 'SS_5_U', 'SS_5_D',
+            'skew4u', 'skew4d', 'skew5u', 'skew5d',
+            'SKEW4U', 'SKEW4D', 'SKEW5U', 'SKEW5D',
+            'skewstep4u', 'skewstep4d', 'skewstep5u', 'skewstep5d',
+            'SKEWSTEP4U', 'SKEWSTEP4D', 'SKEWSTEP5U', 'SKEWSTEP5D',
+            'sstep4u', 'sstep4d', 'sstep5u', 'sstep5d'
+        ]
+    },
+    {
+        label: '🏔️ Trek',
+        candidates: [
+            'trkup', 'trkdown', 'TRKUP', 'TRKDOWN',
+            'trekup', 'trekdown', 'TREKUP', 'TREKDOWN',
+            'trk_up', 'trk_down', 'TRK_UP', 'TRK_DOWN',
+            'trek_up', 'trek_down', 'TREK_UP', 'TREK_DOWN',
+            'treku', 'trekd', 'TREKU', 'TREKD'
+        ]
+    },
+    {
+        label: '🔀 Volatility Switch',
+        candidates: [
+            'vslow', 'vsmed', 'vshigh',
+            'vs_low', 'vs_med', 'vs_high',
+            'VS_LOW', 'VS_MED', 'VS_HIGH',
+            'volswitch_low', 'volswitch_med', 'volswitch_high',
+            'VOLSWITCH_LOW', 'VOLSWITCH_MED', 'VOLSWITCH_HIGH',
+            'vswitchlow', 'vswitchmed', 'vswitchhigh',
+            'VSWITCHLOW', 'VSWITCHMED', 'VSWITCHHIGH'
+        ]
+    }
+];
+
+const state = {
+    ws: null,
+    connected: false,
+    connecting: false,
+    pingInterval: null,
+    lastPingSentAt: null,
+    reqId: 1,
+    pendingRequests: new Map(),
+    hunting: false,
+    stopRequested: false,
+    results: {},
+    currentActiveTicks: {},
+    activeSubscriptions: new Set()
+};
+
+function $(id) { return document.getElementById(id); }
+function nowTime() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+}
+function log(msg, type = 'info') {
+    const logs = $('logs');
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.innerHTML = '<span class="log-time">' + nowTime() + '</span><span class="log-' + type + '">' + escapeHtml(msg) + '</span>';
+    logs.appendChild(line);
+    logs.scrollTop = logs.scrollHeight;
+    while (logs.children.length > 400) logs.removeChild(logs.firstChild);
+}
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function setStatus(status, text, detail) {
+    const dot = $('status-dot');
+    dot.className = 'dot ' + (status || '');
+    $('status-text').textContent = text;
+    $('status-detail').textContent = detail || '';
+}
+
+function connect() {
+    if (state.connected || state.connecting) return;
+    state.connecting = true;
+    setStatus('connecting', 'Connexion…', DERIV_WS_PUBLIC);
+    try { state.ws = new WebSocket(DERIV_WS_PUBLIC); }
+    catch (e) { setStatus('error', 'Erreur', e.message); state.connecting = false; return; }
+    state.ws.onopen = onOpen;
+    state.ws.onmessage = onMessage;
+    state.ws.onerror = onError;
+    state.ws.onclose = onClose;
+}
+function onOpen() {
+    state.connected = true;
+    state.connecting = false;
+    setStatus('connected', 'Connecté ✓', 'WebSocket public Deriv');
+    log('✅ Connexion établie', 'success');
+    startPing();
+}
+function onMessage(event) {
+    let data;
+    try { data = JSON.parse(event.data); } catch (e) { return; }
+    if (data.msg_type === 'ping' && data.ping === 'pong') {
+        if (state.lastPingSentAt) state.lastPingSentAt = null;
+        return;
+    }
+    if (data.msg_type === 'tick' && data.tick && data.tick.symbol) {
+        const code = data.tick.symbol;
+        if (!state.currentActiveTicks[code]) {
+            state.currentActiveTicks[code] = true;
+            log('  ✅ TICK REÇU de ' + code + ' @ ' + data.tick.quote, 'success');
+        }
+    }
+    // Log réponse active_symbols si elle arrive
+    if (data.msg_type === 'active_symbols') {
+        log('📋 active_symbols REÇU ! ' + (data.active_symbols?.length || 0) + ' symboles', 'success');
+        if (data.active_symbols) {
+            // Filtrer les synthétiques
+            const synthetics = data.active_symbols.filter(s =>
+                s.market === 'synthetic_index' || (s.submarket && s.submarket.includes('random'))
+            );
+            log('🎯 ' + synthetics.length + ' synthétiques trouvés', 'data');
+            for (const s of synthetics.slice(0, 50)) {
+                log('  • ' + s.underlying_symbol + ' → ' + (s.underlying_symbol_name || s.display_name || '?'), 'data');
+            }
+            if (synthetics.length > 50) log('  … et ' + (synthetics.length - 50) + ' autres', 'data');
+        }
+    }
+    if (data.req_id && state.pendingRequests.has(data.req_id)) {
+        const { resolve } = state.pendingRequests.get(data.req_id);
+        state.pendingRequests.delete(data.req_id);
+        resolve(data);
+        return;
+    }
+}
+function onError() { log('❌ Erreur WebSocket', 'error'); state.connecting = false; }
+function onClose(event) {
+    state.connected = false; state.connecting = false; stopPing();
+    setStatus('', 'Déconnecté', 'Code ' + event.code);
+}
+function startPing() { stopPing(); sendPing(); state.pingInterval = setInterval(sendPing, PING_INTERVAL_MS); }
+function stopPing() { if (state.pingInterval) { clearInterval(state.pingInterval); state.pingInterval = null; } }
+function sendPing() {
+    if (!state.connected || !state.ws) return;
+    state.lastPingSentAt = Date.now();
+    try { state.ws.send(JSON.stringify({ ping: 1 })); } catch (e) {}
+}
+function sendRequest(payload, timeoutMs = 5000) {
+    if (!state.connected || !state.ws) return Promise.reject(new Error('Non connecté'));
+    const reqId = state.reqId++;
+    payload.req_id = reqId;
+    return new Promise((resolve, reject) => {
+        state.pendingRequests.set(reqId, { resolve, reject });
+        setTimeout(() => {
+            if (state.pendingRequests.has(reqId)) {
+                state.pendingRequests.delete(reqId);
+                reject(new Error('Timeout'));
+            }
+        }, timeoutMs);
+        try { state.ws.send(JSON.stringify(payload)); }
+        catch (e) { state.pendingRequests.delete(reqId); reject(e); }
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TEST ACTIVE_SYMBOLS
+// ══════════════════════════════════════════════════════════════════
+async function tryActiveSymbols() {
+    log('📋 Tentative active_symbols…', 'info');
+    try {
+        const res = await sendRequest({ active_symbols: 'brief' }, 8000);
+        if (res.error) {
+            log('❌ Erreur : ' + JSON.stringify(res.error), 'error');
+        } else if (res.active_symbols) {
+            log('✅ ' + res.active_symbols.length + ' symboles reçus', 'success');
+        } else {
+            log('⚠️ Réponse reçue mais sans active_symbols', 'warn');
+        }
+    } catch (e) {
+        log('❌ Timeout ou erreur : ' + e.message, 'error');
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CHASSE AUX CODES
+// ══════════════════════════════════════════════════════════════════
+async function testCandidate(code) {
+    state.currentActiveTicks[code] = false;
+    try {
+        const res = await sendRequest({ ticks: code, subscribe: 1 }, 4000);
+        if (res && res.subscription && res.subscription.id) {
+            state.activeSubscriptions.add(res.subscription.id);
+        }
+        if (res && res.tick && res.tick.symbol) {
+            state.currentActiveTicks[res.tick.symbol] = true;
+        }
+        await new Promise(r => setTimeout(r, 600));
+        return state.currentActiveTicks[code] === true;
+    } catch (e) {
+        return false;
+    }
+}
+
+async function cleanupSubscriptions() {
+    for (const subId of state.activeSubscriptions) {
+        try { state.ws.send(JSON.stringify({ forget: subId })); } catch (e) {}
+    }
+    state.activeSubscriptions.clear();
+}
+
+async function hunt() {
+    if (state.hunting) return;
+    state.hunting = true;
+    state.stopRequested = false;
+    state.results = {};
+    state.currentActiveTicks = {};
+    $('btn-hunt').disabled = true;
+    $('btn-stop').disabled = false;
+    $('results-section').style.display = 'block';
+    $('results-container').innerHTML = '';
+
+    log('🚀 Chasse v2 démarrée…', 'info');
+    log('📊 ' + HUNT_LIST.length + ' familles · ~' + HUNT_LIST.reduce((s, g) => s + g.candidates.length, 0) + ' codes à tester', 'info');
+
+    for (const group of HUNT_LIST) {
+        if (state.stopRequested) { log('⏹ Arrêt', 'warn'); break; }
+
+        log('🔍 ' + group.label + ' (' + group.candidates.length + ' codes)', 'info');
+        state.results[group.label] = { found: [], failed: [] };
+
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'test-group';
+        groupDiv.innerHTML = '<div class="test-group-title"><span>' + group.label + '</span><span class="notfound-badge">en cours</span></div>';
+        $('results-container').appendChild(groupDiv);
+
+        let foundOne = false;
+
+        for (const code of group.candidates) {
+            if (state.stopRequested) break;
+            if (foundOne) break;
+
+            const row = document.createElement('div');
+            row.className = 'candidate-row testing';
+            row.innerHTML = '<span class="candidate-code">' + escapeHtml(code) + '</span><span class="candidate-badge testing">⏳</span>';
+            groupDiv.appendChild(row);
+
+            const isActive = await testCandidate(code);
+            row.className = 'candidate-row ' + (isActive ? 'found' : 'failed');
+            const badge = row.querySelector('.candidate-badge');
+            badge.className = 'candidate-badge ' + (isActive ? 'active' : 'inactive');
+            badge.textContent = isActive ? '✅ ACTIF' : '❌';
+
+            if (isActive) {
+                state.results[group.label].found.push(code);
+                log('  🎯 TROUVÉ : ' + code, 'success');
+                foundOne = true;
+            }
+        }
+
+        if (!foundOne) {
+            log('  ❌ Aucun code valide', 'error');
+        }
+
+        // Mettre à jour le badge du groupe
+        const groupBadge = groupDiv.querySelector('.notfound-badge');
+        if (foundOne) {
+            groupBadge.className = 'found-badge';
+            groupBadge.textContent = '✅ ' + state.results[group.label].found.join(', ');
+        } else {
+            groupBadge.textContent = '❌ aucun';
+        }
+
+        await cleanupSubscriptions();
+        await new Promise(r => setTimeout(r, 300));
+    }
+
+    log('🏁 Chasse v2 terminée', 'success');
+    showSummary();
+    state.hunting = false;
+    $('btn-hunt').disabled = false;
+    $('btn-stop').disabled = true;
+}
+
+function showSummary() {
+    log('═══════════════════════════════════════', 'info');
+    log('📋 RÉSUMÉ FINAL', 'success');
+    for (const [label, res] of Object.entries(state.results)) {
+        if (res.found.length > 0) log('✅ ' + label + ' → ' + res.found.join(', '), 'success');
+        else log('❌ ' + label, 'error');
+    }
+    log('═══════════════════════════════════════', 'info');
+}
+
+$('btn-active-symbols').addEventListener('click', () => {
+    if (!state.connected) { log('⚠️ Attends la connexion', 'warn'); return; }
+    tryActiveSymbols();
+});
+$('btn-hunt').addEventListener('click', () => {
+    if (!state.connected) { log('⚠️ Attends la connexion', 'warn'); return; }
+    hunt();
+});
+$('btn-stop').addEventListener('click', () => {
+    state.stopRequested = true;
+    log('⏹ Arrêt demandé…', 'warn');
+});
+
+log('🔍 Deriv — Chasse aux codes v2', 'info');
+log('📋 ' + HUNT_LIST.length + ' familles · ' + HUNT_LIST.reduce((s, g) => s + g.candidates.length, 0) + ' codes', 'info');
+setStatus('', 'Déconnecté', 'Connexion…');
+
+window.addEventListener('load', () => {
+    setTimeout(() => { connect(); }, 300);
+});
+</script>
+
+</body>
+</html>
