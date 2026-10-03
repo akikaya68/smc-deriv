@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deriv WebSocket — Étape 1</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #0f1419; color: #e8eaed;
+        padding: 1rem; font-size: 14px; line-height: 1.5;
+        max-width: 900px; margin: 0 auto;
+    }
+    h1 { font-size: 1.2rem; margin-bottom: 0.3rem; }
+    .subtitle { font-size: 0.75rem; color: #9ca3af; margin-bottom: 1rem; }
+
+    .status-box {
+        display: flex; align-items: center; gap: 0.6rem;
+        padding: 0.9rem 1rem; border-radius: 10px;
+        background: #1a2028; border: 1px solid #2d3744;
+        margin-bottom: 1rem;
+    }
+    .dot {
+        width: 12px; height: 12px; border-radius: 50%;
+        background: #6b7280; flex-shrink: 0;
+    }
+    .dot.connected { background: #16a34a; animation: pulse 2s infinite; }
+    .dot.connecting { background: #ea580c; animation: pulse 1s infinite; }
+    .dot.error { background: #dc2626; }
+    @keyframes pulse { 50% { opacity: 0.4; } }
+
+    .status-text { flex: 1; font-weight: 600; }
+    .status-detail { font-size: 0.7rem; color: #9ca3af; }
+
+    .controls { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+
+    button {
+        padding: 0.7rem 1.1rem; border-radius: 8px;
+        border: 1px solid #2d3744; background: #1a2028;
+        color: #e8eaed; font-size: 0.82rem; font-weight: 600;
+        cursor: pointer; font-family: inherit;
+    }
+    button:hover { background: #232b36; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.primary { background: #16a34a; border-color: #16a34a; color: #fff; }
+    button.danger { background: #dc2626; border-color: #dc2626; color: #fff; }
+
+    .stats {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 0.5rem; margin-bottom: 1rem;
+    }
+    .stat {
+        padding: 0.6rem; border-radius: 8px;
+        background: #1a2028; border: 1px solid #2d3744;
+        text-align: center;
+    }
+    .stat-label { font-size: 0.62rem; color: #9ca3af; text-transform: uppercase; font-weight: 700; }
+    .stat-value { font-size: 1rem; font-weight: 700; font-family: ui-monospace, monospace; margin-top: 0.2rem; }
+    .stat-value.green { color: #16a34a; }
+    .stat-value.red { color: #dc2626; }
+    .stat-value.blue { color: #2563eb; }
+
+    .logs {
+        background: #0a0f14; border: 1px solid #2d3744;
+        border-radius: 8px; padding: 0.8rem;
+        font-family: ui-monospace, monospace; font-size: 0.72rem;
+        max-height: 400px; overflow-y: auto; line-height: 1.6;
+    }
+    .log-line { margin-bottom: 0.2rem; word-break: break-all; }
+    .log-time { color: #6b7280; margin-right: 0.4rem; }
+    .log-info { color: #9ca3af; }
+    .log-success { color: #86efac; }
+    .log-error { color: #fca5a5; }
+    .log-warn { color: #fde68a; }
+    .log-data { color: #93c5fd; }
+
+    .ticks-box {
+        background: #1a2028; border: 1px solid #2d3744;
+        border-radius: 8px; padding: 0.8rem; margin-bottom: 1rem;
+        display: none;
+    }
+    .ticks-box.visible { display: block; }
+    .ticks-title { font-size: 0.7rem; color: #9ca3af; text-transform: uppercase; font-weight: 700; margin-bottom: 0.5rem; }
+    .tick-row { display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid #2d3744; font-family: ui-monospace, monospace; font-size: 0.8rem; }
+    .tick-row:last-child { border-bottom: none; }
+    .tick-quote { font-weight: 700; color: #86efac; }
+    .tick-time { color: #6b7280; font-size: 0.7rem; }
+</style>
+</head>
+<body>
+
+<h1>🧪 Deriv WebSocket — Étape 1</h1>
+<p class="subtitle">Connexion publique + test active_symbols + ticks Volatility 75</p>
+
+<!-- STATUT -->
+<div class="status-box">
+    <div class="dot" id="status-dot"></div>
+    <div style="flex:1;">
+        <div class="status-text" id="status-text">Déconnecté</div>
+        <div class="status-detail" id="status-detail">Prêt à se connecter</div>
+    </div>
+</div>
+
+<!-- CONTRÔLES -->
+<div class="controls">
+    <button class="primary" id="btn-connect">🔌 Connecter</button>
+    <button class="danger" id="btn-disconnect" disabled>⏹ Déconnecter</button>
+    <button id="btn-symbols">📊 Tester active_symbols</button>
+    <button id="btn-ticks" disabled>📈 S'abonner Volatility 75</button>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+    <div class="stat">
+        <div class="stat-label">État</div>
+        <div class="stat-value" id="stat-state">—</div>
+    </div>
+    <div class="stat">
+        <div class="stat-label">Ping (ms)</div>
+        <div class="stat-value blue" id="stat-ping">—</div>
+    </div>
+    <div class="stat">
+        <div class="stat-label">Messages reçus</div>
+        <div class="stat-value" id="stat-msgs">0</div>
+    </div>
+    <div class="stat">
+        <div class="stat-label">Reconnexions</div>
+        <div class="stat-value" id="stat-reconn">0</div>
+    </div>
+    <div class="stat">
+        <div class="stat-label">Symboles</div>
+        <div class="stat-value" id="stat-symbols">—</div>
+    </div>
+</div>
+
+<!-- TICKS -->
+<div class="ticks-box" id="ticks-box">
+    <div class="ticks-title">📈 Volatility 75 Index — Ticks temps réel</div>
+    <div id="ticks-list"></div>
+</div>
+
+<!-- LOGS -->
+<div class="logs" id="logs"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════════
+const DERIV_WS_PUBLIC = 'wss://api.derivws.com/trading/v1/options/ws/public';
+const PING_INTERVAL_MS = 30000;
+const MAX_RECONNECT_ATTEMPTS = 10;
+const RECONNECT_BASE_DELAY = 1000;
+
+// Symbol Deriv pour Volatility 75 Index
+const TEST_SYMBOL = 'R_75';
+
+// ══════════════════════════════════════════════════════════════════
+// ÉTAT
+// ══════════════════════════════════════════════════════════════════
+const state = {
+    ws: null,
+    connected: false,
+    connecting: false,
+    pingInterval: null,
+    reconnectAttempts: 0,
+    reconnectTimer: null,
+    messageCount: 0,
+    lastPingSentAt: null,
+    reqId: 1,
+    pendingRequests: new Map(),
+    activeSymbols: [],
+    ticksSubscriptionId: null
+};
+
+// ══════════════════════════════════════════════════════════════════
+// UTILITAIRES
+// ══════════════════════════════════════════════════════════════════
+function $(id) { return document.getElementById(id); }
+
+function nowTime() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+}
+
+function log(msg, type = 'info') {
+    const logs = $('logs');
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.innerHTML = '<span class="log-time">' + nowTime() + '</span><span class="log-' + type + '">' + escapeHtml(msg) + '</span>';
+    logs.appendChild(line);
+    logs.scrollTop = logs.scrollHeight;
+    // Limite à 200 lignes
+    while (logs.children.length > 200) logs.removeChild(logs.firstChild);
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function setStatus(status, text, detail) {
+    const dot = $('status-dot');
+    const txt = $('status-text');
+    const det = $('status-detail');
+    dot.className = 'dot ' + (status || '');
+    txt.textContent = text;
+    det.textContent = detail || '';
+    $('stat-state').textContent = status === 'connected' ? '🟢 ON' : status === 'connecting' ? '🟠 …' : status === 'error' ? '🔴 ERR' : '⚪ OFF';
+    $('stat-state').className = 'stat-value ' + (status === 'connected' ? 'green' : status === 'error' ? 'red' : '');
+}
+
+function updateStats() {
+    $('stat-msgs').textContent = state.messageCount;
+    $('stat-reconn').textContent = state.reconnectAttempts;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CONNEXION WEBSOCKET
+// ══════════════════════════════════════════════════════════════════
+function connect() {
+    if (state.connected || state.connecting) return;
+    state.connecting = true;
+    setStatus('connecting', 'Connexion…', DERIV_WS_PUBLIC);
+    log('🔌 Connexion à ' + DERIV_WS_PUBLIC, 'info');
+
+    try {
+        state.ws = new WebSocket(DERIV_WS_PUBLIC);
+    } catch (e) {
+        log('❌ Erreur création WebSocket : ' + e.message, 'error');
+        state.connecting = false;
+        setStatus('error', 'Erreur', e.message);
+        return;
+    }
+
+    state.ws.onopen = onOpen;
+    state.ws.onmessage = onMessage;
+    state.ws.onerror = onError;
+    state.ws.onclose = onClose;
+}
+
+function onOpen() {
+    state.connected = true;
+    state.connecting = false;
+    state.reconnectAttempts = 0;
+    setStatus('connected', 'Connecté ✓', 'WebSocket public Deriv');
+    log('✅ Connexion établie', 'success');
+
+    // Démarrer le ping keepalive
+    startPing();
+
+    // Activer les boutons
+    $('btn-connect').disabled = true;
+    $('btn-disconnect').disabled = false;
+    $('btn-ticks').disabled = false;
+
+    // Test automatique : demander active_symbols
+    setTimeout(() => {
+        log('📊 Test automatique : active_symbols', 'info');
+        sendRequest({ active_symbols: 'brief' });
+    }, 500);
+}
+
+function onMessage(event) {
+    state.messageCount++;
+    updateStats();
+
+    let data;
+    try {
+        data = JSON.parse(event.data);
+    } catch (e) {
+        log('⚠️ JSON invalide : ' + event.data.slice(0, 100), 'warn');
+        return;
+    }
+
+    // Ping/Pong
+    if (data.msg_type === 'ping' && data.ping === 'pong') {
+        if (state.lastPingSentAt) {
+            const ms = Date.now() - state.lastPingSentAt;
+            $('stat-ping').textContent = ms;
+            state.lastPingSentAt = null;
+        }
+        return; // Ne pas logguer les pongs
+    }
+
+    // Résoudre les requêtes en attente
+    if (data.req_id && state.pendingRequests.has(data.req_id)) {
+        const { resolve, reject } = state.pendingRequests.get(data.req_id);
+        state.pendingRequests.delete(data.req_id);
+        if (data.error) reject(new Error(data.error.message || JSON.stringify(data.error)));
+        else resolve(data);
+        return;
+    }
+
+    // Gérer les messages non sollicités
+    if (data.msg_type === 'active_symbols') {
+        onActiveSymbols(data);
+    } else if (data.msg_type === 'tick') {
+        onTick(data);
+    } else if (data.msg_type === 'history') {
+        onHistory(data);
+    } else {
+        log('📩 Message : ' + data.msg_type, 'info');
+    }
+}
+
+function onError(event) {
+    log('❌ Erreur WebSocket', 'error');
+    state.connecting = false;
+}
+
+function onClose(event) {
+    const wasConnected = state.connected;
+    state.connected = false;
+    state.connecting = false;
+    stopPing();
+
+    log('🔌 Connexion fermée (code ' + event.code + ')', wasConnected ? 'warn' : 'info');
+
+    // Désactiver les boutons
+    $('btn-connect').disabled = false;
+    $('btn-disconnect').disabled = true;
+    $('btn-ticks').disabled = true;
+
+    // Reconnexion automatique si ce n'était pas une déconnexion volontaire
+    if (wasConnected && event.code !== 1000) {
+        scheduleReconnect();
+    } else if (!wasConnected) {
+        setStatus('', 'Déconnecté', 'Clique sur Connecter');
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RECONNEXION AUTOMATIQUE (backoff exponentiel)
+// ══════════════════════════════════════════════════════════════════
+function scheduleReconnect() {
+    if (state.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        log('❌ Nombre max de reconnexions atteint', 'error');
+        setStatus('error', 'Échec', 'Reconnexion impossible');
+        return;
+    }
+
+    state.reconnectAttempts++;
+    updateStats();
+
+    // Backoff exponentiel : 1s, 2s, 4s, 8s, 16s, ... plafonné à 30s
+    const delay = Math.min(RECONNECT_BASE_DELAY * Math.pow(2, state.reconnectAttempts - 1), 30000);
+    // Jitter aléatoire ±20%
+    const jitter = delay * (0.8 + Math.random() * 0.4);
+    const finalDelay = Math.round(jitter);
+
+    setStatus('connecting', 'Reconnexion…', 'Tentative ' + state.reconnectAttempts + '/' + MAX_RECONNECT_ATTEMPTS + ' dans ' + (finalDelay/1000).toFixed(1) + 's');
+    log('🔄 Reconnexion dans ' + (finalDelay/1000).toFixed(1) + 's (tentative ' + state.reconnectAttempts + ')', 'warn');
+
+    state.reconnectTimer = setTimeout(() => {
+        connect();
+    }, finalDelay);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PING KEEPALIVE
+// ══════════════════════════════════════════════════════════════════
+function startPing() {
+    stopPing();
+    // Premier ping immédiat
+    sendPing();
+    state.pingInterval = setInterval(sendPing, PING_INTERVAL_MS);
+}
+
+function stopPing() {
+    if (state.pingInterval) {
+        clearInterval(state.pingInterval);
+        state.pingInterval = null;
+    }
+}
+
+function sendPing() {
+    if (!state.connected || !state.ws) return;
+    state.lastPingSentAt = Date.now();
+    try {
+        state.ws.send(JSON.stringify({ ping: 1 }));
+    } catch (e) {
+        log('⚠️ Erreur envoi ping : ' + e.message, 'warn');
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// REQUÊTES
+// ══════════════════════════════════════════════════════════════════
+function sendRequest(payload) {
+    if (!state.connected || !state.ws) {
+        log('⚠️ Non connecté — impossible d\'envoyer', 'warn');
+        return Promise.reject(new Error('Non connecté'));
+    }
+
+    const reqId = state.reqId++;
+    payload.req_id = reqId;
+
+    return new Promise((resolve, reject) => {
+        state.pendingRequests.set(reqId, { resolve, reject });
+
+        // Timeout de 15 secondes
+        setTimeout(() => {
+            if (state.pendingRequests.has(reqId)) {
+                state.pendingRequests.delete(reqId);
+                reject(new Error('Timeout'));
+            }
+        }, 15000);
+
+        try {
+            state.ws.send(JSON.stringify(payload));
+        } catch (e) {
+            state.pendingRequests.delete(reqId);
+            reject(e);
+        }
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// HANDLERS
+// ══════════════════════════════════════════════════════════════════
+async function onActiveSymbols(data) {
+    if (!data.active_symbols) {
+        log('⚠️ active_symbols vide', 'warn');
+        return;
+    }
+
+    state.activeSymbols = data.active_symbols;
+    $('stat-symbols').textContent = state.activeSymbols.length;
+
+    // Filtrer les synthétiques
+    const synthetics = state.activeSymbols.filter(s =>
+        s.market === 'synthetic_index' ||
+        (s.submarket && s.submarket.includes('random')) ||
+        s.underlying_symbol_type === 'stockindex'
+    );
+
+    log('✅ active_symbols reçus : ' + state.activeSymbols.length + ' symboles (' + synthetics.length + ' synthétiques)', 'success');
+
+    // Afficher un échantillon
+    const sample = synthetics.slice(0, 10);
+    for (const s of sample) {
+        log('  • ' + s.underlying_symbol + ' → ' + s.underlying_symbol_name, 'data');
+    }
+    if (synthetics.length > 10) {
+        log('  … et ' + (synthetics.length - 10) + ' autres', 'data');
+    }
+}
+
+function onTick(data) {
+    if (!data.tick) return;
+    const box = $('ticks-box');
+    box.classList.add('visible');
+    const list = $('ticks-list');
+
+    const row = document.createElement('div');
+    row.className = 'tick-row';
+    const time = new Date(data.tick.epoch * 1000).toLocaleTimeString('fr-FR');
+    row.innerHTML =
+        '<span class="tick-quote">' + data.tick.quote + '</span>' +
+        '<span class="tick-time">' + time + '</span>';
+    list.insertBefore(row, list.firstChild);
+
+    // Limiter à 20 ticks
+    while (list.children.length > 20) list.removeChild(list.lastChild);
+}
+
+function onHistory(data) {
+    log('📜 Historique reçu : ' + (data.history?.prices?.length || 0) + ' points', 'data');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ACTIONS UTILISATEUR
+// ══════════════════════════════════════════════════════════════════
+$('btn-connect').addEventListener('click', () => {
+    connect();
+});
+
+$('btn-disconnect').addEventListener('click', () => {
+    log('⏹ Déconnexion volontaire', 'info');
+    if (state.reconnectTimer) {
+        clearTimeout(state.reconnectTimer);
+        state.reconnectTimer = null;
+    }
+    if (state.ws) {
+        state.ws.close(1000, 'User disconnect');
+    }
+});
+
+$('btn-symbols').addEventListener('click', async () => {
+    if (!state.connected) {
+        log('⚠️ Connecte-toi d\'abord', 'warn');
+        return;
+    }
+    log('📊 Demande active_symbols…', 'info');
+    try {
+        await sendRequest({ active_symbols: 'brief' });
+    } catch (e) {
+        log('❌ Erreur : ' + e.message, 'error');
+    }
+});
+
+$('btn-ticks').addEventListener('click', async () => {
+    if (!state.connected) {
+        log('⚠️ Connecte-toi d\'abord', 'warn');
+        return;
+    }
+    log('📈 Abonnement aux ticks de ' + TEST_SYMBOL + '…', 'info');
+    try {
+        const res = await sendRequest({ ticks: TEST_SYMBOL, subscribe: 1 });
+        if (res.subscription) {
+            state.ticksSubscriptionId = res.subscription.id;
+            log('✅ Abonné aux ticks — ID : ' + res.subscription.id, 'success');
+        }
+    } catch (e) {
+        log('❌ Erreur : ' + e.message, 'error');
+    }
+});
+
+// ══════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════
+log('🧪 Deriv WebSocket Étape 1 — Prêt', 'info');
+log('👉 Clique sur "Connecter" pour démarrer', 'info');
+setStatus('', 'Déconnecté', 'Clique sur Connecter');
+
+// Auto-connexion au chargement
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        log('🚀 Auto-connexion au chargement…', 'info');
+        connect();
+    }, 500);
+});
+</script>
+
+</body>
+</html>
