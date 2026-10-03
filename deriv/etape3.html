@@ -357,7 +357,7 @@ function sendRequest(payload, timeoutMs = 15000) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// RÉCUPÉRATION DES BOUGIES
+// RÉCUPÉRATION DES BOUGIES (subscribe retiré)
 // ══════════════════════════════════════════════════════════════════
 async function fetchCandles(symbol, granularity, count, style) {
     log('📥 ' + symbol + ' · ' + granularity + 's · ' + count + ' bougies · ' + style, 'info');
@@ -368,8 +368,7 @@ async function fetchCandles(symbol, granularity, count, style) {
         count: count,
         end: 'latest',
         start: 1,
-        style: style,
-        subscribe: 0
+        style: style
     };
 
     if (style === 'candles') {
@@ -382,8 +381,7 @@ async function fetchCandles(symbol, granularity, count, style) {
         throw new Error(res.error.message || JSON.stringify(res.error));
     }
 
-    // Debug : afficher les clés de la réponse
-    log('📦 Clés de la réponse : ' + Object.keys(res).join(', '), 'data');
+    log('📦 Clés : ' + Object.keys(res).join(', '), 'data');
 
     if (style === 'candles' && res.candles) {
         return res.candles.map(c => ({
@@ -492,7 +490,6 @@ function drawCandles(candles) {
     const xScale = i => margin.left + i * candleWidth + candleWidth / 2;
     const yScale = p => margin.top + plotH - ((p - yMin) / (yMax - yMin)) * plotH;
 
-    // Grille
     ctx.strokeStyle = '#2d3744';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -503,7 +500,6 @@ function drawCandles(candles) {
     }
     ctx.stroke();
 
-    // Labels
     ctx.fillStyle = '#9ca3af';
     ctx.font = '9px -apple-system, sans-serif';
     ctx.textAlign = 'left';
@@ -513,7 +509,6 @@ function drawCandles(candles) {
         ctx.fillText(price.toFixed(4), margin.left + plotW + 4, y + 3);
     }
 
-    // Bougies
     visible.forEach((c, i) => {
         const x = xScale(i);
         const bullish = c.close >= c.open;
