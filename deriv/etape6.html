@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMC Trader Pro v6.0 — Auto Scanner</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #0f1419; color: #e8eaed;
+        padding: 1rem; font-size: 14px; line-height: 1.5;
+        max-width: 900px; margin: 0 auto;
+    }
+    h1 { font-size: 1.2rem; margin-bottom: 0.3rem; }
+    .subtitle { font-size: 0.75rem; color: #9ca3af; margin-bottom: 1rem; }
+
+    .status-box {
+        display: flex; align-items: center; gap: 0.6rem;
+        padding: 0.9rem 1rem; border-radius: 10px;
+        background: #1a2028; border: 1px solid #2d3744;
+        margin-bottom: 1rem;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; background: #6b7280; flex-shrink: 0; }
+    .dot.connected { background: #16a34a; animation: pulse 2s infinite; }
+    .dot.connecting { background: #ea580c; animation: pulse 1s infinite; }
+    .dot.error { background: #dc2626; }
+    @keyframes pulse { 50% { opacity: 0.4; } }
+    .status-text { flex: 1; font-weight: 600; font-size: 0.85rem; }
+    .status-detail { font-size: 0.7rem; color: #9ca3af; }
+
+    .tabs {
+        display: flex; gap: 0.2rem; margin-bottom: 1rem;
+        background: #1a2028; border-radius: 10px; padding: 0.25rem;
+        border: 1px solid #2d3744; overflow-x: auto;
+    }
+    .tab {
+        padding: 0.5rem 0.75rem; border-radius: 7px;
+        font-size: 0.72rem; font-weight: 600; cursor: pointer;
+        white-space: nowrap; color: #9ca3af; flex: 1; text-align: center;
+    }
+    .tab.active { background: #16a34a; color: #fff; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .section {
+        background: #1a2028; border: 1px solid #2d3744;
+        border-radius: 10px; padding: 1rem; margin-bottom: 1rem;
+    }
+    .section-title {
+        font-size: 0.72rem; text-transform: uppercase;
+        color: #9ca3af; font-weight: 700; letter-spacing: 0.06em;
+        margin-bottom: 0.8rem;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+
+    label { display: block; font-size: 0.68rem; color: #9ca3af; margin-bottom: 0.3rem; text-transform: uppercase; font-weight: 700; }
+    input, select, textarea {
+        width: 100%; padding: 0.7rem 0.9rem; border-radius: 8px;
+        border: 1px solid #2d3744; background: #0f1419; color: #e8eaed;
+        font-size: 0.85rem; margin-bottom: 0.7rem; font-family: inherit;
+    }
+    input:focus, textarea:focus { outline: none; border-color: #16a34a; }
+
+    button {
+        padding: 0.7rem 1.1rem; border-radius: 8px;
+        border: 1px solid #2d3744; background: #1a2028;
+        color: #e8eaed; font-size: 0.82rem; font-weight: 600;
+        cursor: pointer; font-family: inherit;
+        margin-right: 0.3rem; margin-bottom: 0.3rem;
+    }
+    button:hover { background: #232b36; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.primary { background: #16a34a; border-color: #16a34a; color: #fff; }
+    button.info { background: #2563eb; border-color: #2563eb; color: #fff; }
+    button.danger { background: #dc2626; border-color: #dc2626; color: #fff; }
+    button.warn { background: #ea580c; border-color: #ea580c; color: #fff; }
+    button.small { font-size: 0.7rem; padding: 0.4rem 0.7rem; }
+
+    .stats {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.5rem; margin-bottom: 1rem;
+    }
+    .stat {
+        padding: 0.6rem; border-radius: 8px;
+        background: #1a2028; border: 1px solid #2d3744;
+        text-align: center;
+    }
+    .stat-label { font-size: 0.6rem; color: #9ca3af; text-transform: uppercase; font-weight: 700; }
+    .stat-value { font-size: 0.95rem; font-weight: 700; font-family: ui-monospace, monospace; margin-top: 0.2rem; }
+    .stat-value.green { color: #16a34a; }
+    .stat-value.red { color: #dc2626; }
+    .stat-value.blue { color: #2563eb; }
+    .stat-value.orange { color: #ea580c; }
+    .stat-value.purple { color: #a855f7; }
+
+    .trade-card {
+        background: #0a0f14; border-radius: 8px;
+        padding: 0.8rem; margin-bottom: 0.6rem;
+        border-left: 4px solid #4b5563;
+    }
+    .trade-card.open { border-left-color: #2563eb; }
+    .trade-card.win { border-left-color: #16a34a; background: #052e1633; }
+    .trade-card.loss { border-left-color: #dc2626; background: #450a0a33; }
+    .trade-card.pending { border-left-color: #ea580c; }
+
+    .trade-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 0.4rem;
+    }
+    .trade-symbol { font-weight: 700; font-size: 0.85rem; }
+    .trade-badge {
+        padding: 0.15rem 0.5rem; border-radius: 6px;
+        font-size: 0.65rem; font-weight: 700;
+    }
+    .trade-badge.buy { background: #16a34a; color: #fff; }
+    .trade-badge.sell { background: #dc2626; color: #fff; }
+    .trade-badge.open { background: #2563eb; color: #fff; }
+    .trade-badge.win { background: #16a34a; color: #fff; }
+    .trade-badge.loss { background: #dc2626; color: #fff; }
+    .trade-badge.pending { background: #ea580c; color: #fff; }
+    .trade-badge.signal { background: #a855f7; color: #fff; }
+
+    .trade-info {
+        display: grid; grid-template-columns: repeat(4, 1fr);
+        gap: 0.3rem; font-size: 0.7rem;
+        font-family: ui-monospace, monospace;
+        margin-bottom: 0.4rem;
+    }
+    .trade-info .label { color: #6b7280; font-size: 0.6rem; }
+    .trade-info .value { font-weight: 700; }
+
+    .trade-footer {
+        display: flex; justify-content: space-between;
+        font-size: 0.65rem; color: #6b7280;
+        margin-top: 0.3rem;
+    }
+
+    .audit-box {
+        background: #1a2028;
+        border-radius: 6px;
+        padding: 0.6rem;
+        margin-top: 0.5rem;
+        font-size: 0.7rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        color: #93c5fd;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .logs {
+        background: #0a0f14; border: 1px solid #2d3744;
+        border-radius: 8px; padding: 0.8rem;
+        font-family: ui-monospace, monospace; font-size: 0.72rem;
+        max-height: 300px; overflow-y: auto; line-height: 1.6;
+    }
+    .log-line { margin-bottom: 0.2rem; word-break: break-all; }
+    .log-time { color: #6b7280; margin-right: 0.4rem; }
+    .log-info { color: #9ca3af; }
+    .log-success { color: #86efac; }
+    .log-error { color: #fca5a5; }
+    .log-warn { color: #fde68a; }
+    .log-data { color: #93c5fd; }
+    .log-signal { color: #fbbf24; font-weight: 700; }
+
+    .empty {
+        text-align: center;
+        padding: 1.5rem 1rem;
+        color: #6b7280;
+        font-size: 0.78rem;
+    }
+
+    .badge-count {
+        background: #16a34a;
+        color: #fff;
+        padding: 0.15rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.65rem;
+        font-weight: 700;
+    }
+
+    .scanner-status {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.4rem;
+        margin-bottom: 0.7rem;
+    }
+    .scanner-status .stat {
+        padding: 0.5rem;
+    }
+
+    .signal-card {
+        background: #0a0f14;
+        border-radius: 8px;
+        padding: 0.7rem;
+        margin-bottom: 0.5rem;
+        border-left: 4px solid #a855f7;
+        background: #1a0e2a33;
+    }
+</style>
+</head>
+<body>
+
+<h1>🚀 SMC Trader Pro v6.0</h1>
+<p class="subtitle">Scanner Auto + Journal + MT5 + IA + Telegram</p>
+
+<div class="status-box">
+    <div class="dot" id="ws-dot"></div>
+    <div style="flex:1;">
+        <div class="status-text" id="ws-status">Bridge déconnecté</div>
+        <div class="status-detail" id="ws-detail">Configure l'URL WebSocket</div>
+    </div>
+</div>
+
+<div class="tabs">
+    <div class="tab active" data-tab="scanner">🤖 Scanner</div>
+    <div class="tab" data-tab="journal">📓 Journal</div>
+    <div class="tab" data-tab="stats">📊 Stats</div>
+    <div class="tab" data-tab="config">⚙️ Config</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- TAB SCANNER -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="tab-panel active" id="panel-scanner">
+    <div class="section">
+        <div class="section-title">
+            <span>🤖 Scanner automatique</span>
+            <button class="small primary" id="btn-toggle-scanner">▶️ Démarrer</button>
+        </div>
+        <div class="scanner-status">
+            <div class="stat">
+                <div class="stat-label">Statut</div>
+                <div class="stat-value" id="scanner-state">⏸ Arrêté</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Prochain scan</div>
+                <div class="stat-value orange" id="scanner-next">—</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Signaux détectés</div>
+                <div class="stat-value purple" id="scanner-signals">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Trades ouverts</div>
+                <div class="stat-value blue" id="scanner-open">0</div>
+            </div>
+        </div>
+        <div style="font-size:0.7rem;color:#6b7280;text-align:center;margin-top:0.5rem;">
+            Scan toutes les 30 min · 46 indices · 5 stratégies
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">🎯 Configuration auto</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+            <div>
+                <label>Montant par trade ($)</label>
+                <input type="number" id="cfg-amount" value="5" step="0.5" min="0.5">
+            </div>
+            <div>
+                <label>Winrate min (%)</label>
+                <input type="number" id="cfg-wr" value="60" step="1" min="50" max="95">
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+            <div>
+                <label>Profit Factor min</label>
+                <input type="number" id="cfg-pf" value="1.5" step="0.1" min="1">
+            </div>
+            <div>
+                <label>Max positions</label>
+                <input type="number" id="cfg-maxpos" value="5" step="1" min="1" max="20">
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">⚡ Derniers signaux détectés</div>
+        <div id="signals-list"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">📋 Logs</div>
+        <div class="logs" id="logs"></div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- TAB JOURNAL -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="panel-journal">
+    <div class="section">
+        <div class="section-title">
+            <span>📊 Résumé</span>
+            <button class="small info" id="btn-sync">🔄 Sync MT5</button>
+        </div>
+        <div class="stats">
+            <div class="stat"><div class="stat-label">Trades</div><div class="stat-value" id="stat-total">0</div></div>
+            <div class="stat"><div class="stat-label">Ouverts</div><div class="stat-value blue" id="stat-open">0</div></div>
+            <div class="stat"><div class="stat-label">Gagnants</div><div class="stat-value green" id="stat-wins">0</div></div>
+            <div class="stat"><div class="stat-label">Perdants</div><div class="stat-value red" id="stat-losses">0</div></div>
+            <div class="stat"><div class="stat-label">Winrate</div><div class="stat-value" id="stat-winrate">0%</div></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">📈 Positions ouvertes <span class="badge-count" id="badge-open">0</span></div>
+        <div id="list-open"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">📉 Historique <span class="badge-count" id="badge-closed">0</span></div>
+        <div id="list-closed"></div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- TAB STATS -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="panel-stats">
+    <div class="section">
+        <div class="section-title">📊 Statistiques globales</div>
+        <div class="stats">
+            <div class="stat"><div class="stat-label">Total</div><div class="stat-value" id="st-total">0</div></div>
+            <div class="stat"><div class="stat-label">Gains</div><div class="stat-value green" id="st-wins">0</div></div>
+            <div class="stat"><div class="stat-label">Pertes</div><div class="stat-value red" id="st-losses">0</div></div>
+            <div class="stat"><div class="stat-label">Winrate</div><div class="stat-value" id="st-winrate">0%</div></div>
+            <div class="stat"><div class="stat-label">P&L total</div><div class="stat-value" id="st-pnl">$0</div></div>
+            <div class="stat"><div class="stat-label">P&L moyen</div><div class="stat-value" id="st-avg">$0</div></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">📈 Performance par symbole</div>
+        <div id="stats-by-symbol"></div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- TAB CONFIG -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="panel-config">
+    <div class="section">
+        <div class="section-title">🔌 Bridge MT5</div>
+        <label>URL WebSocket</label>
+        <input type="text" id="cfg-ws-url" placeholder="wss://xxx.trycloudflare.com">
+        <label>Token</label>
+        <input type="text" id="cfg-ws-token" placeholder="smc_v5_...">
+        <button class="primary" id="btn-connect">🔌 Connecter</button>
+        <button class="danger" id="btn-disconnect">⏹ Déconnecter</button>
+    </div>
+
+    <div class="section">
+        <div class="section-title">📱 Telegram</div>
+        <label>Bot Token</label>
+        <input type="text" id="cfg-tg-token" placeholder="123456:ABC...">
+        <label>Chat ID</label>
+        <input type="text" id="cfg-tg-chatid" placeholder="-1001234567890">
+        <button class="info" id="btn-test-tg">🧪 Tester Telegram</button>
+    </div>
+
+    <div class="section">
+        <div class="section-title">🧠 DeepSeek IA</div>
+        <label>API Key</label>
+        <input type="text" id="cfg-ds-key" placeholder="sk-...">
+        <button class="info" id="btn-test-ds">🧪 Tester DeepSeek</button>
+        <button class="info" id="btn-audit-all">🧠 Auditer tous les trades</button>
+    </div>
+
+    <div class="section">
+        <div class="section-title">💾 Données</div>
+        <button class="info" id="btn-export">📤 Exporter JSON</button>
+        <button class="danger" id="btn-clear">🗑️ Effacer tout</button>
+    </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// PARTIE 2 — JS
+// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════════
+const SYMBOL_MAP = {
+    'R_10': 'Volatility 10 Index', 'R_25': 'Volatility 25 Index',
+    'R_50': 'Volatility 50 Index', 'R_75': 'Volatility 75 Index',
+    'R_100': 'Volatility 100 Index',
+    '1HZ10V': 'Volatility 10 (1s) Index', '1HZ15V': 'Volatility 15 (1s) Index',
+    '1HZ25V': 'Volatility 25 (1s) Index', '1HZ30V': 'Volatility 30 (1s) Index',
+    '1HZ50V': 'Volatility 50 (1s) Index', '1HZ75V': 'Volatility 75 (1s) Index',
+    '1HZ90V': 'Volatility 90 (1s) Index', '1HZ100V': 'Volatility 100 (1s) Index',
+    'BOOM50': 'Boom 50 Index', 'BOOM150N': 'Boom 150 Index',
+    'BOOM300N': 'Boom 300 Index', 'BOOM500': 'Boom 500 Index',
+    'BOOM600': 'Boom 600 Index', 'BOOM900': 'Boom 900 Index',
+    'BOOM1000': 'Boom 1000 Index',
+    'CRASH50': 'Crash 50 Index', 'CRASH150N': 'Crash 150 Index',
+    'CRASH300N': 'Crash 300 Index', 'CRASH500': 'Crash 500 Index',
+    'CRASH600': 'Crash 600 Index', 'CRASH900': 'Crash 900 Index',
+    'CRASH1000': 'Crash 1000 Index',
+    'JD10': 'Jump 10 Index', 'JD25': 'Jump 25 Index', 'JD50': 'Jump 50 Index',
+    'JD75': 'Jump 75 Index', 'JD100': 'Jump 100 Index',
+    'stpRNG': 'Step Index', 'stpRNG2': 'Step Index 200', 'stpRNG3': 'Step Index 300',
+    'stpRNG4': 'Step Index 400', 'stpRNG5': 'Step Index 500',
+    'RB100': 'Range Break 100 Index', 'RB200': 'Range Break 200 Index',
+    'RDBULL': 'Bull Market Index', 'RDBEAR': 'Bear Market Index'
+};
+
+const ALL_INDICES = Object.keys(SYMBOL_MAP);
+
+const ENDPOINTS_DERIV = [
+    'wss://api.derivws.com/trading/v1/options/ws/public',
+    'wss://ws.derivws.com/websockets/v3?app_id=1089'
+];
+
+const STORAGE = {
+    wsUrl: 'smc_v6_ws_url',
+    wsToken: 'smc_v6_ws_token',
+    tgToken: 'smc_v6_tg_token',
+    tgChat: 'smc_v6_tg_chatid',
+    dsKey: 'smc_v6_ds_key',
+    trades: 'smc_v6_trades',
+    signals: 'smc_v6_signals',
+    cache: 'smc_v6_signal_cache',
+    config: 'smc_v6_config',
+    scannerState: 'smc_v6_scanner_state'
+};
+
+const DEFAULT_CONFIG = {
+    wsUrl: 'wss://antivirus-muslim-desert-pie.trycloudflare.com',
+    wsToken: 'smc_v5_MonTokenSecret_2026_xK9pL3mNqR7vT5',
+    tgToken: '8877106520:AAGlWDTxbVlKF7bWsh403-CdP2TwW_7fvtY',
+    tgChat: '5814233227',
+    dsKey: 'sk-a432d370fc764da082e62058ad527029'
+};
+
+const SCAN_INTERVAL_MS = 30 * 60 * 1000;
+const CACHE_DURATION_MS = 30 * 60 * 1000;
+
+const state = {
+    // Bridge MT5
+    mt5Ws: null,
+    mt5Connected: false,
+    // Deriv Data
+    derivWs: null,
+    derivConnected: false,
+    derivReqId: 1,
+    derivPending: new Map(),
+    // Scanner
+    scannerActive: false,
+    scannerTimer: null,
+    countdownTimer: null,
+    nextScanAt: null,
+    scanning: false,
+    // Data
+    trades: [],
+    signals: [],
+    signalCache: {},
+    pendingTradeId: null
+};
+
+function $(id) { return document.getElementById(id); }
+function nowTime() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+}
+function log(msg, type = 'info') {
+    const logs = $('logs');
+    if (!logs) return;
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.innerHTML = '<span class="log-time">' + nowTime() + '</span><span class="log-' + type + '">' + escapeHtml(msg) + '</span>';
+    logs.appendChild(line);
+    logs.scrollTop = logs.scrollHeight;
+    while (logs.children.length > 400) logs.removeChild(logs.firstChild);
+}
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function setWsStatus(status, text, detail) {
+    const dot = $('ws-dot');
+    dot.className = 'dot ' + (status || '');
+    $('ws-status').textContent = text;
+    $('ws-detail').textContent = detail || '';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CONFIG LOAD/SAVE
+// ══════════════════════════════════════════════════════════════════
+function loadConfig() {
+    $('cfg-ws-url').value = localStorage.getItem(STORAGE.wsUrl) || DEFAULT_CONFIG.wsUrl;
+    $('cfg-ws-token').value = localStorage.getItem(STORAGE.wsToken) || DEFAULT_CONFIG.wsToken;
+    $('cfg-tg-token').value = localStorage.getItem(STORAGE.tgToken) || DEFAULT_CONFIG.tgToken;
+    $('cfg-tg-chatid').value = localStorage.getItem(STORAGE.tgChat) || DEFAULT_CONFIG.tgChat;
+    $('cfg-ds-key').value = localStorage.getItem(STORAGE.dsKey) || DEFAULT_CONFIG.dsKey;
+    
+    try {
+        const cfg = JSON.parse(localStorage.getItem(STORAGE.config) || '{}');
+        if (cfg.amount) $('cfg-amount').value = cfg.amount;
+        if (cfg.wr) $('cfg-wr').value = cfg.wr;
+        if (cfg.pf) $('cfg-pf').value = cfg.pf;
+        if (cfg.maxpos) $('cfg-maxpos').value = cfg.maxpos;
+    } catch (e) {}
+}
+function saveConfig() {
+    localStorage.setItem(STORAGE.wsUrl, $('cfg-ws-url').value.trim());
+    localStorage.setItem(STORAGE.wsToken, $('cfg-ws-token').value.trim());
+    localStorage.setItem(STORAGE.tgToken, $('cfg-tg-token').value.trim());
+    localStorage.setItem(STORAGE.tgChat, $('cfg-tg-chatid').value.trim());
+    localStorage.setItem(STORAGE.dsKey, $('cfg-ds-key').value.trim());
+    localStorage.setItem(STORAGE.config, JSON.stringify({
+        amount: parseFloat($('cfg-amount').value) || 5,
+        wr: parseInt($('cfg-wr').value) || 60,
+        pf: parseFloat($('cfg-pf').value) || 1.5,
+        maxpos: parseInt($('cfg-maxpos').value) || 5
+    }));
+}
+function getConfig() {
+    return {
+        amount: parseFloat($('cfg-amount').value) || 5,
+        wr: parseInt($('cfg-wr').value) || 60,
+        pf: parseFloat($('cfg-pf').value) || 1.5,
+        maxpos: parseInt($('cfg-maxpos').value) || 5
+    };
+}
+
+// ══════════════════════════════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════════════════════════════
+function loadTrades() {
+    try { state.trades = JSON.parse(localStorage.getItem(STORAGE.trades) || '[]'); } catch (e) { state.trades = []; }
+}
+function saveTrades() {
+    try { localStorage.setItem(STORAGE.trades, JSON.stringify(state.trades)); } catch (e) {}
+}
+function loadSignals() {
+    try { state.signals = JSON.parse(localStorage.getItem(STORAGE.signals) || '[]'); } catch (e) { state.signals = []; }
+    state.signals = state.signals.slice(0, 50);
+}
+function saveSignals() {
+    try { localStorage.setItem(STORAGE.signals, JSON.stringify(state.signals)); } catch (e) {}
+}
+function loadCache() {
+    try {
+        const raw = localStorage.getItem(STORAGE.cache);
+        if (!raw) return {};
+        const obj = JSON.parse(raw);
+        const now = Date.now();
+        const filtered = {};
+        for (const [k, v] of Object.entries(obj)) {
+            if (now - v < CACHE_DURATION_MS) filtered[k] = v;
+        }
+        state.signalCache = filtered;
+    } catch (e) { state.signalCache = {}; }
+}
+function saveCache() {
+    try { localStorage.setItem(STORAGE.cache, JSON.stringify(state.signalCache)); } catch (e) {}
+}
+function isCached(symbol, strategy) {
+    const key = symbol + '_' + strategy;
+    const ts = state.signalCache[key];
+    if (!ts) return false;
+    if (Date.now() - ts > CACHE_DURATION_MS) { delete state.signalCache[key]; return false; }
+    return true;
+}
+function cacheSignal(symbol, strategy) {
+    state.signalCache[symbol + '_' + strategy] = Date.now();
+    saveCache();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════════════════
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        $('panel-' + tab.dataset.tab).classList.add('active');
+        if (tab.dataset.tab === 'stats') renderStats();
+        if (tab.dataset.tab === 'journal') renderJournal();
+    });
+});
+
+// ══════════════════════════════════════════════════════════════════
+// BRIDGE MT5 (WebSocket)
+// ══════════════════════════════════════════════════════════════════
+function connectMT5() {
+    if (state.mt5Ws) { try { state.mt5Ws.close(); } catch (e) {} }
+    saveConfig();
+    const url = $('cfg-ws-url').value.trim();
+    if (!url) { log('❌ URL bridge manquante', 'error'); return; }
+
+    setWsStatus('connecting', 'Connexion bridge…', url);
+    log('🔌 Connexion bridge : ' + url, 'info');
+
+    try { state.mt5Ws = new WebSocket(url); }
+    catch (e) { log('❌ ' + e.message, 'error'); setWsStatus('error', 'Erreur', e.message); return; }
+
+    state.mt5Ws.onopen = () => {
+        state.mt5Connected = true;
+        setWsStatus('connected', 'Bridge connecté ✓', url);
+        log('✅ Bridge connecté', 'success');
+        $('btn-connect').disabled = true;
+        $('btn-disconnect').disabled = false;
+        setTimeout(() => sendMT5({ type: 'get_status' }), 500);
+    };
+
+    state.mt5Ws.onmessage = (event) => {
+        let data;
+        try { data = JSON.parse(event.data); } catch (e) { return; }
+        handleMT5Message(data);
+    };
+
+    state.mt5Ws.onerror = () => log('❌ Erreur bridge', 'error');
+
+    state.mt5Ws.onclose = (event) => {
+        state.mt5Connected = false;
+        setWsStatus('', 'Bridge déconnecté', 'Code ' + event.code);
+        log('🔌 Bridge déconnecté (code ' + event.code + ')', 'warn');
+        $('btn-connect').disabled = false;
+        $('btn-disconnect').disabled = true;
+    };
+}
+function disconnectMT5() {
+    if (state.mt5Ws) { state.mt5Ws.close(1000, 'user'); state.mt5Ws = null; }
+}
+function sendMT5(payload) {
+    if (!state.mt5Connected || !state.mt5Ws) { log('⚠️ Bridge non connecté', 'warn'); return false; }
+    try { state.mt5Ws.send(JSON.stringify(payload)); return true; }
+    catch (e) { log('❌ Envoi : ' + e.message, 'error'); return false; }
+}
+
+function handleMT5Message(data) {
+    const type = data.type || '?';
+
+    if (type === 'open_order') {
+        if (data.status === 'error') {
+            log('❌ Ordre rejeté : ' + data.error, 'error');
+            if (state.pendingTradeId) {
+                updateTrade(state.pendingTradeId, { status: 'rejected', error: data.error });
+                state.pendingTradeId = null;
+            }
+        }
+        return;
+    }
+
+    switch (type) {
+        case 'welcome':
+            log('✅ Bridge welcome v' + data.version, 'success');
+            break;
+
+        case 'order_pending':
+            log('⏳ Ordre en attente : ' + data.request_id, 'warn');
+            if (state.pendingTradeId) updateTrade(state.pendingTradeId, { status: 'sent' });
+            break;
+
+        case 'order_executed':
+            log('🎉 Exécuté ! Ticket ' + data.ticket, 'signal');
+            let target = state.pendingTradeId ? state.trades.find(t => t.id === state.pendingTradeId) : null;
+            if (!target) target = state.trades.find(t => t.status === 'sent' || t.status === 'pending');
+            if (target) {
+                updateTrade(target.id, {
+                    status: 'open',
+                    ticket: data.ticket,
+                    openPrice: data.price,
+                    openTime: Date.now(),
+                    mt5Symbol: data.symbol
+                });
+                state.pendingTradeId = null;
+                notifyTelegram(
+                    '🟢 *Trade exécuté*\n\n' +
+                    '📊 ' + data.symbol + '\n' +
+                    '🎫 Ticket : `' + data.ticket + '`\n' +
+                    '📈 ' + data.action + ' ' + data.volume + ' lots\n' +
+                    '💰 Prix : ' + data.price
+                );
+            }
+            break;
+
+        case 'status':
+            log('📊 Bridge EA=' + data.ea_connected + ' Queue=' + data.queue_length, 'data');
+            break;
+
+        case 'get_positions':
+            handlePositionsResponse(data);
+            break;
+
+        case 'positions_pending':
+        case 'account_pending':
+            break;
+
+        case 'get_account':
+            log('💰 Compte ' + data.login + ' | ' + (data.balance || '?') + ' ' + (data.currency || ''), 'success');
+            break;
+
+        default:
+            if (data.error) log('❌ ' + data.error, 'error');
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SYNC MT5
+// ══════════════════════════════════════════════════════════════════
+function syncMT5() {
+    if (!state.mt5Connected) return;
+    sendMT5({ type: 'get_positions' });
+}
+
+function handlePositionsResponse(data) {
+    if (!data.positions) return;
+    const mt5Tickets = new Set();
+
+    for (const pos of data.positions) {
+        mt5Tickets.add(pos.ticket);
+        const trade = state.trades.find(t => t.ticket === pos.ticket);
+        if (trade) {
+            updateTrade(trade.id, {
+                currentPrice: pos.price_current,
+                profit: pos.profit,
+                swap: pos.swap
+            });
+        }
+    }
+
+    // Détecter les trades fermés
+    for (const trade of state.trades) {
+        if (trade.status === 'open' && trade.ticket && !mt5Tickets.has(trade.ticket)) {
+            log('🎯 Trade clôturé : #' + trade.ticket, 'success');
+            const result = trade.profit > 0 ? 'win' : trade.profit < 0 ? 'loss' : 'be';
+            updateTrade(trade.id, {
+                status: 'closed',
+                closeTime: Date.now(),
+                result: result
+            });
+            notifyTelegram('🔴 *Trade clôturé*\n\nTicket : `' + trade.ticket + '`\nRésultat : ' + (result === 'win' ? '✅ GAGNÉ' : result === 'loss' ? '❌ PERDU' : '⚖️ BE'));
+            // Audit IA
+            auditTrade(trade);
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TRADES
+// ══════════════════════════════════════════════════════════════════
+function addTrade(trade) {
+    trade.id = 'tr_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    trade.createdAt = Date.now();
+    trade.status = 'pending';
+    state.trades.unshift(trade);
+    saveTrades();
+    renderJournal();
+    return trade;
+}
+function updateTrade(id, updates) {
+    const idx = state.trades.findIndex(t => t.id === id);
+    if (idx < 0) return;
+    state.trades[idx] = { ...state.trades[idx], ...updates };
+    saveTrades();
+    renderJournal();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// NOTIFICATIONS
+// ══════════════════════════════════════════════════════════════════
+async function notifyTelegram(text) {
+    const token = $('cfg-tg-token').value.trim();
+    const chatId = $('cfg-tg-chatid').value.trim();
+    if (!token || !chatId) return false;
+    try {
+        const res = await fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'Markdown' })
+        });
+        const data = await res.json();
+        return data.ok === true;
+    } catch (e) { return false; }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// DEEPSEEK
+// ══════════════════════════════════════════════════════════════════
+async function callDeepSeek(prompt, maxTokens = 500) {
+    const key = $('cfg-ds-key').value.trim();
+    if (!key) throw new Error('Clé manquante');
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            model: 'deepseek-chat',
+            messages: [
+                { role: 'system', content: 'Tu es un analyste trader SMC. Réponds en français, concis, sans markdown.' },
+                { role: 'user', content: prompt }
+            ],
+            max_tokens: maxTokens
+        })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    return data.choices[0].message.content;
+}
+
+async function auditTrade(trade) {
+    if (!$('cfg-ds-key').value.trim()) return;
+    try {
+        const prompt = 'Analyse ce trade SMC et donne une note /100 :\n' +
+            'Symbole : ' + (trade.mt5Symbol || trade.symbol) + '\n' +
+            'Direction : ' + trade.direction + '\n' +
+            'Résultat : ' + trade.result + '\n' +
+            'Profit : ' + (trade.profit || 0) + '$\n' +
+            'Stratégie : ' + (trade.strategyName || '?');
+        const audit = await callDeepSeek(prompt, 300);
+        const idx = state.trades.findIndex(t => t.id === trade.id);
+        if (idx >= 0) {
+            state.trades[idx].audit = audit;
+            saveTrades();
+            renderJournal();
+        }
+    } catch (e) { log('⚠️ Audit échoué : ' + e.message, 'warn'); }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// DERIV DATA (pour le scanner)
+// ══════════════════════════════════════════════════════════════════
+async function connectDerivData() {
+    if (state.derivConnected) return true;
+    for (const url of ENDPOINTS_DERIV) {
+        try {
+            const ok = await new Promise(resolve => {
+                let ws;
+                try { ws = new WebSocket(url); } catch (e) { resolve(false); return; }
+                let resolved = false;
+                const timeout = setTimeout(() => { if (!resolved) { resolved = true; try { ws.close(); } catch (e) {} resolve(false); } }, 6000);
+                ws.onopen = () => {
+                    if (resolved) return;
+                    resolved = true; clearTimeout(timeout);
+                    state.derivWs = ws;
+                    state.derivConnected = true;
+                    ws.onmessage = handleDerivMessage;
+                    ws.onclose = () => { state.derivConnected = false; };
+                    resolve(true);
+                };
+                ws.onerror = () => {};
+                ws.onclose = () => { if (!resolved) { resolved = true; clearTimeout(timeout); resolve(false); } };
+            });
+            if (ok) { log('✅ Deriv Data connecté', 'success'); return true; }
+        } catch (e) {}
+    }
+    log('❌ Deriv Data HS', 'error');
+    return false;
+}
+
+function handleDerivMessage(event) {
+    let data;
+    try { data = JSON.parse(event.data); } catch (e) { return; }
+    if (data.msg_type === 'ping' && data.ping === 'pong') return;
+    if (data.req_id && state.derivPending.has(data.req_id)) {
+        const { resolve, reject } = state.derivPending.get(data.req_id);
+        state.derivPending.delete(data.req_id);
+        if (data.error) reject(new Error(data.error.message));
+        else resolve(data);
+    }
+}
+
+function sendDeriv(payload, timeoutMs = 20000) {
+    if (!state.derivConnected || !state.derivWs) return Promise.reject(new Error('Non connecté'));
+    const reqId = state.derivReqId++;
+    payload.req_id = reqId;
+    return new Promise((resolve, reject) => {
+        state.derivPending.set(reqId, { resolve, reject });
+        setTimeout(() => {
+            if (state.derivPending.has(reqId)) {
+                state.derivPending.delete(reqId);
+                reject(new Error('Timeout'));
+            }
+        }, timeoutMs);
+        try { state.derivWs.send(JSON.stringify(payload)); }
+        catch (e) { state.derivPending.delete(reqId); reject(e); }
+    });
+}
+
+async function fetchCandles(symbol, granularity, count) {
+    const res = await sendDeriv({
+        ticks_history: symbol,
+        adjust_start_time: 1,
+        count: count,
+        end: 'latest',
+        start: 1,
+        style: 'candles',
+        granularity: granularity
+    }, 25000);
+    if (res.error) throw new Error(res.error.message);
+    if (!res.candles) throw new Error('Pas de candles');
+    return res.candles.map(c => ({
+        epoch: c.epoch,
+        open: parseFloat(c.open),
+        high: parseFloat(c.high),
+        low: parseFloat(c.low),
+        close: parseFloat(c.close)
+    }));
+}
+
+// ══════════════════════════════════════════════════════════════════
+// INDICATEURS
+// ══════════════════════════════════════════════════════════════════
+function calculateATR(candles, period = 14) {
+    if (candles.length < period + 1) return [];
+    const trs = [];
+    for (let i = 1; i < candles.length; i++) {
+        const tr = Math.max(
+            candles[i].high - candles[i].low,
+            Math.abs(candles[i].high - candles[i-1].close),
+            Math.abs(candles[i].low - candles[i-1].close)
+        );
+        trs.push(tr);
+    }
+    const atrs = [];
+    let sum = 0;
+    for (let i = 0; i < period; i++) sum += trs[i];
+    atrs[period - 1] = sum / period;
+    for (let i = period; i < trs.length; i++) {
+        atrs[i] = (atrs[i-1] * (period - 1) + trs[i]) / period;
+    }
+    return atrs;
+}
+function calculateSMA(candles, period) {
+    const smas = [];
+    for (let i = period - 1; i < candles.length; i++) {
+        let sum = 0;
+        for (let j = 0; j < period; j++) sum += candles[i - j].close;
+        smas[i] = sum / period;
+    }
+    return smas;
+}
+function calculateStdDev(candles, period, smas) {
+    const stds = [];
+    for (let i = period - 1; i < candles.length; i++) {
+        const mean = smas[i];
+        if (mean === undefined) continue;
+        let sumSq = 0;
+        for (let j = 0; j < period; j++) {
+            const diff = candles[i - j].close - mean;
+            sumSq += diff * diff;
+        }
+        stds[i] = Math.sqrt(sumSq / period);
+    }
+    return stds;
+}
+function calculateRSI(candles, period = 14) {
+    if (candles.length < period + 1) return [];
+    const gains = [], losses = [];
+    for (let i = 1; i < candles.length; i++) {
+        const diff = candles[i].close - candles[i-1].close;
+        gains.push(diff > 0 ? diff : 0);
+        losses.push(diff < 0 ? -diff : 0);
+    }
+    const rsis = [];
+    let avgGain = 0, avgLoss = 0;
+    for (let i = 0; i < period; i++) { avgGain += gains[i]; avgLoss += losses[i]; }
+    avgGain /= period; avgLoss /= period;
+    rsis[period] = avgLoss === 0 ? 100 : 100 - (100 / (1 + avgGain / avgLoss));
+    for (let i = period + 1; i < candles.length; i++) {
+        avgGain = (avgGain * (period - 1) + gains[i-1]) / period;
+        avgLoss = (avgLoss * (period - 1) + losses[i-1]) / period;
+        rsis[i] = avgLoss === 0 ? 100 : 100 - (100 / (1 + avgGain / avgLoss));
+    }
+    return rsis;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SIMULATION + STATS
+// ══════════════════════════════════════════════════════════════════
+function simulateTrade(candles, startIdx, direction, entry, sl, tp) {
+    for (let i = startIdx; i < candles.length; i++) {
+        const c = candles[i];
+        if (direction === 'buy') {
+            if (c.low <= sl) return { result: 'loss', pips: entry - sl };
+            if (c.high >= tp) return { result: 'win', pips: tp - entry };
+        } else {
+            if (c.high >= sl) return { result: 'loss', pips: sl - entry };
+            if (c.low <= tp) return { result: 'win', pips: entry - tp };
+        }
+    }
+    const last = candles[candles.length - 1].close;
+    const pips = direction === 'buy' ? last - entry : entry - last;
+    return { result: pips > 0 ? 'win' : 'loss', pips };
+}
+function calculateStats(trades) {
+    if (!trades.length) return { total: 0, wins: 0, losses: 0, winrate: 0, profitFactor: 0, totalPips: 0 };
+    const wins = trades.filter(t => t.result === 'win');
+    const losses = trades.filter(t => t.result === 'loss');
+    const pipsWon = wins.reduce((s, t) => s + t.pips, 0);
+    const pipsLost = losses.reduce((s, t) => s + t.pips, 0);
+    const winrate = trades.length > 0 ? Math.round(wins.length / trades.length * 100) : 0;
+    const profitFactor = pipsLost > 0 ? pipsWon / pipsLost : (pipsWon > 0 ? 99 : 0);
+    return {
+        total: trades.length,
+        wins: wins.length,
+        losses: losses.length,
+        winrate: winrate,
+        profitFactor: profitFactor.toFixed(2),
+        totalPips: (pipsWon - pipsLost).toFixed(2)
+    };
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 5 STRATÉGIES AVEC SL/TP 1:3
+// ══════════════════════════════════════════════════════════════════
+function strategy1(candles) {
+    const rangeBars = 50, atrPeriod = 14;
+    const atrs = calculateATR(candles, atrPeriod);
+    const trades = [];
+    for (let i = rangeBars + atrPeriod; i < candles.length - 1; i++) {
+        const window = candles.slice(i - rangeBars, i);
+        const rangeHigh = Math.max(...window.map(c => c.high));
+        const rangeLow = Math.min(...window.map(c => c.low));
+        const rangeMid = (rangeHigh + rangeLow) / 2;
+        const current = candles[i].close;
+        const atr = atrs[i - 1 - atrPeriod];
+        if (!atr || atr <= 0) continue;
+        if (current < rangeLow + atr * 0.5) {
+            const entry = candles[i + 1].open;
+            const sl = entry - atr * 1.5;
+            const risk = entry - sl;
+            const tp = entry + risk * 3; // RR 1:3
+            trades.push(simulateTrade(candles, i + 1, 'buy', entry, sl, tp));
+        } else if (current > rangeHigh - atr * 0.5) {
+            const entry = candles[i + 1].open;
+            const sl = entry + atr * 1.5;
+            const risk = sl - entry;
+            const tp = entry - risk * 3;
+            trades.push(simulateTrade(candles, i + 1, 'sell', entry, sl, tp));
+        }
+    }
+    return calculateStats(trades);
+}
+
+function strategy2(candles, symbol) {
+    const atrPeriod = 14;
+    const atrs = calculateATR(candles, atrPeriod);
+    const trades = [];
+    const direction = symbol.includes('BOOM') ? 'sell' : 'buy';
+    for (let i = atrPeriod + 5; i < candles.length - 1; i++) {
+        const atr = atrs[i - 1 - atrPeriod];
+        if (!atr || atr <= 0) continue;
+        const recent = candles.slice(Math.max(0, i - 5), i);
+        const bigMove = recent.some(c => Math.abs(c.close - c.open) > atr * 2);
+        if (bigMove) continue;
+        const entry = candles[i + 1].open;
+        const sl = direction === 'buy' ? entry - atr * 0.8 : entry + atr * 0.8;
+        const risk = Math.abs(entry - sl);
+        const tp = direction === 'buy' ? entry + risk * 3 : entry - risk * 3;
+        trades.push(simulateTrade(candles, i + 1, direction, entry, sl, tp));
+    }
+    return calculateStats(trades);
+}
+
+function strategy3(candles) {
+    const bbPeriod = 20, bbMult = 2, rsiPeriod = 14, atrPeriod = 14;
+    const smas = calculateSMA(candles, bbPeriod);
+    const stds = calculateStdDev(candles, bbPeriod, smas);
+    const rsis = calculateRSI(candles, rsiPeriod);
+    const atrs = calculateATR(candles, atrPeriod);
+    const trades = [];
+    const startIdx = Math.max(bbPeriod, rsiPeriod, atrPeriod) + 1;
+    for (let i = startIdx; i < candles.length - 1; i++) {
+        const sma = smas[i], std = stds[i], rsi = rsis[i];
+        const atr = atrs[i - 1 - atrPeriod];
+        if (!sma || !std || !rsi || !atr || atr <= 0) continue;
+        const upper = sma + bbMult * std;
+        const lower = sma - bbMult * std;
+        const close = candles[i].close;
+        let direction = null;
+        if (close < lower && rsi < 35) direction = 'buy';
+        else if (close > upper && rsi > 65) direction = 'sell';
+        if (!direction) continue;
+        const entry = candles[i + 1].open;
+        const sl = direction === 'buy' ? entry - atr * 1.5 : entry + atr * 1.5;
+        const risk = Math.abs(entry - sl);
+        const tp = direction === 'buy' ? entry + risk * 3 : entry - risk * 3;
+        trades.push(simulateTrade(candles, i + 1, direction, entry, sl, tp));
+    }
+    return calculateStats(trades);
+}
+
+function strategy4(candles) {
+    const rangeBars = 100, atrPeriod = 14;
+    const atrs = calculateATR(candles, atrPeriod);
+    const trades = [];
+    for (let i = rangeBars + atrPeriod; i < candles.length - 1; i++) {
+        const window = candles.slice(i - rangeBars, i);
+        const rangeHigh = Math.max(...window.map(c => c.high));
+        const rangeLow = Math.min(...window.map(c => c.low));
+        const current = candles[i];
+        const atr = atrs[i - 1 - atrPeriod];
+        if (!atr || atr <= 0) continue;
+        const isBullBreak = current.close > rangeHigh && (current.close - current.open) > atr * 0.8;
+        const isBearBreak = current.close < rangeLow && (current.open - current.close) > atr * 0.8;
+        if (isBullBreak) {
+            const entry = candles[i + 1].open;
+            const sl = entry - atr * 1.2;
+            const risk = entry - sl;
+            const tp = entry + risk * 3;
+            trades.push(simulateTrade(candles, i + 1, 'buy', entry, sl, tp));
+        } else if (isBearBreak) {
+            const entry = candles[i + 1].open;
+            const sl = entry + atr * 1.2;
+            const risk = sl - entry;
+            const tp = entry - risk * 3;
+            trades.push(simulateTrade(candles, i + 1, 'sell', entry, sl, tp));
+        }
+    }
+    return calculateStats(trades);
+}
+
+function strategy5(candles) {
+    const lookback = 3, atrPeriod = 14, rangeBars = 50;
+    const atrs = calculateATR(candles, atrPeriod);
+    const trades = [];
+    function findSwings(start, end) {
+        const swings = [];
+        for (let i = start + lookback; i < end - lookback; i++) {
+            let isHigh = true, isLow = true;
+            for (let j = 1; j <= lookback; j++) {
+                if (candles[i].high <= candles[i - j].high || candles[i].high <= candles[i + j].high) isHigh = false;
+                if (candles[i].low >= candles[i - j].low || candles[i].low >= candles[i + j].low) isLow = false;
+            }
+            if (isHigh) swings.push({ type: 'high', index: i, price: candles[i].high });
+            if (isLow) swings.push({ type: 'low', index: i, price: candles[i].low });
+        }
+        return swings;
+    }
+    const minStart = Math.max(rangeBars, atrPeriod + lookback * 2) + 1;
+    for (let i = minStart; i < candles.length - 2; i++) {
+        const atr = atrs[i - 1 - atrPeriod];
+        if (!atr || atr <= 0) continue;
+        const swings = findSwings(i - rangeBars, i);
+        if (swings.length < 4) continue;
+        let lastHigh = null, lastLow = null, lastBOS = null;
+        for (const s of swings) {
+            if (s.type === 'high') {
+                if (lastHigh && s.price > lastHigh.price) lastBOS = { direction: 'bull', index: s.index, price: s.price };
+                lastHigh = s;
+            } else {
+                if (lastLow && s.price < lastLow.price) lastBOS = { direction: 'bear', index: s.index, price: s.price };
+                lastLow = s;
+            }
+        }
+        if (!lastBOS || lastBOS.index > i - 3) continue;
+        const rangeWindow = candles.slice(i - rangeBars, i);
+        const rangeHigh = Math.max(...rangeWindow.map(c => c.high));
+        const rangeLow = Math.min(...rangeWindow.map(c => c.low));
+        const eq = (rangeHigh + rangeLow) / 2;
+        const zone = candles[i].close > eq ? 'premium' : 'discount';
+        let direction = null;
+        if (lastBOS.direction === 'bull' && zone === 'discount') direction = 'buy';
+        else if (lastBOS.direction === 'bear' && zone === 'premium') direction = 'sell';
+        else continue;
+        const entry = candles[i + 1].open;
+        const sl = direction === 'buy' ? entry - atr * 1.5 : entry + atr * 1.5;
+        const risk = Math.abs(entry - sl);
+        const tp = direction === 'buy' ? entry + risk * 3 : entry - risk * 3;
+        trades.push(simulateTrade(candles, i + 1, direction, entry, sl, tp));
+    }
+    return calculateStats(trades);
+}
+
+const STRATEGIES = [
+    { id: 's1', name: 'Stratégie 1', fn: strategy1 },
+    { id: 's2', name: 'Stratégie 2', fn: strategy2 },
+    { id: 's3', name: 'Stratégie 3', fn: strategy3 },
+    { id: 's4', name: 'Stratégie 4', fn: strategy4 },
+    { id: 's5', name: 'Stratégie 5', fn: strategy5 }
+];
+
+// ══════════════════════════════════════════════════════════════════
+// SCANNER
+// ══════════════════════════════════════════════════════════════════
+function startScanner() {
+    if (state.scannerActive) return;
+    state.scannerActive = true;
+    $('scanner-state').textContent = '🟢 Actif';
+    $('scanner-state').className = 'stat-value green';
+    $('btn-toggle-scanner').textContent = '⏹ Arrêter';
+    $('btn-toggle-scanner').className = 'small danger';
+    try { localStorage.setItem(STORAGE.scannerState, '1'); } catch (e) {}
+    log('🤖 Scanner démarré', 'success');
+    runScan();
+}
+function stopScanner() {
+    state.scannerActive = false;
+    if (state.scannerTimer) { clearTimeout(state.scannerTimer); state.scannerTimer = null; }
+    if (state.countdownTimer) { clearInterval(state.countdownTimer); state.countdownTimer = null; }
+    $('scanner-state').textContent = '⏸ Arrêté';
+    $('scanner-state').className = 'stat-value';
+    $('btn-toggle-scanner').textContent = '▶️ Démarrer';
+    $('btn-toggle-scanner').className = 'small primary';
+    $('scanner-next').textContent = '—';
+    try { localStorage.setItem(STORAGE.scannerState, '0'); } catch (e) {}
+    log('⏹ Scanner arrêté', 'warn');
+}
+
+async function runScan() {
+    if (!state.scannerActive || state.scanning) return;
+    state.scanning = true;
+
+    const config = getConfig();
+    log('═══════════════════════════════════════', 'info');
+    log('🤖 SCAN AUTO · ' + new Date().toLocaleTimeString('fr-FR'), 'success');
+    log('💰 Montant/trade : ' + config.amount + '$', 'data');
+    log('🎯 Filtres : WR≥' + config.wr + '% PF≥' + config.pf, 'data');
+    log('═══════════════════════════════════════', 'info');
+
+    // Vérifier Deriv Data
+    if (!state.derivConnected) {
+        const ok = await connectDerivData();
+        if (!ok) { log('❌ Deriv Data HS', 'error'); state.scanning = false; return; }
+    }
+
+    // Vérifier bridge MT5
+    if (!state.mt5Connected) {
+        log('❌ Bridge MT5 HS', 'error');
+        state.scanning = false;
+        return;
+    }
+
+    // Compter positions ouvertes
+    const openCount = state.trades.filter(t => t.status === 'open' || t.status === 'sent' || t.status === 'pending').length;
+    if (openCount >= config.maxpos) {
+        log('⏸ Max positions atteint (' + openCount + '/' + config.maxpos + ')', 'warn');
+        state.scanning = false;
+        scheduleNextScan();
+        return;
+    }
+
+    let signalsFound = 0;
+    for (const symbol of ALL_INDICES) {
+        if (!state.scannerActive) break;
+        try {
+            const candles = await fetchCandles(symbol, 300, 1000); // M5, 1000 bougies
+            const results = [];
+            for (const strat of STRATEGIES) {
+                const stats = strat.fn(candles, symbol);
+                results.push({ name: strat.name, id: strat.id, stats });
+            }
+            // Chercher les signaux A+
+            for (const r of results) {
+                if (r.stats.winrate >= config.wr && parseFloat(r.stats.profitFactor) >= config.pf && r.stats.total >= 10) {
+                    if (isCached(symbol, r.name)) continue;
+                    // Signal A+ !
+                    signalsFound++;
+                    cacheSignal(symbol, r.name);
+                    log('🎯 SIGNAL ' + symbol + ' × ' + r.name + ' (WR ' + r.stats.winrate + '%, PF ' + r.stats.profitFactor + ')', 'signal');
+                    await executeSignal(symbol, r, config);
+                    // Max 1 signal par scan (1 position par opportunité)
+                    break;
+                }
+            }
+            await new Promise(r => setTimeout(r, 200));
+        } catch (e) {
+            // Ignorer les erreurs
+        }
+    }
+
+    log('✅ Scan terminé · ' + signalsFound + ' signal(aux)', 'success');
+    state.scanning = false;
+    renderScannerStats();
+    scheduleNextScan();
+}
+
+async function executeSignal(symbol, strategyResult, config) {
+    const mt5Symbol = SYMBOL_MAP[symbol];
+    if (!mt5Symbol) { log('⚠️ Pas de mapping pour ' + symbol, 'warn'); return; }
+
+    // Déterminer direction (par défaut : dépend de la stratégie)
+    // Pour simplifier : on utilise un signal composite
+    // S1, S3, S5 : range → buy ou sell selon la dernière bougie
+    // S2 : Boom=sell / Crash=buy
+    // S4 : breakout → direction de la cassure
+    let direction = 'buy';
+    if (symbol.includes('BOOM')) direction = 'sell';
+    else if (strategyResult.id === 's2') direction = symbol.includes('BOOM') ? 'sell' : 'buy';
+
+    // Volume : montant fixe / (SL × pipValue)
+    // Pour simplifier : 0.01 lot minimum
+    // Le bridge calculera le SL/TP en points
+    const amount = config.amount;
+    // Approximation : 1 lot ≈ 10$/pip → 0.01 lot = 0.1$/pip
+    // Si SL ~ 30 pips → risque = 3$ pour 0.01 lot
+    // Pour 5$ → 0.016 lot
+    const lot = Math.max(0.01, Math.min(1, amount / 30 / 10)).toFixed(2);
+
+    const requestId = 'req_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    const trade = addTrade({
+        symbol: symbol,
+        mt5Symbol: mt5Symbol,
+        direction: direction,
+        lot: parseFloat(lot),
+        strategyName: strategyResult.name,
+        strategyId: strategyResult.id,
+        signalData: {
+            winrate: strategyResult.stats.winrate,
+            pf: strategyResult.stats.profitFactor,
+            total: strategyResult.stats.total
+        }
+    });
+    state.pendingTradeId = trade.id;
+
+    // Ajouter aux signaux
+    state.signals.unshift({
+        symbol: symbol,
+        mt5Symbol: mt5Symbol,
+        strategy: strategyResult.name,
+        direction: direction,
+        winrate: strategyResult.stats.winrate,
+        pf: strategyResult.stats.profitFactor,
+        lot: lot,
+        time: Date.now()
+    });
+    state.signals = state.signals.slice(0, 30);
+    saveSignals();
+    renderSignals();
+
+    // Envoyer à MT5
+    sendMT5({
+        type: 'open_order',
+        request_id: requestId,
+        order: {
+            symbol: mt5Symbol,
+            direction: direction,
+            lot: parseFloat(lot),
+            sl_points: 0,
+            tp_points: 0,
+            comment: 'SMC ' + strategyResult.name
+        }
+    });
+
+    log('📤 Envoi MT5 : ' + mt5Symbol + ' ' + direction + ' ' + lot + ' lots', 'signal');
+
+    // Notification Telegram
+    await notifyTelegram(
+        '🚀 *SIGNAL A+ DÉTECTÉ*\n\n' +
+        '📊 ' + symbol + '\n' +
+        '🎯 ' + strategyResult.name + '\n' +
+        '📈 ' + direction.toUpperCase() + ' ' + lot + ' lots\n' +
+        '💯 WR : ' + strategyResult.stats.winrate + '%\n' +
+        '📊 PF : ' + strategyResult.stats.profitFactor + '\n' +
+        '💰 Montant : ' + amount + '$'
+    );
+}
+
+function scheduleNextScan() {
+    if (!state.scannerActive) return;
+    state.nextScanAt = Date.now() + SCAN_INTERVAL_MS;
+    if (state.countdownTimer) clearInterval(state.countdownTimer);
+    state.countdownTimer = setInterval(() => {
+        if (!state.scannerActive) { clearInterval(state.countdownTimer); return; }
+        const rem = Math.max(0, state.nextScanAt - Date.now());
+        const m = Math.floor(rem / 60000);
+        const s = Math.floor((rem % 60000) / 1000);
+        $('scanner-next').textContent = m + 'm ' + String(s).padStart(2, '0') + 's';
+        if (rem <= 0) {
+            clearInterval(state.countdownTimer);
+            if (state.scannerActive) runScan();
+        }
+    }, 1000);
+}
+
+function renderScannerStats() {
+    $('scanner-signals').textContent = state.signals.length;
+    const openCount = state.trades.filter(t => t.status === 'open' || t.status === 'sent' || t.status === 'pending').length;
+    $('scanner-open').textContent = openCount;
+}
+
+function renderSignals() {
+    const list = $('signals-list');
+    if (!state.signals.length) {
+        list.innerHTML = '<div class="empty">Aucun signal pour le moment</div>';
+        return;
+    }
+    list.innerHTML = state.signals.slice(0, 10).map(s => {
+        return '<div class="signal-card">' +
+            '<div class="trade-header">' +
+                '<span class="trade-symbol">' + escapeHtml(s.symbol) + '</span>' +
+                '<span class="trade-badge signal">' + s.direction.toUpperCase() + '</span>' +
+            '</div>' +
+            '<div style="font-size:0.7rem;color:#9ca3af;">' + escapeHtml(s.strategy) + '</div>' +
+            '<div class="trade-info" style="margin-top:0.4rem;">' +
+                '<div><div class="label">WR</div><div class="value" style="color:#16a34a;">' + s.winrate + '%</div></div>' +
+                '<div><div class="label">PF</div><div class="value">' + s.pf + '</div></div>' +
+                '<div><div class="label">Lot</div><div class="value">' + s.lot + '</div></div>' +
+                '<div><div class="label">Heure</div><div class="value">' + new Date(s.time).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) + '</div></div>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RENDER JOURNAL
+// ══════════════════════════════════════════════════════════════════
+function renderJournal() {
+    const open = state.trades.filter(t => t.status === 'open' || t.status === 'sent' || t.status === 'pending');
+    const closed = state.trades.filter(t => t.status === 'closed' || t.status === 'rejected');
+
+    $('badge-open').textContent = open.length;
+    $('badge-closed').textContent = closed.length;
+
+    const wins = closed.filter(t => t.result === 'win').length;
+    const losses = closed.filter(t => t.result === 'loss').length;
+    $('stat-total').textContent = state.trades.length;
+    $('stat-open').textContent = open.length;
+    $('stat-wins').textContent = wins;
+    $('stat-losses').textContent = losses;
+    $('stat-winrate').textContent = (wins + losses) > 0 ? Math.round(wins / (wins + losses) * 100) + '%' : '0%';
+
+    $('list-open').innerHTML = open.length ? open.map(renderTradeCard).join('') : '<div class="empty">Aucune position ouverte</div>';
+    $('list-closed').innerHTML = closed.length ? closed.slice(0, 20).map(renderTradeCard).join('') : '<div class="empty">Aucune position fermée</div>';
+}
+
+function renderTradeCard(t) {
+    const dirClass = t.direction === 'buy' ? 'buy' : 'sell';
+    const statusClass = t.status === 'open' ? 'open' :
+                        t.status === 'sent' || t.status === 'pending' ? 'pending' :
+                        t.result === 'win' ? 'win' :
+                        t.result === 'loss' ? 'loss' : 'pending';
+    const dirLabel = t.direction === 'buy' ? '🟢 ACHAT' : '🔴 VENTE';
+    const statusLabel = t.status === 'open' ? '🟢 OUVERT' :
+                        t.status === 'sent' ? '🟠 ENVOYÉ' :
+                        t.status === 'pending' ? '⏳ EN ATTENTE' :
+                        t.status === 'rejected' ? '❌ REJETÉ' :
+                        t.result === 'win' ? '✅ GAGNÉ' :
+                        t.result === 'loss' ? '❌ PERDU' : '⚪ CLÔTURÉ';
+    const profit = t.profit != null ? (t.profit >= 0 ? '+' : '') + t.profit.toFixed(2) + ' $' : '—';
+    const profitColor = t.profit > 0 ? '#16a34a' : t.profit < 0 ? '#dc2626' : '#9ca3af';
+
+    return '<div class="trade-card ' + statusClass + '">' +
+        '<div class="trade-header">' +
+            '<span class="trade-symbol">' + escapeHtml(t.mt5Symbol || t.symbol) + '</span>' +
+            '<span class="trade-badge ' + dirClass + '">' + dirLabel + '</span>' +
+        '</div>' +
+        '<div class="trade-info">' +
+            '<div><div class="label">Ticket</div><div class="value">' + (t.ticket || '—') + '</div></div>' +
+            '<div><div class="label">Statut</div><div class="value">' + statusLabel + '</div></div>' +
+            '<div><div class="label">Lot</div><div class="value">' + (t.lot || '0.01') + '</div></div>' +
+            '<div><div class="label">P&L</div><div class="value" style="color:' + profitColor + '">' + profit + '</div></div>' +
+        '</div>' +
+        '<div class="trade-footer">' +
+            '<span>' + (t.strategyName || '—') + '</span>' +
+            '<span>' + new Date(t.createdAt).toLocaleString('fr-FR') + '</span>' +
+        '</div>' +
+        (t.error ? '<div style="color:#fca5a5;font-size:0.7rem;margin-top:0.3rem;">⚠️ ' + escapeHtml(t.error) + '</div>' : '') +
+        (t.audit ? '<div class="audit-box">🧠 ' + escapeHtml(t.audit) + '</div>' : '') +
+    '</div>';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RENDER STATS
+// ══════════════════════════════════════════════════════════════════
+function renderStats() {
+    const closed = state.trades.filter(t => t.status === 'closed');
+    const wins = closed.filter(t => t.result === 'win').length;
+    const losses = closed.filter(t => t.result === 'loss').length;
+    const totalPnl = closed.reduce((s, t) => s + (t.profit || 0), 0);
+
+    $('st-total').textContent = closed.length;
+    $('st-wins').textContent = wins;
+    $('st-losses').textContent = losses;
+    $('st-winrate').textContent = (wins + losses) > 0 ? Math.round(wins / (wins + losses) * 100) + '%' : '0%';
+    $('st-pnl').textContent = (totalPnl >= 0 ? '+' : '') + totalPnl.toFixed(2) + ' $';
+    $('st-pnl').className = 'stat-value ' + (totalPnl >= 0 ? 'green' : 'red');
+    $('st-avg').textContent = closed.length ? (totalPnl / closed.length).toFixed(2) + ' $' : '$0';
+
+    const bySymbol = {};
+    for (const t of closed) {
+        const key = t.mt5Symbol || t.symbol;
+        if (!bySymbol[key]) bySymbol[key] = { wins: 0, losses: 0, pnl: 0, total: 0 };
+        bySymbol[key].total++;
+        bySymbol[key].pnl += (t.profit || 0);
+        if (t.result === 'win') bySymbol[key].wins++;
+        if (t.result === 'loss') bySymbol[key].losses++;
+    }
+
+    const list = Object.entries(bySymbol).sort((a, b) => b[1].total - a[1].total);
+    $('stats-by-symbol').innerHTML = list.length ? list.map(([sym, s]) => {
+        const wr = (s.wins + s.losses) > 0 ? Math.round(s.wins / (s.wins + s.losses) * 100) : 0;
+        return '<div style="padding:0.5rem;background:#0a0f14;border-radius:6px;margin-bottom:0.3rem;display:grid;grid-template-columns:1fr auto auto auto;gap:0.5rem;font-size:0.72rem;">' +
+            '<span style="color:#93c5fd;font-weight:700;">' + escapeHtml(sym) + '</span>' +
+            '<span>' + s.total + ' trades</span>' +
+            '<span style="color:' + (wr >= 50 ? '#16a34a' : '#dc2626') + ';">' + wr + '%</span>' +
+            '<span style="color:' + (s.pnl >= 0 ? '#16a34a' : '#dc2626') + ';">' + (s.pnl >= 0 ? '+' : '') + s.pnl.toFixed(2) + '$</span>' +
+        '</div>';
+    }).join('') : '<div class="empty">Aucune donnée</div>';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// EVENTS
+// ══════════════════════════════════════════════════════════════════
+$('btn-connect').addEventListener('click', connectMT5);
+$('btn-disconnect').addEventListener('click', disconnectMT5);
+$('btn-sync').addEventListener('click', syncMT5);
+$('btn-toggle-scanner').addEventListener('click', () => {
+    if (state.scannerActive) stopScanner();
+    else startScanner();
+});
+$('btn-test-tg').addEventListener('click', async () => {
+    const ok = await notifyTelegram('🧪 *Test SMC v6.0*\n\n✅ Telegram OK !');
+    log(ok ? '✅ Telegram OK' : '❌ Telegram KO', ok ? 'success' : 'error');
+});
+$('btn-test-ds').addEventListener('click', async () => {
+    try {
+        const reply = await callDeepSeek('Réponds juste "OK".', 50);
+        log('✅ DeepSeek : ' + reply, 'success');
+    } catch (e) { log('❌ DeepSeek : ' + e.message, 'error'); }
+});
+$('btn-export').addEventListener('click', () => {
+    const data = JSON.stringify({ trades: state.trades, signals: state.signals }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'smc-v6-export-' + Date.now() + '.json'; a.click();
+    URL.revokeObjectURL(url);
+    log('📤 Export OK', 'success');
+});
+$('btn-clear').addEventListener('click', () => {
+    if (!confirm('Effacer TOUT ?')) return;
+    state.trades = []; state.signals = []; state.signalCache = {};
+    saveTrades(); saveSignals(); saveCache();
+    renderJournal(); renderSignals(); renderScannerStats();
+    log('🗑️ Tout effacé', 'warn');
+});
+['cfg-amount', 'cfg-wr', 'cfg-pf', 'cfg-maxpos'].forEach(id => {
+    $(id).addEventListener('change', saveConfig);
+});
+
+// ══════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════
+loadConfig();
+loadTrades();
+loadSignals();
+loadCache();
+renderJournal();
+renderSignals();
+renderScannerStats();
+
+log('🚀 SMC Trader Pro v6.0', 'info');
+log('📋 Trades : ' + state.trades.length + ' | Signaux : ' + state.signals.length, 'data');
+setWsStatus('', 'Déconnecté', 'Prêt');
+
+// Auto-connexion
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        connectMT5();
+        connectDerivData();
+    }, 800);
+});
+
+// Reprise scanner
+if (localStorage.getItem(STORAGE.scannerState) === '1') {
+    setTimeout(() => { if (state.mt5Connected) startScanner(); }, 3000);
+}
+</script>
+
+</body>
+</html>
