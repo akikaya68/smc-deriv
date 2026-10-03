@@ -196,7 +196,7 @@ const PING_INTERVAL_MS = 30000;
 const CONNECT_TIMEOUT = 6000;
 
 // ══════════════════════════════════════════════════════════════════
-// 46 INDICES OFFICIELS DERIV (récupérés via active_symbols)
+// 46 INDICES OFFICIELS DERIV
 // ══════════════════════════════════════════════════════════════════
 const SYNTHETIC_FAMILIES = {
     'volatility': {
@@ -461,7 +461,6 @@ function attachHandlers() {
         stopPing();
         setStatus('error', 'Déconnecté', 'Code ' + event.code);
         $('btn-test').disabled = true;
-        // Tentative de reconnexion
         if (state.reconnectAttempts < 3) {
             state.reconnectAttempts++;
             setTimeout(() => { connect(); }, 3000);
