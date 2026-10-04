@@ -89,14 +89,6 @@ button.small { font-size: 0.68rem; padding: 0.4rem 0.7rem; }
 .index-item.selected { background: #16a34a22; border-color: var(--success); }
 .index-item .code { font-weight: 700; color: #93c5fd; font-family: ui-monospace, monospace; font-size: 0.72rem; }
 .index-item .name { font-size: 0.62rem; color: var(--ink-dim); margin-top: 0.15rem; }
-.matrix-table { width: 100%; border-collapse: collapse; font-size: 0.68rem; font-family: ui-monospace, monospace; background: var(--panel-2); border-radius: 8px; overflow: hidden; }
-.matrix-table th, .matrix-table td { padding: 0.4rem 0.3rem; text-align: center; border-bottom: 1px solid var(--panel); }
-.matrix-table th { background: var(--panel); color: var(--ink-dim); font-size: 0.55rem; text-transform: uppercase; position: sticky; top: 0; }
-.matrix-table td.symbol { text-align: left; color: #93c5fd; font-weight: 700; font-size: 0.6rem; }
-.matrix-table td.wr-green { color: var(--success); font-weight: 700; }
-.matrix-table td.wr-blue { color: var(--info); }
-.matrix-table td.wr-orange { color: var(--warn); }
-.matrix-table td.wr-red { color: var(--error); }
 .top5-item { background: var(--panel-2); border-radius: 8px; padding: 0.7rem 0.9rem; border-left: 4px solid; display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 0.7rem; margin-bottom: 0.4rem; }
 .top5-rank { font-size: 1.3rem; font-weight: 700; font-family: ui-monospace, monospace; text-align: center; }
 .top5-score { font-size: 1.1rem; font-weight: 700; font-family: ui-monospace, monospace; color: var(--success); text-align: right; }
@@ -110,7 +102,7 @@ button.small { font-size: 0.68rem; padding: 0.4rem 0.7rem; }
 <body>
 
 <h1>🚀 SMC Trader Pro <span class="badge-v">FINAL v6.3</span></h1>
-<p class="subtitle">5 Stratégies + SMC unifié · Scanner Hybride · MT5 · Journal · IA</p>
+<p class="subtitle">41 indices · 5 Stratégies + SMC unifié · Scanner Hybride · MT5 · Journal · IA</p>
 
 <div class="status-box">
     <div class="dot" id="deriv-dot"></div>
@@ -235,11 +227,14 @@ button.small { font-size: 0.68rem; padding: 0.4rem 0.7rem; }
         <div class="section-title">🎯 Paramètres</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
             <div><label>Montant ($)</label><input type="number" id="scan-amount" value="5" step="0.5" min="0.5"></div>
-            <div><label>WR min (%)</label><input type="number" id="scan-wr" value="60" step="1" min="50" max="95"></div>
+            <div><label>WR min (%)</label><input type="number" id="scan-wr" value="50" step="1" min="40" max="95"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
-            <div><label>PF min</label><input type="number" id="scan-pf" value="1.5" step="0.1" min="1"></div>
+            <div><label>PF min</label><input type="number" id="scan-pf" value="1.0" step="0.1" min="0.5"></div>
             <div><label>Max positions</label><input type="number" id="scan-maxpos" value="5" step="1" min="1"></div>
+        </div>
+        <div style="font-size:0.68rem;color:#6b7280;margin-top:0.3rem;">
+            ⓘ Seuils assouplis : WR 50% · PF 1.0 · Moteur SMC élargi
         </div>
     </div>
     <div class="section">
@@ -371,43 +366,71 @@ button.small { font-size: 0.68rem; padding: 0.4rem 0.7rem; }
 </div>
 <script>
 // ═══════════════════════════════════════════════════════════════════
-// PARTIE 2/3 — CONFIG + STATE + DERIV + MT5
+// PARTIE 2/3 — CONFIG + STATE + DERIV + MT5 (41 INDICES)
 // ═══════════════════════════════════════════════════════════════════
 
-// ─── SYMBOLES (41 indices avec mapping Deriv → MT5) ───
+// ─── 41 SYMBOLES (mapping Deriv → MT5) ───
 const SYMBOLS = [
+    // Volatility (5)
     { deriv: 'R_10', mt5: 'Volatility 10 Index', display: 'Volatility 10' },
     { deriv: 'R_25', mt5: 'Volatility 25 Index', display: 'Volatility 25' },
     { deriv: 'R_50', mt5: 'Volatility 50 Index', display: 'Volatility 50' },
     { deriv: 'R_75', mt5: 'Volatility 75 Index', display: 'Volatility 75' },
     { deriv: 'R_100', mt5: 'Volatility 100 Index', display: 'Volatility 100' },
+    // Volatility 1s (8)
     { deriv: '1HZ10V', mt5: 'Volatility 10 (1s) Index', display: 'Volatility 10 (1s)' },
+    { deriv: '1HZ15V', mt5: 'Volatility 15 (1s) Index', display: 'Volatility 15 (1s)' },
     { deriv: '1HZ25V', mt5: 'Volatility 25 (1s) Index', display: 'Volatility 25 (1s)' },
+    { deriv: '1HZ30V', mt5: 'Volatility 30 (1s) Index', display: 'Volatility 30 (1s)' },
     { deriv: '1HZ50V', mt5: 'Volatility 50 (1s) Index', display: 'Volatility 50 (1s)' },
     { deriv: '1HZ75V', mt5: 'Volatility 75 (1s) Index', display: 'Volatility 75 (1s)' },
+    { deriv: '1HZ90V', mt5: 'Volatility 90 (1s) Index', display: 'Volatility 90 (1s)' },
     { deriv: '1HZ100V', mt5: 'Volatility 100 (1s) Index', display: 'Volatility 100 (1s)' },
+    // Boom (7)
+    { deriv: 'BOOM50', mt5: 'Boom 50 Index', display: 'Boom 50' },
+    { deriv: 'BOOM150N', mt5: 'Boom 150 Index', display: 'Boom 150' },
+    { deriv: 'BOOM300N', mt5: 'Boom 300 Index', display: 'Boom 300' },
     { deriv: 'BOOM500', mt5: 'Boom 500 Index', display: 'Boom 500' },
+    { deriv: 'BOOM600', mt5: 'Boom 600 Index', display: 'Boom 600' },
+    { deriv: 'BOOM900', mt5: 'Boom 900 Index', display: 'Boom 900' },
     { deriv: 'BOOM1000', mt5: 'Boom 1000 Index', display: 'Boom 1000' },
+    // Crash (7)
+    { deriv: 'CRASH50', mt5: 'Crash 50 Index', display: 'Crash 50' },
+    { deriv: 'CRASH150N', mt5: 'Crash 150 Index', display: 'Crash 150' },
+    { deriv: 'CRASH300N', mt5: 'Crash 300 Index', display: 'Crash 300' },
     { deriv: 'CRASH500', mt5: 'Crash 500 Index', display: 'Crash 500' },
+    { deriv: 'CRASH600', mt5: 'Crash 600 Index', display: 'Crash 600' },
+    { deriv: 'CRASH900', mt5: 'Crash 900 Index', display: 'Crash 900' },
     { deriv: 'CRASH1000', mt5: 'Crash 1000 Index', display: 'Crash 1000' },
+    // Jump (5)
     { deriv: 'JD10', mt5: 'Jump 10 Index', display: 'Jump 10' },
     { deriv: 'JD25', mt5: 'Jump 25 Index', display: 'Jump 25' },
     { deriv: 'JD50', mt5: 'Jump 50 Index', display: 'Jump 50' },
     { deriv: 'JD75', mt5: 'Jump 75 Index', display: 'Jump 75' },
     { deriv: 'JD100', mt5: 'Jump 100 Index', display: 'Jump 100' },
+    // Step (5)
     { deriv: 'stpRNG', mt5: 'Step Index', display: 'Step 100' },
     { deriv: 'stpRNG2', mt5: 'Step Index 200', display: 'Step 200' },
     { deriv: 'stpRNG3', mt5: 'Step Index 300', display: 'Step 300' },
+    { deriv: 'stpRNG4', mt5: 'Step Index 400', display: 'Step 400' },
+    { deriv: 'stpRNG5', mt5: 'Step Index 500', display: 'Step 500' },
+    // Range Break (2)
     { deriv: 'RB100', mt5: 'Range Break 100 Index', display: 'Range Break 100' },
-    { deriv: 'RB200', mt5: 'Range Break 200 Index', display: 'Range Break 200' }
+    { deriv: 'RB200', mt5: 'Range Break 200 Index', display: 'Range Break 200' },
+    // Bull/Bear (2)
+    { deriv: 'RDBULL', mt5: 'Bull Market Index', display: 'Bull Market' },
+    { deriv: 'RDBEAR', mt5: 'Bear Market Index', display: 'Bear Market' }
 ];
 
 const FAMILIES = {
     volatility: { name: '📊 Volatility', indices: ['R_10', 'R_25', 'R_50', 'R_75', 'R_100'] },
-    boom: { name: '💥 Boom', indices: ['BOOM500', 'BOOM1000'] },
-    crash: { name: '📉 Crash', indices: ['CRASH500', 'CRASH1000'] },
+    volatility_1s: { name: '⚡ Volatility 1s', indices: ['1HZ10V', '1HZ15V', '1HZ25V', '1HZ30V', '1HZ50V', '1HZ75V', '1HZ90V', '1HZ100V'] },
+    boom: { name: '💥 Boom', indices: ['BOOM50', 'BOOM150N', 'BOOM300N', 'BOOM500', 'BOOM600', 'BOOM900', 'BOOM1000'] },
+    crash: { name: '📉 Crash', indices: ['CRASH50', 'CRASH150N', 'CRASH300N', 'CRASH500', 'CRASH600', 'CRASH900', 'CRASH1000'] },
     jump: { name: '⤴️ Jump', indices: ['JD10', 'JD25', 'JD50', 'JD75', 'JD100'] },
-    step: { name: '🪜 Step', indices: ['stpRNG', 'stpRNG2', 'stpRNG3'] }
+    step: { name: '🪜 Step', indices: ['stpRNG', 'stpRNG2', 'stpRNG3', 'stpRNG4', 'stpRNG5'] },
+    range_break: { name: '📏 Range Break', indices: ['RB100', 'RB200'] },
+    bull_bear: { name: '🐂🐻 Bull/Bear', indices: ['RDBULL', 'RDBEAR'] }
 };
 
 const DEFAULTS = {
@@ -419,12 +442,12 @@ const DEFAULTS = {
 };
 
 const STORAGE = {
-    wsUrl: 'synth_ws_url', wsToken: 'synth_ws_token',
-    tgToken: 'synth_tg_token', tgChat: 'synth_tg_chatid',
-    dsKey: 'synth_ds_key', trades: 'synth_trades',
-    signals: 'synth_signals', cache: 'synth_cache',
-    config: 'synth_config', risk: 'synth_risk',
-    scanner: 'synth_scanner', kill: 'synth_kill'
+    wsUrl: 'synth_ws_url_v2', wsToken: 'synth_ws_token_v2',
+    tgToken: 'synth_tg_token_v2', tgChat: 'synth_tg_chatid_v2',
+    dsKey: 'synth_ds_key_v2', trades: 'synth_trades_v2',
+    signals: 'synth_signals_v2', cache: 'synth_cache_v2',
+    config: 'synth_config_v2', risk: 'synth_risk_v2',
+    scanner: 'synth_scanner_v2', kill: 'synth_kill_v2'
 };
 
 const CFG = {
@@ -432,26 +455,22 @@ const CFG = {
     CACHE_DURATION_MS: 30 * 60 * 1000,
     CANDLES_M5: 1500,
     IN_SAMPLE_RATIO: 0.7,
-    MIN_TRADES_BACKTEST: 10,
+    MIN_TRADES_BACKTEST: 5,
     RECONNECT_BASE_MS: 2000,
     MAX_RECONNECT: 10
 };
 
 // ─── ÉTAT GLOBAL ───
 const state = {
-    // Deriv
     derivWs: null, derivConnected: false, derivConnecting: false,
     derivPingInterval: null, derivReconnectAttempts: 0,
     derivPending: new Map(), derivReqId: 1,
     derivCandlesCache: new Map(),
-    // MT5
     mt5Ws: null, mt5Connected: false,
     mt5ReconnectAttempts: 0, mt5ReconnectTimer: null,
     pendingOrders: new Map(),
-    // Scanner
     scannerActive: false, scannerTimer: null, countdownTimer: null,
     nextScanAt: null, scanning: false,
-    // Data
     selectedSymbol: 'R_75',
     trades: [], signals: [], signalCache: {},
     killSwitch: false,
@@ -542,8 +561,8 @@ function saveConfig() {
     localStorage.setItem(STORAGE.dsKey, $('cfg-ds-key').value.trim());
     localStorage.setItem(STORAGE.config, JSON.stringify({
         amount: parseFloat($('scan-amount').value) || 5,
-        wr: parseInt($('scan-wr').value) || 60,
-        pf: parseFloat($('scan-pf').value) || 1.5,
+        wr: parseInt($('scan-wr').value) || 50,
+        pf: parseFloat($('scan-pf').value) || 1.0,
         maxpos: parseInt($('scan-maxpos').value) || 5
     }));
 }
@@ -558,8 +577,8 @@ function saveRisk() {
 function getConfig() {
     return {
         amount: parseFloat($('scan-amount').value) || 5,
-        wr: parseInt($('scan-wr').value) || 60,
-        pf: parseFloat($('scan-pf').value) || 1.5,
+        wr: parseInt($('scan-wr').value) || 50,
+        pf: parseFloat($('scan-pf').value) || 1.0,
         maxpos: parseInt($('scan-maxpos').value) || 5,
         riskDaily: parseFloat($('risk-daily').value) || 50,
         riskExposure: parseFloat($('risk-exposure').value) || 200,
@@ -614,7 +633,7 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 // ═══════════════════════════════════════════════════════════════════
-// MT5 BRIDGE (WebSocket sécurisé)
+// MT5 BRIDGE
 // ═══════════════════════════════════════════════════════════════════
 function connectMT5() {
     if (state.mt5Ws) { try { state.mt5Ws.close(); } catch (e) {} }
@@ -913,7 +932,7 @@ function initSymbolSelects() {
 </script>
 <script>
 // ═══════════════════════════════════════════════════════════════════
-// PARTIE 3/3 — INDICATEURS + STRATÉGIES + SMC + SCANNER + RENDER + INIT
+// PARTIE 3/3 — INDICATEURS + STRATÉGIES + SMC (ASSOUPLI) + SCANNER + INIT
 // ═══════════════════════════════════════════════════════════════════
 
 // ─── INDICATEURS ───
@@ -1151,7 +1170,7 @@ const STRATEGIES = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════
-// MOTEUR SMC UNIFIÉ
+// MOTEUR SMC UNIFIÉ — VERSION ASSOUPLIE
 // ═══════════════════════════════════════════════════════════════════
 function trendOf(candles) {
     if (candles.length < 20) return 'range';
@@ -1160,10 +1179,11 @@ function trendOf(candles) {
     const highs = candles.map(c => c.high), lows = candles.map(c => c.low);
     const range = (Math.max(...highs) - Math.min(...lows)) / first * 100;
     const strength = Math.abs(change) / Math.max(0.001, range);
-    if (change > 0.1 && strength > 0.3) return 'bullish';
-    if (change < -0.1 && strength > 0.3) return 'bearish';
+    if (change > 0.05 && strength > 0.2) return 'bullish';
+    if (change < -0.05 && strength > 0.2) return 'bearish';
     return 'range';
 }
+
 function evaluateSetup(candles) {
     if (!candles || candles.length < 100) return null;
     const N = candles.length;
@@ -1171,11 +1191,12 @@ function evaluateSetup(candles) {
     const atrArr = calculateATR(candles, 14);
     const atr = atrArr[atrArr.length - 1];
     if (!atr || atr <= 0) return null;
-    const trendShort = trendOf(candles.slice(-50));
-    const trendMid = trendOf(candles.slice(-200));
+
     const trendLong = trendOf(candles.slice(-Math.min(500, N)));
 
-    const lookback = 3, swings = [];
+    // Détection swings (lookback élargi 3 → 5)
+    const lookback = 5;
+    const swings = [];
     const structBars = Math.min(500, N - 10);
     const startIdx = N - structBars;
     for (let i = startIdx + lookback; i < N - lookback; i++) {
@@ -1187,40 +1208,68 @@ function evaluateSetup(candles) {
         if (isH) swings.push({ type: 'high', index: i, price: candles[i].high });
         if (isL) swings.push({ type: 'low', index: i, price: candles[i].low });
     }
-    if (swings.length < 6) return null;
+    if (swings.length < 3) return null;
+
     let lh = null, ll = null, bos = null;
     for (const s of swings) {
         if (s.type === 'high') { if (lh && s.price > lh.price) bos = { direction: 'bull', index: s.index }; lh = s; }
         else { if (ll && s.price < ll.price) bos = { direction: 'bear', index: s.index }; ll = s; }
     }
-    if (!bos || N - bos.index > 100) return null;
+    if (!bos || N - bos.index > 200) return null;
+
+    // Order Block (fenêtre élargie 15 → 30)
     let ob = null;
     if (bos.direction === 'bull') {
-        for (let i = bos.index - 1; i >= Math.max(0, bos.index - 15); i--) {
+        for (let i = bos.index - 1; i >= Math.max(0, bos.index - 30); i--) {
             if (candles[i].close < candles[i].open) { ob = { top: Math.max(candles[i].open, candles[i].close), bottom: candles[i].low }; break; }
         }
     } else {
-        for (let i = bos.index - 1; i >= Math.max(0, bos.index - 15); i--) {
+        for (let i = bos.index - 1; i >= Math.max(0, bos.index - 30); i--) {
             if (candles[i].close > candles[i].open) { ob = { top: candles[i].high, bottom: Math.min(candles[i].open, candles[i].close) }; break; }
         }
     }
-    if (!ob) return null;
-    let inOB = bos.direction === 'bull' ? (lastClosed.low <= ob.top && lastClosed.low >= ob.bottom) : (lastClosed.high >= ob.bottom && lastClosed.high <= ob.top);
-    if (!inOB) return null;
+
+    // Zone premium/discount (sur 200 bougies)
     const rw = candles.slice(-200);
     const rH = Math.max(...rw.map(c => c.high)), rL = Math.min(...rw.map(c => c.low));
     const eq = (rH + rL) / 2;
     const zone = lastClosed.close > eq ? 'premium' : 'discount';
+
+    // RÈGLES ASSOUPLIES :
+    // - Si OB trouvé → on l'utilise comme SL
+    // - Sinon → on utilise le dernier swing bas/haut comme SL
     let direction = null;
-    if (bos.direction === 'bull' && zone === 'discount' && trendLong !== 'bearish') direction = 'buy';
-    else if (bos.direction === 'bear' && zone === 'premium' && trendLong !== 'bullish') direction = 'sell';
-    if (!direction) return null;
+    let slReference = null;
+
+    if (bos.direction === 'bull') {
+        // Achat autorisé en discount OU sans zone (préférence discount)
+        if (trendLong !== 'bearish') {
+            direction = 'buy';
+            if (ob) slReference = ob.bottom;
+            else if (ll) slReference = ll.price;
+        }
+    } else if (bos.direction === 'bear') {
+        // Vente autorisée en premium OU sans zone (préférence premium)
+        if (trendLong !== 'bullish') {
+            direction = 'sell';
+            if (ob) slReference = ob.top;
+            else if (lh) slReference = lh.price;
+        }
+    }
+
+    if (!direction || slReference == null) return null;
+
     const entry = lastClosed.close;
-    const sl = direction === 'buy' ? ob.bottom - atr * 0.3 : ob.top + atr * 0.3;
+    const sl = direction === 'buy' ? slReference - atr * 0.3 : slReference + atr * 0.3;
     const risk = Math.abs(entry - sl);
-    if (risk < atr * 0.5) return null;
+    if (risk < atr * 0.3) return null;
     const tp = direction === 'buy' ? entry + risk * 3 : entry - risk * 3;
-    return { hasSignal: true, direction, entry, sl, tp, risk, atr, zone, trend: trendLong, trendShort, trendMid, setupId: hashString(direction + '_' + zone + '_' + bos.index) };
+
+    return {
+        hasSignal: true, direction, entry, sl, tp, risk, atr, zone, trend: trendLong,
+        hasOB: !!ob,
+        setupId: hashString(direction + '_' + zone + '_' + bos.index + '_' + (ob ? 'OB' : 'SW'))
+    };
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1231,15 +1280,15 @@ function checkRiskGuard(config) {
     const today = new Date().toDateString();
     const todayTrades = getClosedTrades().filter(t => new Date(t.closeTime || t.createdAt).toDateString() === today);
     const dailyPnl = todayTrades.reduce((s, t) => s + (t.profit || 0), 0);
-    if (dailyPnl <= -config.riskDaily) return { ok: false, reason: 'DAILY_LOSS_LIMIT (' + dailyPnl.toFixed(2) + '$)' };
+    if (dailyPnl <= -config.riskDaily) return { ok: false, reason: 'DAILY_LOSS_LIMIT' };
     const openTrades = getOpenTrades();
     const exposure = openTrades.length * config.amount;
-    if (exposure >= config.riskExposure) return { ok: false, reason: 'MAX_EXPOSURE (' + exposure + '$)' };
-    if (openTrades.length >= config.maxpos) return { ok: false, reason: 'MAX_POSITIONS (' + openTrades.length + '/' + config.maxpos + ')' };
+    if (exposure >= config.riskExposure) return { ok: false, reason: 'MAX_EXPOSURE' };
+    if (openTrades.length >= config.maxpos) return { ok: false, reason: 'MAX_POSITIONS' };
     const closed = getClosedTrades().slice(0, 20);
     let lossStreak = 0;
     for (const t of closed) { if (t.result === 'loss') lossStreak++; else break; }
-    if (lossStreak >= config.riskStreak) return { ok: false, reason: 'LOSS_STREAK (' + lossStreak + ')' };
+    if (lossStreak >= config.riskStreak) return { ok: false, reason: 'LOSS_STREAK' };
     return { ok: true, dailyPnl, exposure, lossStreak };
 }
 
@@ -1254,7 +1303,7 @@ function startScanner() {
     $('btn-scanner-toggle').textContent = '⏹ Arrêter';
     $('btn-scanner-toggle').className = 'small danger';
     localStorage.setItem(STORAGE.scanner, '1');
-    log('🤖 Scanner HYBRIDE démarré', 'success', 'scan-logs');
+    log('🤖 Scanner HYBRIDE démarré (41 indices)', 'success', 'scan-logs');
     runScan();
 }
 function stopScanner() {
@@ -1279,7 +1328,7 @@ async function runScan() {
     renderFunnel();
 
     log('═══════════════════════════════════════', 'info', 'scan-logs');
-    log('🤖 SCAN HYBRIDE · ' + new Date().toLocaleTimeString('fr-FR'), 'hybrid', 'scan-logs');
+    log('🤖 SCAN HYBRIDE · ' + new Date().toLocaleTimeString('fr-FR') + ' · ' + SYMBOLS.length + ' indices', 'hybrid', 'scan-logs');
     log('💰 ' + config.amount + '$/trade · WR≥' + config.wr + '% · PF≥' + config.pf, 'data', 'scan-logs');
     log('═══════════════════════════════════════', 'info', 'scan-logs');
 
@@ -1304,7 +1353,6 @@ async function runScan() {
             if (!candles || candles.length < 100) continue;
             state.funnel.dataOK++;
 
-            // 5 STRATÉGIES
             const stratResults = {};
             const split = Math.floor(candles.length * CFG.IN_SAMPLE_RATIO);
             const inSample = candles.slice(0, split);
@@ -1330,34 +1378,26 @@ async function runScan() {
 
             if (!anyStratValid) continue;
 
-            // MOTEUR UNIFIÉ
             const setup = evaluateSetup(candles);
             if (!setup || !setup.hasSignal) continue;
             state.funnel.unifiedOK++;
 
-            // SCORE HYBRIDE 50/50
             const validStrats = Object.values(stratResults).filter(s => s.valid);
             const avgStratWR = validStrats.reduce((s, x) => s + x.wr, 0) / validStrats.length;
             const unifiedWR = 65;
             const hybridScore = Math.round((avgStratWR + unifiedWR) / 2);
 
-            if (hybridScore < config.wr) {
-                log('⏸ ' + sym.deriv + ' : score hybride ' + hybridScore + '% < ' + config.wr + '%', 'info', 'scan-logs');
-                continue;
-            }
+            if (hybridScore < config.wr) continue;
             state.funnel.hybridOK++;
 
-            // ANTI-DOUBLON
             const fullSetupId = sym.deriv + '_' + setup.setupId;
             if (isCached(fullSetupId)) continue;
             cacheSetup(fullSetupId);
 
-            // RISK FINAL
             const rg2 = checkRiskGuard(config);
             if (!rg2.ok) continue;
             state.funnel.riskOK++;
 
-            // EXÉCUTION
             const executed = await executeOrder(sym, setup, stratResults, hybridScore, config);
             if (executed) signalsFound++;
             await new Promise(r => setTimeout(r, 300));
@@ -1377,7 +1417,7 @@ async function executeOrder(sym, setup, stratResults, hybridScore, config) {
     const pointSize = 0.01;
     const slPoints = Math.round(setup.risk / pointSize);
     const tickValue = 0.01;
-    const lot = Math.max(0.01, Math.min(5, config.amount / (slPoints * tickValue)));
+    const lot = Math.max(0.01, Math.min(5, config.amount / Math.max(1, slPoints * tickValue)));
     const finalLot = Math.round(lot / 0.01) * 0.01;
 
     const validStrats = Object.values(stratResults).filter(s => s.valid).map(s => s.name).join(', ');
@@ -1387,7 +1427,7 @@ async function executeOrder(sym, setup, stratResults, hybridScore, config) {
         direction: setup.direction, lot: finalLot,
         strategyName: 'HYBRIDE (' + validStrats + ')',
         hybridScore: hybridScore,
-        signalData: { zone: setup.zone, trend: setup.trend, setupId: setup.setupId, stratResults }
+        signalData: { zone: setup.zone, trend: setup.trend, setupId: setup.setupId, stratResults, hasOB: setup.hasOB }
     });
 
     state.pendingOrders.set(requestId, trade.id);
@@ -1409,7 +1449,7 @@ async function executeOrder(sym, setup, stratResults, hybridScore, config) {
         direction: setup.direction, lot: finalLot,
         hybridScore: hybridScore,
         strategies: validStrats,
-        reason: setup.direction + ' ' + setup.zone + ' (' + setup.trend + ')',
+        reason: setup.direction + ' ' + setup.zone + ' (' + setup.trend + ')' + (setup.hasOB ? ' OB' : ' SW'),
         time: Date.now()
     });
     state.signals = state.signals.slice(0, 30);
@@ -1593,9 +1633,9 @@ async function runAnalyse() {
                     '<div><div class="label">TP</div><div class="value" style="color:#16a34a;">' + setup.tp.toFixed(4) + '</div></div>' +
                     '<div><div class="label">RR</div><div class="value">1:3</div></div>' +
                 '</div>' +
-                '<div style="font-size:0.7rem;color:#93c5fd;margin-top:0.3rem;">Zone : ' + setup.zone + ' · Tendance : ' + setup.trend + '</div>' +
+                '<div style="font-size:0.7rem;color:#93c5fd;margin-top:0.3rem;">Zone : ' + setup.zone + ' · Tendance : ' + setup.trend + ' · ' + (setup.hasOB ? 'Order Block' : 'Swing') + '</div>' +
                 '</div>';
-            log('🎯 Signal SMC détecté : ' + setup.direction + ' ' + setup.zone, 'signal');
+            log('🎯 Signal SMC détecté : ' + setup.direction + ' ' + setup.zone + ' (' + (setup.hasOB ? 'OB' : 'Swing') + ')', 'signal');
         } else {
             $('analyse-signal').innerHTML = '<div class="empty">Aucun signal SMC sur ' + escapeHtml(symbol) + '</div>';
             log('⏸ Pas de signal sur ' + symbol, 'info');
@@ -1788,8 +1828,8 @@ function init() {
     renderFunnel();
     renderRiskGuard();
     log('🚀 SMC Trader Pro v6.3 FINAL', 'hybrid');
-    log('📋 5 stratégies + moteur unifié · Score 50/50', 'hybrid');
-    log('🔬 4 bugs critiques corrigés (XSS, mémoire, reset, ping)', 'success');
+    log('📋 ' + SYMBOLS.length + ' indices · 5 stratégies + moteur SMC unifié', 'hybrid');
+    log('🔬 Moteur SMC ASSOUPLI (lookback 5, OB 30 bougies, SL swing fallback)', 'success');
     setDerivStatus('', 'Déconnecté', 'Prêt');
     setMT5Status('', 'Déconnecté', 'Configuration requise');
     window.addEventListener('load', () => {
