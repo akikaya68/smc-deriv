@@ -143,7 +143,8 @@ button.small { font-size: 0.68rem; padding: 0.4rem 0.7rem; }
             <option value="3600">H1</option>
             <option value="14400">H4</option>
         </select>
-        <button class="primary" id="btn-analyse" style="width:100%;">🔍 Analyser</button>
+        <button class="primary" id="btn-analyse" style="width:100%;">🔍 Analyser (SMC seul)</button>
+        <button class="info" id="btn-analyse-full" style="width:100%;">📊 Analyse COMPLÈTE (5 stratégies + SMC)</button>
     </div>
     <div id="analyse-results" style="display:none;">
         <div class="section">
@@ -151,8 +152,12 @@ button.small { font-size: 0.68rem; padding: 0.4rem 0.7rem; }
             <div class="candles-container"><canvas id="analyse-canvas"></canvas></div>
         </div>
         <div class="section">
-            <div class="section-title">🎯 Signal</div>
+            <div class="section-title">🎯 Signal SMC (debug)</div>
             <div id="analyse-signal"></div>
+        </div>
+        <div class="section">
+            <div class="section-title">📊 Analyse des 5 stratégies</div>
+            <div id="analyse-strategies"></div>
         </div>
     </div>
     <div class="section">
@@ -179,10 +184,13 @@ button.small { font-size: 0.68rem; padding: 0.4rem 0.7rem; }
             <label>Famille</label>
             <select id="bt-family-select">
                 <option value="volatility">📊 Volatility (5)</option>
+                <option value="volatility_1s">⚡ Volatility 1s (8)</option>
                 <option value="boom">💥 Boom (7)</option>
                 <option value="crash">📉 Crash (7)</option>
                 <option value="jump">⤴️ Jump (5)</option>
                 <option value="step">🪜 Step (5)</option>
+                <option value="range_break">📏 Range Break (2)</option>
+                <option value="bull_bear">🐂🐻 Bull/Bear (2)</option>
             </select>
         </div>
         <label>Bougies</label>
@@ -234,7 +242,7 @@ button.small { font-size: 0.68rem; padding: 0.4rem 0.7rem; }
             <div><label>Max positions</label><input type="number" id="scan-maxpos" value="5" step="1" min="1"></div>
         </div>
         <div style="font-size:0.68rem;color:#6b7280;margin-top:0.3rem;">
-            ⓘ Seuils assouplis : WR 50% · PF 1.0 · Moteur SMC élargi
+            ⓘ Tous les signaux valides sont envoyés à MT5 et enregistrés dans le journal
         </div>
     </div>
     <div class="section">
@@ -266,7 +274,7 @@ button.small { font-size: 0.68rem; padding: 0.4rem 0.7rem; }
         </div>
     </div>
     <div class="section">
-        <div class="section-title">📈 Ouverts</div>
+        <div class="section-title">📈 Ouverts / En attente</div>
         <div id="j-list-open"></div>
     </div>
     <div class="section">
@@ -371,13 +379,11 @@ button.small { font-size: 0.68rem; padding: 0.4rem 0.7rem; }
 
 // ─── 41 SYMBOLES (mapping Deriv → MT5) ───
 const SYMBOLS = [
-    // Volatility (5)
     { deriv: 'R_10', mt5: 'Volatility 10 Index', display: 'Volatility 10' },
     { deriv: 'R_25', mt5: 'Volatility 25 Index', display: 'Volatility 25' },
     { deriv: 'R_50', mt5: 'Volatility 50 Index', display: 'Volatility 50' },
     { deriv: 'R_75', mt5: 'Volatility 75 Index', display: 'Volatility 75' },
     { deriv: 'R_100', mt5: 'Volatility 100 Index', display: 'Volatility 100' },
-    // Volatility 1s (8)
     { deriv: '1HZ10V', mt5: 'Volatility 10 (1s) Index', display: 'Volatility 10 (1s)' },
     { deriv: '1HZ15V', mt5: 'Volatility 15 (1s) Index', display: 'Volatility 15 (1s)' },
     { deriv: '1HZ25V', mt5: 'Volatility 25 (1s) Index', display: 'Volatility 25 (1s)' },
@@ -386,7 +392,6 @@ const SYMBOLS = [
     { deriv: '1HZ75V', mt5: 'Volatility 75 (1s) Index', display: 'Volatility 75 (1s)' },
     { deriv: '1HZ90V', mt5: 'Volatility 90 (1s) Index', display: 'Volatility 90 (1s)' },
     { deriv: '1HZ100V', mt5: 'Volatility 100 (1s) Index', display: 'Volatility 100 (1s)' },
-    // Boom (7)
     { deriv: 'BOOM50', mt5: 'Boom 50 Index', display: 'Boom 50' },
     { deriv: 'BOOM150N', mt5: 'Boom 150 Index', display: 'Boom 150' },
     { deriv: 'BOOM300N', mt5: 'Boom 300 Index', display: 'Boom 300' },
@@ -394,7 +399,6 @@ const SYMBOLS = [
     { deriv: 'BOOM600', mt5: 'Boom 600 Index', display: 'Boom 600' },
     { deriv: 'BOOM900', mt5: 'Boom 900 Index', display: 'Boom 900' },
     { deriv: 'BOOM1000', mt5: 'Boom 1000 Index', display: 'Boom 1000' },
-    // Crash (7)
     { deriv: 'CRASH50', mt5: 'Crash 50 Index', display: 'Crash 50' },
     { deriv: 'CRASH150N', mt5: 'Crash 150 Index', display: 'Crash 150' },
     { deriv: 'CRASH300N', mt5: 'Crash 300 Index', display: 'Crash 300' },
@@ -402,22 +406,18 @@ const SYMBOLS = [
     { deriv: 'CRASH600', mt5: 'Crash 600 Index', display: 'Crash 600' },
     { deriv: 'CRASH900', mt5: 'Crash 900 Index', display: 'Crash 900' },
     { deriv: 'CRASH1000', mt5: 'Crash 1000 Index', display: 'Crash 1000' },
-    // Jump (5)
     { deriv: 'JD10', mt5: 'Jump 10 Index', display: 'Jump 10' },
     { deriv: 'JD25', mt5: 'Jump 25 Index', display: 'Jump 25' },
     { deriv: 'JD50', mt5: 'Jump 50 Index', display: 'Jump 50' },
     { deriv: 'JD75', mt5: 'Jump 75 Index', display: 'Jump 75' },
     { deriv: 'JD100', mt5: 'Jump 100 Index', display: 'Jump 100' },
-    // Step (5)
     { deriv: 'stpRNG', mt5: 'Step Index', display: 'Step 100' },
     { deriv: 'stpRNG2', mt5: 'Step Index 200', display: 'Step 200' },
     { deriv: 'stpRNG3', mt5: 'Step Index 300', display: 'Step 300' },
     { deriv: 'stpRNG4', mt5: 'Step Index 400', display: 'Step 400' },
     { deriv: 'stpRNG5', mt5: 'Step Index 500', display: 'Step 500' },
-    // Range Break (2)
     { deriv: 'RB100', mt5: 'Range Break 100 Index', display: 'Range Break 100' },
     { deriv: 'RB200', mt5: 'Range Break 200 Index', display: 'Range Break 200' },
-    // Bull/Bear (2)
     { deriv: 'RDBULL', mt5: 'Bull Market Index', display: 'Bull Market' },
     { deriv: 'RDBEAR', mt5: 'Bear Market Index', display: 'Bear Market' }
 ];
@@ -442,12 +442,12 @@ const DEFAULTS = {
 };
 
 const STORAGE = {
-    wsUrl: 'synth_ws_url_v2', wsToken: 'synth_ws_token_v2',
-    tgToken: 'synth_tg_token_v2', tgChat: 'synth_tg_chatid_v2',
-    dsKey: 'synth_ds_key_v2', trades: 'synth_trades_v2',
-    signals: 'synth_signals_v2', cache: 'synth_cache_v2',
-    config: 'synth_config_v2', risk: 'synth_risk_v2',
-    scanner: 'synth_scanner_v2', kill: 'synth_kill_v2'
+    wsUrl: 'synth_v3_ws_url', wsToken: 'synth_v3_ws_token',
+    tgToken: 'synth_v3_tg_token', tgChat: 'synth_v3_tg_chatid',
+    dsKey: 'synth_v3_ds_key', trades: 'synth_v3_trades',
+    signals: 'synth_v3_signals', cache: 'synth_v3_cache',
+    config: 'synth_v3_config', risk: 'synth_v3_risk',
+    scanner: 'synth_v3_scanner', kill: 'synth_v3_kill'
 };
 
 const CFG = {
@@ -460,7 +460,6 @@ const CFG = {
     MAX_RECONNECT: 10
 };
 
-// ─── ÉTAT GLOBAL ───
 const state = {
     derivWs: null, derivConnected: false, derivConnecting: false,
     derivPingInterval: null, derivReconnectAttempts: 0,
@@ -587,7 +586,6 @@ function getConfig() {
     };
 }
 
-// ─── STORAGE DATA ───
 function loadTrades() { try { state.trades = JSON.parse(localStorage.getItem(STORAGE.trades) || '[]'); } catch (e) { state.trades = []; } }
 function saveTrades() { try { localStorage.setItem(STORAGE.trades, JSON.stringify(state.trades)); } catch (e) {} }
 function loadSignals() {
@@ -743,10 +741,11 @@ function handlePositionsResponse(data) {
 function addTrade(trade) {
     trade.id = 'tr_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
     trade.createdAt = Date.now();
-    trade.status = 'pending';
+    if (!trade.status) trade.status = 'pending';
     state.trades.unshift(trade);
     saveTrades();
     renderJournal();
+    log('📓 Journal : nouveau trade ' + (trade.mt5Symbol || trade.symbol) + ' ' + trade.direction + ' ' + trade.lot + ' lots', 'info', 'j-logs');
     return trade;
 }
 function updateTrade(id, updates) {
@@ -919,7 +918,6 @@ async function fetchCandles(symbol, granularity, count) {
     return candles;
 }
 
-// ─── INIT SYMBOLS DANS LES SELECTS ───
 function initSymbolSelects() {
     const analyseSel = $('analyse-symbol');
     const btSel = $('bt-symbol');
@@ -932,7 +930,7 @@ function initSymbolSelects() {
 </script>
 <script>
 // ═══════════════════════════════════════════════════════════════════
-// PARTIE 3/3 — INDICATEURS + STRATÉGIES + SMC (ASSOUPLI) + SCANNER + INIT
+// PARTIE 3/3 — INDICATEURS + STRATÉGIES + SMC + SCANNER + INIT
 // ═══════════════════════════════════════════════════════════════════
 
 // ─── INDICATEURS ───
@@ -1170,7 +1168,7 @@ const STRATEGIES = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════
-// MOTEUR SMC UNIFIÉ — VERSION ASSOUPLIE
+// MOTEUR SMC UNIFIÉ (ASSOUPLI)
 // ═══════════════════════════════════════════════════════════════════
 function trendOf(candles) {
     if (candles.length < 20) return 'range';
@@ -1191,10 +1189,8 @@ function evaluateSetup(candles) {
     const atrArr = calculateATR(candles, 14);
     const atr = atrArr[atrArr.length - 1];
     if (!atr || atr <= 0) return null;
-
     const trendLong = trendOf(candles.slice(-Math.min(500, N)));
 
-    // Détection swings (lookback élargi 3 → 5)
     const lookback = 5;
     const swings = [];
     const structBars = Math.min(500, N - 10);
@@ -1209,15 +1205,12 @@ function evaluateSetup(candles) {
         if (isL) swings.push({ type: 'low', index: i, price: candles[i].low });
     }
     if (swings.length < 3) return null;
-
     let lh = null, ll = null, bos = null;
     for (const s of swings) {
         if (s.type === 'high') { if (lh && s.price > lh.price) bos = { direction: 'bull', index: s.index }; lh = s; }
         else { if (ll && s.price < ll.price) bos = { direction: 'bear', index: s.index }; ll = s; }
     }
     if (!bos || N - bos.index > 200) return null;
-
-    // Order Block (fenêtre élargie 15 → 30)
     let ob = null;
     if (bos.direction === 'bull') {
         for (let i = bos.index - 1; i >= Math.max(0, bos.index - 30); i--) {
@@ -1228,48 +1221,143 @@ function evaluateSetup(candles) {
             if (candles[i].close > candles[i].open) { ob = { top: candles[i].high, bottom: Math.min(candles[i].open, candles[i].close) }; break; }
         }
     }
-
-    // Zone premium/discount (sur 200 bougies)
     const rw = candles.slice(-200);
     const rH = Math.max(...rw.map(c => c.high)), rL = Math.min(...rw.map(c => c.low));
     const eq = (rH + rL) / 2;
     const zone = lastClosed.close > eq ? 'premium' : 'discount';
-
-    // RÈGLES ASSOUPLIES :
-    // - Si OB trouvé → on l'utilise comme SL
-    // - Sinon → on utilise le dernier swing bas/haut comme SL
-    let direction = null;
-    let slReference = null;
-
+    let direction = null, slReference = null;
     if (bos.direction === 'bull') {
-        // Achat autorisé en discount OU sans zone (préférence discount)
         if (trendLong !== 'bearish') {
             direction = 'buy';
             if (ob) slReference = ob.bottom;
             else if (ll) slReference = ll.price;
         }
     } else if (bos.direction === 'bear') {
-        // Vente autorisée en premium OU sans zone (préférence premium)
         if (trendLong !== 'bullish') {
             direction = 'sell';
             if (ob) slReference = ob.top;
             else if (lh) slReference = lh.price;
         }
     }
-
     if (!direction || slReference == null) return null;
-
     const entry = lastClosed.close;
     const sl = direction === 'buy' ? slReference - atr * 0.3 : slReference + atr * 0.3;
     const risk = Math.abs(entry - sl);
     if (risk < atr * 0.3) return null;
     const tp = direction === 'buy' ? entry + risk * 3 : entry - risk * 3;
+    return { hasSignal: true, direction, entry, sl, tp, risk, atr, zone, trend: trendLong, hasOB: !!ob, setupId: hashString(direction + '_' + zone + '_' + bos.index + '_' + (ob ? 'OB' : 'SW')) };
+}
 
-    return {
-        hasSignal: true, direction, entry, sl, tp, risk, atr, zone, trend: trendLong,
-        hasOB: !!ob,
-        setupId: hashString(direction + '_' + zone + '_' + bos.index + '_' + (ob ? 'OB' : 'SW'))
+// ─── DEBUG SMC ───
+function debugEvaluateSetup(candles) {
+    const debug = {
+        hasSignal: false, reason: 'inconnu', setup: null,
+        N: 0, atr: 0, trendLong: '?', swingCount: 0,
+        bos: null, ob: null, zone: '?', slReference: null,
+        risk: 0, minRisk: 0, bosAge: 0
     };
+    if (!candles || candles.length < 100) { debug.reason = 'Pas assez de bougies (<100)'; return debug; }
+    const N = candles.length;
+    debug.N = N;
+    const lastClosed = candles[N - 2];
+    const atrArr = calculateATR(candles, 14);
+    const atr = atrArr[atrArr.length - 1];
+    debug.atr = atr;
+    if (!atr || atr <= 0) { debug.reason = 'ATR invalide'; return debug; }
+    const trendLong = trendOf(candles.slice(-Math.min(500, N)));
+    debug.trendLong = trendLong;
+    const lookback = 5;
+    const swings = [];
+    const structBars = Math.min(500, N - 10);
+    const startIdx = N - structBars;
+    for (let i = startIdx + lookback; i < N - lookback; i++) {
+        let isH = true, isL = true;
+        for (let j = 1; j <= lookback; j++) {
+            if (candles[i].high <= candles[i - j].high || candles[i].high <= candles[i + j].high) isH = false;
+            if (candles[i].low >= candles[i - j].low || candles[i].low >= candles[i + j].low) isL = false;
+        }
+        if (isH) swings.push({ type: 'high', index: i, price: candles[i].high });
+        if (isL) swings.push({ type: 'low', index: i, price: candles[i].low });
+    }
+    debug.swingCount = swings.length;
+    if (swings.length < 3) { debug.reason = 'Swings insuffisants (' + swings.length + '<3)'; return debug; }
+    let lh = null, ll = null, bos = null;
+    for (const s of swings) {
+        if (s.type === 'high') { if (lh && s.price > lh.price) bos = { direction: 'bull', index: s.index }; lh = s; }
+        else { if (ll && s.price < ll.price) bos = { direction: 'bear', index: s.index }; ll = s; }
+    }
+    debug.bos = bos;
+    if (!bos) { debug.reason = 'Aucun BOS (pas de cassure de structure)'; return debug; }
+    const bosAge = N - bos.index;
+    debug.bosAge = bosAge;
+    if (bosAge > 200) { debug.reason = 'BOS trop ancien (' + bosAge + ' > 200 bougies)'; return debug; }
+    let ob = null;
+    if (bos.direction === 'bull') {
+        for (let i = bos.index - 1; i >= Math.max(0, bos.index - 30); i--) {
+            if (candles[i].close < candles[i].open) { ob = { top: Math.max(candles[i].open, candles[i].close), bottom: candles[i].low }; break; }
+        }
+    } else {
+        for (let i = bos.index - 1; i >= Math.max(0, bos.index - 30); i--) {
+            if (candles[i].close > candles[i].open) { ob = { top: candles[i].high, bottom: Math.min(candles[i].open, candles[i].close) }; break; }
+        }
+    }
+    debug.ob = ob;
+    const rw = candles.slice(-200);
+    const rH = Math.max(...rw.map(c => c.high));
+    const rL = Math.min(...rw.map(c => c.low));
+    const eq = (rH + rL) / 2;
+    const zone = lastClosed.close > eq ? 'premium' : 'discount';
+    debug.zone = zone;
+    let direction = null, slReference = null;
+    if (bos.direction === 'bull') {
+        if (trendLong === 'bearish') { debug.reason = 'Tendance long bearish → pas de buy'; return debug; }
+        direction = 'buy';
+        if (ob) slReference = ob.bottom;
+        else if (ll) slReference = ll.price;
+    } else if (bos.direction === 'bear') {
+        if (trendLong === 'bullish') { debug.reason = 'Tendance long bullish → pas de sell'; return debug; }
+        direction = 'sell';
+        if (ob) slReference = ob.top;
+        else if (lh) slReference = lh.price;
+    }
+    debug.slReference = slReference;
+    if (!direction || slReference == null) { debug.reason = 'Pas de direction OU pas de SL'; return debug; }
+    const entry = lastClosed.close;
+    const sl = direction === 'buy' ? slReference - atr * 0.3 : slReference + atr * 0.3;
+    const risk = Math.abs(entry - sl);
+    debug.risk = risk;
+    debug.minRisk = atr * 0.3;
+    if (risk < atr * 0.3) { debug.reason = 'Risque trop faible (' + risk.toFixed(4) + ' < ' + (atr*0.3).toFixed(4) + ')'; return debug; }
+    const tp = direction === 'buy' ? entry + risk * 3 : entry - risk * 3;
+    debug.hasSignal = true;
+    debug.reason = 'Signal valide';
+    debug.setup = { hasSignal: true, direction, entry, sl, tp, risk, atr, zone, trend: trendLong, hasOB: !!ob, setupId: hashString(direction + '_' + zone + '_' + bos.index + '_' + (ob ? 'OB' : 'SW')) };
+    return debug;
+}
+function renderSmcDebug(d) {
+    const rows = [
+        ['Bougies analysées', d.N, d.N >= 100],
+        ['ATR (14)', d.atr ? d.atr.toFixed(4) : '—', !!d.atr],
+        ['Tendance long', d.trendLong, d.trendLong !== '?'],
+        ['Swings détectés', d.swingCount, d.swingCount >= 3],
+        ['BOS trouvé', d.bos ? (d.bos.direction + ' @ #' + d.bos.index) : '❌', !!d.bos],
+        ['Âge du BOS', d.bosAge + ' bougies', d.bosAge > 0 && d.bosAge <= 200],
+        ['Order Block', d.ob ? 'Trouvé' : 'Aucun (fallback swing)', true],
+        ['Zone actuelle', d.zone, true],
+        ['SL référence', d.slReference ? d.slReference.toFixed(4) : '—', d.slReference != null],
+        ['Risque calculé', d.risk ? d.risk.toFixed(4) : '—', d.risk >= d.minRisk],
+        ['Risque minimum', d.minRisk ? d.minRisk.toFixed(4) : '—', true]
+    ];
+    let html = '<div style="background:#0a0f14;border-radius:8px;padding:0.7rem;font-family:ui-monospace,monospace;font-size:0.72rem;">';
+    html += '<div style="color:#fca5a5;font-weight:700;margin-bottom:0.5rem;">❌ ' + escapeHtml(d.reason) + '</div>';
+    for (const [label, val, ok] of rows) {
+        html += '<div style="display:grid;grid-template-columns:1fr auto;gap:0.5rem;padding:0.25rem 0;border-bottom:1px solid #1a2028;">' +
+            '<span style="color:#9ca3af;">' + escapeHtml(label) + '</span>' +
+            '<span style="color:' + (ok ? '#86efac' : '#fca5a5') + ';font-weight:700;">' + escapeHtml(String(val)) + '</span>' +
+        '</div>';
+    }
+    html += '</div>';
+    return html;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1293,7 +1381,7 @@ function checkRiskGuard(config) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// SCANNER HYBRIDE
+// SCANNER COMPLET — ENVOIE TOUS LES SIGNAUX VALIDES
 // ═══════════════════════════════════════════════════════════════════
 function startScanner() {
     if (state.scannerActive) return;
@@ -1303,7 +1391,7 @@ function startScanner() {
     $('btn-scanner-toggle').textContent = '⏹ Arrêter';
     $('btn-scanner-toggle').className = 'small danger';
     localStorage.setItem(STORAGE.scanner, '1');
-    log('🤖 Scanner HYBRIDE démarré (41 indices)', 'success', 'scan-logs');
+    log('🤖 Scanner COMPLET démarré (' + SYMBOLS.length + ' indices)', 'success', 'scan-logs');
     runScan();
 }
 function stopScanner() {
@@ -1328,8 +1416,9 @@ async function runScan() {
     renderFunnel();
 
     log('═══════════════════════════════════════', 'info', 'scan-logs');
-    log('🤖 SCAN HYBRIDE · ' + new Date().toLocaleTimeString('fr-FR') + ' · ' + SYMBOLS.length + ' indices', 'hybrid', 'scan-logs');
+    log('🤖 SCAN COMPLET · ' + new Date().toLocaleTimeString('fr-FR') + ' · ' + SYMBOLS.length + ' indices', 'hybrid', 'scan-logs');
     log('💰 ' + config.amount + '$/trade · WR≥' + config.wr + '% · PF≥' + config.pf, 'data', 'scan-logs');
+    log('🎯 Mode : TOUS les signaux valides seront envoyés', 'hybrid', 'scan-logs');
     log('═══════════════════════════════════════', 'info', 'scan-logs');
 
     if (!state.derivConnected) {
@@ -1338,21 +1427,31 @@ async function runScan() {
     }
     if (!state.mt5Connected) { log('❌ Bridge MT5 HS', 'error', 'scan-logs'); state.scanning = false; return; }
 
-    let signalsFound = 0;
+    let totalOrders = 0;
     let idx = 0;
+
     for (const sym of SYMBOLS) {
         if (!state.scannerActive) break;
         idx++;
-        if (idx % 5 === 0) log('   → ' + idx + '/' + SYMBOLS.length, 'data', 'scan-logs');
+
+        // Vérifier limite positions AVANT chaque envoi
+        const currentOpen = getOpenTrades().length;
+        if (currentOpen >= config.maxpos) {
+            log('🛑 Max positions atteint (' + currentOpen + '/' + config.maxpos + ') — arrêt du scan', 'warn', 'scan-logs');
+            break;
+        }
 
         const rg = checkRiskGuard(config);
-        if (!rg.ok) { log('🛡️ ' + rg.reason, 'warn', 'scan-logs'); break; }
+        if (!rg.ok) { log('🛡️ ' + rg.reason + ' — arrêt', 'warn', 'scan-logs'); break; }
+
+        if (idx % 5 === 0) log('   → ' + idx + '/' + SYMBOLS.length + ' · ' + getOpenTrades().length + '/' + config.maxpos + ' positions', 'data', 'scan-logs');
 
         try {
             const candles = await fetchCandles(sym.deriv, 300, CFG.CANDLES_M5);
             if (!candles || candles.length < 100) continue;
             state.funnel.dataOK++;
 
+            // 5 STRATÉGIES
             const stratResults = {};
             const split = Math.floor(candles.length * CFG.IN_SAMPLE_RATIO);
             const inSample = candles.slice(0, split);
@@ -1378,10 +1477,12 @@ async function runScan() {
 
             if (!anyStratValid) continue;
 
+            // MOTEUR SMC
             const setup = evaluateSetup(candles);
             if (!setup || !setup.hasSignal) continue;
             state.funnel.unifiedOK++;
 
+            // SCORE HYBRIDE
             const validStrats = Object.values(stratResults).filter(s => s.valid);
             const avgStratWR = validStrats.reduce((s, x) => s + x.wr, 0) / validStrats.length;
             const unifiedWR = 65;
@@ -1390,25 +1491,48 @@ async function runScan() {
             if (hybridScore < config.wr) continue;
             state.funnel.hybridOK++;
 
+            // ANTI-DOUBLON
             const fullSetupId = sym.deriv + '_' + setup.setupId;
-            if (isCached(fullSetupId)) continue;
-            cacheSetup(fullSetupId);
+            if (isCached(fullSetupId)) {
+                log('⏭ ' + sym.deriv + ' déjà signalé (cache)', 'info', 'scan-logs');
+                continue;
+            }
 
+            // Vérifier position existante sur ce symbole
+            const existing = getOpenTrades().find(t => t.symbol === sym.deriv);
+            if (existing) {
+                log('⏭ ' + sym.deriv + ' position déjà ouverte', 'info', 'scan-logs');
+                cacheSetup(fullSetupId);
+                continue;
+            }
+
+            // RISK FINAL
             const rg2 = checkRiskGuard(config);
-            if (!rg2.ok) continue;
+            if (!rg2.ok) { log('🛡️ ' + rg2.reason, 'warn', 'scan-logs'); break; }
             state.funnel.riskOK++;
 
+            // ENVOI À MT5
+            cacheSetup(fullSetupId);
             const executed = await executeOrder(sym, setup, stratResults, hybridScore, config);
-            if (executed) signalsFound++;
-            await new Promise(r => setTimeout(r, 300));
+            if (executed) {
+                totalOrders++;
+                state.funnel.ordersSent++;
+            }
+            await new Promise(r => setTimeout(r, 400));
         } catch (e) {
             log('⚠️ ' + sym.deriv + ' : ' + e.message, 'warn', 'scan-logs');
         }
     }
-    log('✅ Scan terminé · ' + signalsFound + ' ordre(s)', 'success', 'scan-logs');
+
+    log('═══════════════════════════════════════', 'info', 'scan-logs');
+    log('✅ Scan terminé · ' + totalOrders + ' ordre(s) envoyé(s)', 'success', 'scan-logs');
+    log('📊 Positions ouvertes : ' + getOpenTrades().length + '/' + config.maxpos, 'data', 'scan-logs');
+    log('═══════════════════════════════════════', 'info', 'scan-logs');
+
     state.scanning = false;
     renderScannerStats();
     renderFunnel();
+    renderJournal();
     scheduleNextScan();
 }
 
@@ -1456,7 +1580,7 @@ async function executeOrder(sym, setup, stratResults, hybridScore, config) {
     saveSignals();
     renderSignals();
 
-    log('🎯 SIGNAL HYBRIDE : ' + sym.mt5 + ' ' + setup.direction + ' ' + finalLot + ' lots (score ' + hybridScore + ')', 'hybrid', 'scan-logs');
+    log('🎯 SIGNAL : ' + sym.mt5 + ' ' + setup.direction + ' ' + finalLot + ' lots (score ' + hybridScore + ')', 'hybrid', 'scan-logs');
     notifyTelegram('🚀 *SIGNAL HYBRIDE v6.3*\n\n📊 ' + sym.mt5 + '\n📈 ' + setup.direction.toUpperCase() + ' ' + finalLot + ' lots\n🎯 Score : *' + hybridScore + '/100*\n💯 Stratégies : ' + validStrats + '\n🎯 ' + setup.zone + ' / ' + setup.trend + '\n💰 ' + config.amount + '$');
     return true;
 }
@@ -1608,22 +1732,24 @@ function renderRiskGuard() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// ANALYSE MANUELLE
+// ANALYSE MANUELLE (SMC seul + COMPLET)
 // ═══════════════════════════════════════════════════════════════════
 async function runAnalyse() {
     const symbol = $('analyse-symbol').value;
     const tf = parseInt($('analyse-tf').value);
+    const nbCandles = 500;
     if (!state.derivConnected) {
         const ok = await connectDerivData();
         if (!ok) { log('❌ Deriv HS', 'error'); return; }
     }
-    log('🔍 Analyse ' + symbol + ' TF ' + tf, 'info');
+    log('🔍 Analyse SMC ' + symbol + ' TF ' + tf + ' (' + nbCandles + ' bougies)', 'info');
     try {
-        const candles = await fetchCandles(symbol, tf, 500);
+        const candles = await fetchCandles(symbol, tf, nbCandles);
         $('analyse-results').style.display = 'block';
         drawCandles('analyse-canvas', candles);
-        const setup = evaluateSetup(candles);
-        if (setup && setup.hasSignal) {
+        const debug = debugEvaluateSetup(candles);
+        if (debug.hasSignal) {
+            const setup = debug.setup;
             $('analyse-signal').innerHTML =
                 '<div class="trade-card pending">' +
                 '<div class="trade-header"><span class="trade-symbol">' + escapeHtml(symbol) + '</span><span class="trade-badge signal">' + setup.direction.toUpperCase() + '</span></div>' +
@@ -1635,11 +1761,43 @@ async function runAnalyse() {
                 '</div>' +
                 '<div style="font-size:0.7rem;color:#93c5fd;margin-top:0.3rem;">Zone : ' + setup.zone + ' · Tendance : ' + setup.trend + ' · ' + (setup.hasOB ? 'Order Block' : 'Swing') + '</div>' +
                 '</div>';
-            log('🎯 Signal SMC détecté : ' + setup.direction + ' ' + setup.zone + ' (' + (setup.hasOB ? 'OB' : 'Swing') + ')', 'signal');
+            log('🎯 Signal SMC : ' + setup.direction + ' ' + setup.zone + ' (' + (setup.hasOB ? 'OB' : 'Swing') + ')', 'signal');
         } else {
-            $('analyse-signal').innerHTML = '<div class="empty">Aucun signal SMC sur ' + escapeHtml(symbol) + '</div>';
-            log('⏸ Pas de signal sur ' + symbol, 'info');
+            $('analyse-signal').innerHTML = renderSmcDebug(debug);
+            log('⏸ Pas de signal SMC sur ' + symbol + ' — Raison : ' + debug.reason, 'warn');
         }
+
+        // ANALYSE DES 5 STRATÉGIES
+        const split = Math.floor(candles.length * CFG.IN_SAMPLE_RATIO);
+        const inSample = candles.slice(0, split);
+        const outSample = candles.slice(split);
+        let html = '<div style="display:grid;grid-template-columns:auto 1fr auto auto auto;gap:0.5rem;font-size:0.65rem;padding:0.4rem 0.6rem;background:#0a0f14;border-radius:6px;margin-bottom:0.4rem;font-family:ui-monospace,monospace;align-items:center;">' +
+            '<span style="color:#6b7280;">#</span><span style="color:#6b7280;">Stratégie</span><span style="color:#6b7280;">WR</span><span style="color:#6b7280;">PF</span><span style="color:#6b7280;">Trades</span>' +
+        '</div>';
+        const config = getConfig();
+        let validCount = 0;
+        for (let i = 0; i < STRATEGIES.length; i++) {
+            const strat = STRATEGIES[i];
+            const r1 = strat.fn(inSample, symbol);
+            const r2 = strat.fn(outSample, symbol);
+            const avgWR = Math.round((r1.winrate + r2.winrate) / 2);
+            const avgPF = ((parseFloat(r1.pf) + parseFloat(r2.pf)) / 2).toFixed(2);
+            const total = r1.total + r2.total;
+            const valid = avgWR >= config.wr && parseFloat(avgPF) >= config.pf && total >= CFG.MIN_TRADES_BACKTEST;
+            if (valid) validCount++;
+            const wrColor = avgWR >= 60 ? '#16a34a' : avgWR >= 50 ? '#fbbf24' : '#dc2626';
+            const pfColor = parseFloat(avgPF) >= 1.5 ? '#16a34a' : parseFloat(avgPF) >= 1.0 ? '#fbbf24' : '#dc2626';
+            html += '<div style="display:grid;grid-template-columns:auto 1fr auto auto auto;gap:0.5rem;font-size:0.72rem;padding:0.5rem 0.6rem;background:' + (valid ? '#052e1633' : '#0a0f14') + ';border-radius:6px;margin-bottom:0.3rem;font-family:ui-monospace,monospace;align-items:center;' + (valid ? 'border-left:3px solid #16a34a;' : '') + '">' +
+                '<span>' + (valid ? '✅' : '⏸') + '</span>' +
+                '<span style="color:#93c5fd;font-weight:700;">' + escapeHtml(strat.name) + '</span>' +
+                '<span style="color:' + wrColor + ';font-weight:700;">' + avgWR + '%</span>' +
+                '<span style="color:' + pfColor + ';font-weight:700;">' + avgPF + '</span>' +
+                '<span style="color:#9ca3af;">' + total + '</span>' +
+            '</div>';
+        }
+        html += '<div style="font-size:0.7rem;color:#9ca3af;margin-top:0.5rem;">' + validCount + '/5 stratégies valident les seuils (WR≥' + config.wr + '% · PF≥' + config.pf + ' · Min ' + CFG.MIN_TRADES_BACKTEST + ' trades)</div>';
+        $('analyse-strategies').innerHTML = html;
+        log('📊 5 stratégies testées : ' + validCount + '/5 valides', validCount > 0 ? 'success' : 'warn');
     } catch (e) {
         log('❌ ' + e.message, 'error');
     }
@@ -1758,6 +1916,7 @@ async function runBacktest() {
 // ═══════════════════════════════════════════════════════════════════
 function bindEvents() {
     $('btn-analyse').addEventListener('click', runAnalyse);
+    $('btn-analyse-full').addEventListener('click', runAnalyse);
     $('btn-backtest').addEventListener('click', runBacktest);
     $('btn-scanner-toggle').addEventListener('click', () => { if (state.scannerActive) stopScanner(); else startScanner(); });
     $('btn-connect-mt5').addEventListener('click', connectMT5);
@@ -1829,7 +1988,8 @@ function init() {
     renderRiskGuard();
     log('🚀 SMC Trader Pro v6.3 FINAL', 'hybrid');
     log('📋 ' + SYMBOLS.length + ' indices · 5 stratégies + moteur SMC unifié', 'hybrid');
-    log('🔬 Moteur SMC ASSOUPLI (lookback 5, OB 30 bougies, SL swing fallback)', 'success');
+    log('🎯 Scanner COMPLET : tous les signaux valides sont envoyés', 'hybrid');
+    log('🔬 4 bugs critiques corrigés + moteur SMC assoupli', 'success');
     setDerivStatus('', 'Déconnecté', 'Prêt');
     setMT5Status('', 'Déconnecté', 'Configuration requise');
     window.addEventListener('load', () => {
